@@ -1,6 +1,7 @@
 import { binaryBody, jsonError } from "@/lib/api/http";
 import { withAdmin } from "@/lib/auth/guard";
 import { resolveFavicon } from "@/lib/icons/favicon";
+import { PLACEHOLDER_CACHE_SECONDS, TRANSPARENT_PNG } from "@/lib/icons/placeholder";
 import { parseHttpUrl } from "@/lib/utils/url";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,15 @@ export async function GET(request: Request) {
     if (!target) return jsonError("网址只支持 http 与 https：请检查后重试。", 400);
 
     const payload = await resolveFavicon(target);
-    if (!payload) return jsonError("没有取到站点图标：可以改用 Emoji 或自己上传。", 404);
+    if (!payload) {
+      return new Response(binaryBody(TRANSPARENT_PNG), {
+        headers: {
+          "content-type": "image/png",
+          "cache-control": `private, max-age=${PLACEHOLDER_CACHE_SECONDS}`,
+          "x-content-type-options": "nosniff",
+        },
+      });
+    }
 
     return new Response(binaryBody(payload.body), {
       headers: {
