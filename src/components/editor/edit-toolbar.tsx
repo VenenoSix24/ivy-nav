@@ -13,7 +13,7 @@ interface EditToolbarProps {
 
 export function EditToolbar({ onAddItem, onExit, searchActive }: EditToolbarProps) {
   return (
-    <div className="sticky top-3 z-30 flex justify-center">
+    <div className="sticky top-[4.25rem] z-30 flex justify-center">
       <div className="surface flex flex-wrap items-center justify-center gap-1.5 rounded-2xl px-2 py-1.5 sm:rounded-full">
         <span className="text-muted-foreground inline-flex items-center gap-1.5 px-2 text-[12px] font-medium">
           <Pencil className="size-3.5" />

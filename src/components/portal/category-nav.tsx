@@ -3,42 +3,42 @@
 import { cn } from "cn";
 import { ALL_CATEGORIES, type CategoryFilter, type PortalCategory } from "@/lib/portal/types";
 
-interface CategoryTabsProps {
+interface CategoryNavProps {
   categories: PortalCategory[];
   active: CategoryFilter;
-  onChange: (filter: CategoryFilter) => void;
+  onSelect: (filter: CategoryFilter) => void;
   counts: Map<number, number>;
   totalCount: number;
+  className?: string;
 }
 
-export function CategoryTabs({
+/** 顶栏里的分类导航：横向滚动，移动端不撑破布局（设计文档 §32）。 */
+export function CategoryNav({
   categories,
   active,
-  onChange,
+  onSelect,
   counts,
   totalCount,
-}: CategoryTabsProps) {
-  if (categories.length <= 1) return null;
+  className,
+}: CategoryNavProps) {
+  if (categories.length === 0) return null;
 
   return (
-    <nav
-      aria-label="分类筛选"
-      className="no-scrollbar -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0"
-    >
-      <ul className="flex w-max items-center gap-1 sm:w-auto sm:flex-wrap">
-        <Tab
+    <nav aria-label="分类筛选" className={cn("no-scrollbar min-w-0 overflow-x-auto", className)}>
+      <ul className="flex w-max items-center gap-0.5 sm:gap-1">
+        <NavItem
           label="All"
           count={totalCount}
           active={active === ALL_CATEGORIES}
-          onClick={() => onChange(ALL_CATEGORIES)}
+          onSelect={() => onSelect(ALL_CATEGORIES)}
         />
         {categories.map((category) => (
-          <Tab
+          <NavItem
             key={category.id}
             label={category.name}
             count={counts.get(category.id) ?? 0}
             active={active === category.id}
-            onClick={() => onChange(category.id)}
+            onSelect={() => onSelect(category.id)}
           />
         ))}
       </ul>
@@ -46,34 +46,35 @@ export function CategoryTabs({
   );
 }
 
-function Tab({
+function NavItem({
   label,
   count,
   active,
-  onClick,
+  onSelect,
 }: {
   label: string;
   count: number;
   active: boolean;
-  onClick: () => void;
+  onSelect: () => void;
 }) {
   return (
     <li>
       <button
         type="button"
-        onClick={onClick}
+        onClick={onSelect}
         aria-current={active ? "true" : undefined}
         className={cn(
-          "focus-visible:outline-ring flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2",
+          "focus-visible:outline-ring flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 sm:px-3",
           active
             ? "bg-secondary text-foreground font-medium"
             : "text-muted-foreground hover:text-foreground",
         )}
       >
         {label}
+        {/* 手机上不给计数留位置，避免把分类名挤到看不见 */}
         <span
           className={cn(
-            "text-[11px] tabular-nums",
+            "hidden text-[11px] tabular-nums sm:inline",
             active ? "text-muted-foreground" : "opacity-60",
           )}
         >

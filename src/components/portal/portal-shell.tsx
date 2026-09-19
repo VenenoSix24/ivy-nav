@@ -7,7 +7,6 @@ import { EditableGrid } from "@/components/editor/editable-grid";
 import { EditToolbar } from "@/components/editor/edit-toolbar";
 import { ItemDialog } from "@/components/editor/item-dialog";
 import { CategorySection } from "@/components/portal/category-section";
-import { CategoryTabs } from "@/components/portal/category-tabs";
 import { EmptyState } from "@/components/portal/empty-state";
 import { PortalHeader } from "@/components/portal/portal-header";
 import { SearchBar } from "@/components/portal/search-bar";
@@ -179,20 +178,23 @@ export function PortalShell({ data, isAdmin, initialEditMode = false }: PortalSh
 
   return (
     <>
-      <main className="relative z-10 mx-auto w-full max-w-[1080px] px-4 pb-28 sm:px-6">
-        <div className="pt-8">
-          <PortalHeader
-            isAdmin={isAdmin}
-            editing={editing}
-            onToggleEdit={() => {
-              setEditing((value) => !value);
-              setActive(ALL_CATEGORIES);
-            }}
-          />
-        </div>
+      <PortalHeader
+        isAdmin={isAdmin}
+        editing={editing}
+        onToggleEdit={() => {
+          setEditing((value) => !value);
+          setActive(ALL_CATEGORIES);
+        }}
+        categories={tabCategories}
+        active={active}
+        onSelect={setActive}
+        counts={counts}
+        totalCount={matchedItems.length}
+      />
 
+      <main className="relative z-10 mx-auto w-full max-w-[1080px] px-4 pb-28 sm:px-6">
         {editing ? (
-          <div className="mt-6">
+          <div className="mt-4">
             <EditToolbar
               onAddItem={() => setEditor({ key: "new", item: null, categoryId: null })}
               onExit={() => setEditing(false)}
@@ -201,26 +203,16 @@ export function PortalShell({ data, isAdmin, initialEditMode = false }: PortalSh
           </div>
         ) : null}
 
-        <section className="mt-16 text-center sm:mt-20">
-          <h1 className="text-[clamp(46px,7vw,72px)] leading-[1.02] font-semibold tracking-[-0.055em]">
+        <section className="mt-14 text-center sm:mt-24">
+          <h1 className="text-[clamp(42px,7vw,72px)] leading-[1.02] font-semibold tracking-[-0.055em]">
             Welcome back.
           </h1>
           <p className="text-muted-foreground mt-4 text-[15px] sm:text-[17px]">{site.slogan}</p>
           <SearchBar value={query} onChange={setQuery} />
         </section>
 
-        <div className="mt-10 sm:mt-14">
-          <CategoryTabs
-            categories={tabCategories}
-            active={active}
-            onChange={setActive}
-            counts={counts}
-            totalCount={matchedItems.length}
-          />
-        </div>
-
         {/* 换分类时重挂载一次，让入场动画重放，而不是整页刷新（设计文档 §28） */}
-        <div key={active} className="mt-8 space-y-14 sm:mt-10 sm:space-y-16">
+        <div key={active} className="mt-10 space-y-12 sm:mt-14 sm:space-y-16">
           {sections.map((section) => (
             <CategorySection
               key={String(section.filter)}
