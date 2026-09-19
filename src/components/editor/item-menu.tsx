@@ -1,0 +1,107 @@
+"use client";
+
+import {
+  Copy,
+  Eye,
+  EyeOff,
+  FolderInput,
+  MoreHorizontal,
+  Pencil,
+  Star,
+  StarOff,
+  Trash2,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { PortalCategory, PortalItem } from "@/lib/portal/types";
+
+interface ItemMenuProps {
+  item: PortalItem;
+  categories: PortalCategory[];
+  onEdit: () => void;
+  onDuplicate: () => void;
+  onMove: (categoryId: number | null) => void;
+  onToggleVisibility: () => void;
+  onToggleFeatured: () => void;
+  onDelete: () => void;
+}
+
+export function ItemMenu({
+  item,
+  categories,
+  onEdit,
+  onDuplicate,
+  onMove,
+  onToggleVisibility,
+  onToggleFeatured,
+  onDelete,
+}: ItemMenuProps) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={`${item.title} 的操作`}
+        onPointerDown={(event) => event.stopPropagation()}
+        className="text-muted-foreground hover:text-foreground hover:bg-secondary focus-visible:outline-ring inline-grid size-7 place-items-center rounded-full transition-colors focus-visible:outline-2"
+      >
+        <MoreHorizontal className="size-4" />
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuItem onClick={onEdit}>
+          <Pencil />
+          编辑
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onDuplicate}>
+          <Copy />
+          复制
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onToggleVisibility}>
+          {item.visibility === "public" ? <EyeOff /> : <Eye />}
+          {item.visibility === "public" ? "设为 Private" : "设为 Public"}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onToggleFeatured}>
+          {item.featured ? <StarOff /> : <Star />}
+          {item.featured ? "取消置顶" : "置顶"}
+        </DropdownMenuItem>
+
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <FolderInput />
+            移动分类
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="max-h-72 w-44 overflow-y-auto">
+            <DropdownMenuLabel>移动到</DropdownMenuLabel>
+            <DropdownMenuItem disabled={item.categoryId === null} onClick={() => onMove(null)}>
+              未分类（Inbox）
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {categories.map((category) => (
+              <DropdownMenuItem
+                key={category.id}
+                disabled={item.categoryId === category.id}
+                onClick={() => onMove(category.id)}
+              >
+                {category.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive" onClick={onDelete}>
+          <Trash2 />
+          删除
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
