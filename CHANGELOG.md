@@ -3,6 +3,31 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 与
 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Changed
+
+- 分类导航移到常驻顶栏（品牌 / 分类 / 外观 / 设置同排），滚动到任何位置都能切换分类
+- 手机端卡片改为两列，并收窄内边距、把标签与 Open 改为上下排布
+- 演示种子数据把 7 个分类全部设为首页显示，首次导入即可看到完整排版
+- 管理员账号改由服务器端 `pnpm admin:create` 创建，网页端不再提供建号入口
+
+### Added
+
+- `pnpm admin:create`：交互式建号，支持 `ADMIN_PASSWORD` 非交互传入与 `--reset` 重置密码
+- `pnpm test` 之外的部署路径实测：整项目部署与 standalone 产物两种方式都写进 README
+
+### Fixed
+
+- 登录表单未声明 `method="post"`：脚本未执行时浏览器按 GET 原生提交，会把密码写进 URL
+- `pnpm dev` 与 `pnpm build` 共用 `.next`：一次构建就可能让开发服务器引用的脚本失效，
+  页面表现为样式正常但点击全无反应；开发改用独立目录 `.next-dev`
+
+### Removed
+
+- 网页端建号接口 `/api/auth/setup`
+- 仓库里的 `AGENTS.md`（`next dev` 每次自动生成，改为忽略）
+
 ## [0.1.0] - 2026-09-19
 
 第一个可用版本：首页、数据、认证、前台编辑、图标与备份都跑通了。
