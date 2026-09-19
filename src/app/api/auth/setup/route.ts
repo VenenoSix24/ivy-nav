@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { clientIp, firstIssueMessage, jsonError, jsonOk, readJson } from "@/lib/api/http";
 import { checkPasswordStrength, hashPassword } from "@/lib/auth/password";
-import { createAdminUser, createSession, needsSetup, setSessionCookie } from "@/lib/auth/session";
+import {
+  createFirstAdminUser,
+  createSession,
+  needsSetup,
+  setSessionCookie,
+} from "@/lib/auth/session";
 
 const setupSchema = z.object({
   username: z
@@ -24,8 +29,8 @@ export async function POST(request: Request) {
   if (strength) return jsonError(strength, 400);
 
   const passwordHash = await hashPassword(parsed.data.password);
-  const user = createAdminUser(parsed.data.username, passwordHash);
-  if (!user) return jsonError("创建管理员失败：数据库未返回新用户，请重试。", 500);
+  const user = createFirstAdminUser(parsed.data.username, passwordHash);
+  if (!user) return jsonError("管理员账号已被创建：请直接用该账号登录。", 403);
 
   const { token, expiresAt } = createSession(user.id, {
     userAgent: request.headers.get("user-agent"),
