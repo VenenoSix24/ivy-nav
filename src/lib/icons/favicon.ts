@@ -2,11 +2,15 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { resolveDatabasePath } from "@/db/client";
+import { assertFetchableHost, nextRedirectTarget } from "./egress";
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_HTML_BYTES = 256 * 1024;
 const MAX_ICON_BYTES = 512 * 1024;
 const TIMEOUT_MS = 4000;
+const MAX_REDIRECTS = 3;
+/** 取不到时也记一小会儿，别让匿名请求每次都去撞两轮外网。 */
+const MISS_TTL_MS = 10 * 60 * 1000;
 
 export interface IconPayload {
   body: Buffer;
@@ -49,16 +53,37 @@ function writeCache(origin: string, payload: IconPayload): void {
   }
 }
 
+/**
+ * 手动跟随跳转，每一跳都重新做内网检查。用 redirect: "follow" 的话，
+ * 第二个请求的目标就由被访问站点的 Location 决定，等于把出口检查让给别人。
+ */
 async function fetchWithTimeout(url: string, accept: string): Promise<Response | null> {
+  let target: URL;
   try {
-    return await fetch(url, {
-      redirect: "follow",
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-      headers: { accept, "user-agent": "ivy-nav/0.1 (+favicon)" },
-    });
+    target = new URL(url);
   } catch {
     return null;
   }
+
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
+    try {
+      await assertFetchableHost(target.hostname);
+      const response = await fetch(target, {
+        redirect: "manual",
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+        headers: { accept, "user-agent": "ivy-nav/0.1 (+favicon)" },
+      });
+
+      const location = response.headers.get("location");
+      if (response.status < 300 || response.status >= 400 || !location) return response;
+
+      target = nextRedirectTarget(location, target);
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 }
 
 /** 图标格式靠文件头判断，不信 Content-Type —— 很多站点把 .ico 报成 octet-stream。 */
@@ -139,6 +164,17 @@ async function download(candidates: string[]): Promise<IconPayload | null> {
 }
 
 const inFlight = new Map<string, Promise<IconPayload | null>>();
+const misses = new Map<string, number>();
+
+function recentlyMissed(origin: string, now: number): boolean {
+  const at = misses.get(origin);
+  if (at === undefined) return false;
+  if (now - at > MISS_TTL_MS) {
+    misses.delete(origin);
+    return false;
+  }
+  return true;
+}
 
 /**
  * 取站点图标：先读页面里的 <link rel="icon">，失败再试 /favicon.ico。
@@ -149,6 +185,7 @@ export async function resolveFavicon(pageUrl: URL): Promise<IconPayload | null> 
 
   const cached = readCache(origin);
   if (cached) return cached;
+  if (recentlyMissed(origin, Date.now())) return null;
 
   const pending = inFlight.get(origin);
   if (pending) return pending;
@@ -164,7 +201,12 @@ export async function resolveFavicon(pageUrl: URL): Promise<IconPayload | null> 
     candidates.push(new URL("/favicon.ico", origin).toString());
 
     const payload = await download(candidates);
-    if (payload) writeCache(origin, payload);
+    if (payload) {
+      misses.delete(origin);
+      writeCache(origin, payload);
+    } else {
+      misses.set(origin, Date.now());
+    }
     return payload;
   })().finally(() => inFlight.delete(origin));
 
