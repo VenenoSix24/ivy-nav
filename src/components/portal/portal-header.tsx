@@ -2,17 +2,28 @@
 
 import Link from "next/link";
 import { Settings } from "lucide-react";
+import { cn } from "cn";
 import { BrandMark } from "@/components/portal/brand-mark";
 import { ThemeToggle } from "@/components/portal/theme-toggle";
+import { useScrolled } from "@/hooks/use-scrolled";
 import { site } from "@/lib/site";
 
 /**
- * 顶栏只留品牌与两个图标按钮：分类交给搜索栏下方那条导航，编辑开关在设置页。
- * 顶栏越安静，越像"自己的空间"而不是工具面板。
+ * 滚动感知的悬浮顶栏：停在顶部时完全透明、没有分隔线；往下滚动后
+ * 才浮起一层毛玻璃与细线。这样首屏干净，滚动后又始终压得住内容。
  */
 export function PortalHeader() {
+  const scrolled = useScrolled();
+
   return (
-    <header className="border-border/60 bg-background/75 sticky top-0 z-40 border-b backdrop-blur-xl">
+    <header
+      data-scrolled={scrolled ? "true" : undefined}
+      className={cn(
+        "sticky top-0 z-40 transition-colors duration-300",
+        scrolled &&
+          "border-border/50 bg-background/60 border-b backdrop-blur-2xl backdrop-saturate-150",
+      )}
+    >
       <div className="mx-auto flex h-14 w-full max-w-[1080px] items-center justify-between gap-4 px-4 sm:px-6">
         <Link
           href="/"
