@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+/* eslint-disable @next/next/no-img-element -- favicon 与上传图标尺寸固定、数量多，走本地代理即可，
+   用 next/image 反而要拉远端白名单并多一次优化往返，与「不为小图标加载大资源」相悖 */
+import { createElement, useState } from "react";
 import { cn } from "cn";
 import type { IconType } from "@/db/schema";
 import { getLucideIcon } from "@/components/icons/lucide-registry";
@@ -59,9 +61,10 @@ function IconContent({
       return <span className="translate-y-px select-none">{value}</span>;
 
     case "lucide": {
+      // 图标来自运行时查表，用 createElement 渲染，避免在 render 期间动态构造组件
       const Icon = getLucideIcon(value);
       if (!Icon) return <LetterMark title={title} className={iconClassName} />;
-      return <Icon className={cn("text-foreground size-5", iconClassName)} />;
+      return createElement(Icon, { className: cn("text-foreground size-5", iconClassName) });
     }
 
     case "upload":
