@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { eq } from "drizzle-orm";
-import { getDb } from "@/db/client";
+import { getDb, getSqlite } from "@/db/client";
 import { sessions, users } from "@/db/schema";
 import {
   SESSION_COOKIE_NAME,
@@ -148,6 +148,22 @@ export async function updatePassword(userId: number, passwordHash: string): Prom
     .run();
 }
 
-export function createAdminUser(username: string, passwordHash: string) {
-  return getDb().insert(users).values({ username, passwordHash }).returning({ id: users.id }).get();
+/**
+ * 只在还没有任何用户时插入，判断与写入是同一条语句，SQLite 串行化写入保证
+ * 并发请求里只有一个能成功。分成「先查再写」的话，几个人同时提交就会建出多个管理员。
+ */
+export function createFirstAdminUser(
+  username: string,
+  passwordHash: string,
+): { id: number } | null {
+  const result = getSqlite()
+    .prepare(
+      `INSERT INTO users (username, password_hash, created_at, updated_at)
+       SELECT ?, ?, unixepoch(), unixepoch()
+       WHERE NOT EXISTS (SELECT 1 FROM users)`,
+    )
+    .run(username, passwordHash);
+
+  if (result.changes === 0) return null;
+  return { id: Number(result.lastInsertRowid) };
 }
