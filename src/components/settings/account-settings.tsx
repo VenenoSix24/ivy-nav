@@ -96,7 +96,7 @@ export function AccountSettings({ username, sessionExpiresAt }: AccountSettingsP
                 onChange={(event) => setCurrentPassword(event.target.value)}
                 autoComplete="current-password"
                 required
-                className="h-10 rounded-xl text-[14px]"
+                className="h-10 rounded-xl text-[16px] sm:text-[14px]"
               />
             </Field>
             <Field id="new-password" label="新密码">
@@ -107,7 +107,7 @@ export function AccountSettings({ username, sessionExpiresAt }: AccountSettingsP
                 onChange={(event) => setNewPassword(event.target.value)}
                 autoComplete="new-password"
                 required
-                className="h-10 rounded-xl text-[14px]"
+                className="h-10 rounded-xl text-[16px] sm:text-[14px]"
               />
             </Field>
             <Field id="confirm-password" label="确认新密码">
@@ -118,7 +118,7 @@ export function AccountSettings({ username, sessionExpiresAt }: AccountSettingsP
                 onChange={(event) => setConfirm(event.target.value)}
                 autoComplete="new-password"
                 required
-                className="h-10 rounded-xl text-[14px]"
+                className="h-10 rounded-xl text-[16px] sm:text-[14px]"
               />
             </Field>
           </div>

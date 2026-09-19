@@ -21,7 +21,10 @@ export function CategoryTabs({
   if (categories.length <= 1) return null;
 
   return (
-    <nav aria-label="分类筛选" className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+    <nav
+      aria-label="分类筛选"
+      className="no-scrollbar -mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0"
+    >
       <ul className="flex w-max items-center gap-1 sm:w-auto sm:flex-wrap">
         <Tab
           label="All"

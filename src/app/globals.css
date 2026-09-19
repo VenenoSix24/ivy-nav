@@ -189,9 +189,21 @@
     box-shadow 0.35s var(--ease-out-soft),
     border-color 0.35s var(--ease-out-soft);
 
-  &:hover {
-    transform: translateY(-4px) scale(1.005);
-    box-shadow: var(--surface-shadow-hover);
+  /* 触摸设备没有真正的悬停，加上限制免得点击后卡片停在抬起状态 */
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      transform: translateY(-4px) scale(1.005);
+      box-shadow: var(--surface-shadow-hover);
+    }
+  }
+}
+
+/* 横向滚动的分类条不该露出滚动条 */
+@utility no-scrollbar {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
   }
 }
 

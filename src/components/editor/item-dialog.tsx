@@ -127,7 +127,7 @@ export function ItemDialog({
               onChange={(event) => setTitle(event.target.value)}
               required
               maxLength={80}
-              className="h-10 rounded-xl"
+              className="h-10 rounded-xl text-[16px] sm:text-[14px]"
             />
           </div>
 
@@ -141,7 +141,7 @@ export function ItemDialog({
               placeholder="github.com"
               autoCapitalize="none"
               spellCheck={false}
-              className="h-10 rounded-xl"
+              className="h-10 rounded-xl text-[16px] sm:text-[14px]"
             />
           </div>
 
@@ -194,7 +194,7 @@ export function ItemDialog({
               value={tags}
               onChange={(event) => setTags(event.target.value)}
               placeholder="用逗号或空格分隔"
-              className="h-10 rounded-xl"
+              className="h-10 rounded-xl text-[16px] sm:text-[14px]"
             />
           </div>
 
