@@ -1,5 +1,6 @@
 import { jsonOk } from "@/lib/api/http";
-import { getSession, needsSetup } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
+import { needsSetup } from "@/db/users";
 
 export const dynamic = "force-dynamic";
 

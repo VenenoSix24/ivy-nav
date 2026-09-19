@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { eq } from "drizzle-orm";
-import { getDb, getSqlite } from "@/db/client";
+import { getDb } from "@/db/client";
 import { sessions, users } from "@/db/schema";
+import { needsSetup } from "@/db/users";
 import {
   SESSION_COOKIE_NAME,
   SESSION_RENEW_AFTER_MS,
@@ -20,20 +21,6 @@ export interface AdminSession {
 export interface SessionMeta {
   userAgent?: string | null;
   ip?: string | null;
-}
-
-export function countAdminUsers(): number {
-  const rows = getDb().select({ id: users.id }).from(users).all();
-  return rows.length;
-}
-
-/** 首次部署时还没有管理员，登录页据此切换成创建账号。 */
-export function needsSetup(): boolean {
-  return countAdminUsers() === 0;
-}
-
-export function findUserByName(username: string) {
-  return getDb().select().from(users).where(eq(users.username, username)).get() ?? null;
 }
 
 export function createSession(
@@ -140,30 +127,5 @@ export async function readSessionToken(): Promise<string | null> {
   return (await cookies()).get(SESSION_COOKIE_NAME)?.value ?? null;
 }
 
-export async function updatePassword(userId: number, passwordHash: string): Promise<void> {
-  getDb()
-    .update(users)
-    .set({ passwordHash, updatedAt: new Date() })
-    .where(eq(users.id, userId))
-    .run();
-}
-
-/**
- * 只在还没有任何用户时插入，判断与写入是同一条语句，SQLite 串行化写入保证
- * 并发请求里只有一个能成功。分成「先查再写」的话，几个人同时提交就会建出多个管理员。
- */
-export function createFirstAdminUser(
-  username: string,
-  passwordHash: string,
-): { id: number } | null {
-  const result = getSqlite()
-    .prepare(
-      `INSERT INTO users (username, password_hash, created_at, updated_at)
-       SELECT ?, ?, unixepoch(), unixepoch()
-       WHERE NOT EXISTS (SELECT 1 FROM users)`,
-    )
-    .run(username, passwordHash);
-
-  if (result.changes === 0) return null;
-  return { id: Number(result.lastInsertRowid) };
-}
+// 重新导出：调用方只从 auth 层取会话相关能力，用户查询本身在 db/users.ts
+export { needsSetup };

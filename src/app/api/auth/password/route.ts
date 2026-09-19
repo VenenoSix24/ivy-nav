@@ -2,7 +2,8 @@ import { z } from "zod";
 import { firstIssueMessage, jsonError, jsonOk, readJson } from "@/lib/api/http";
 import { withAdmin } from "@/lib/auth/guard";
 import { checkPasswordStrength, hashPassword, verifyPassword } from "@/lib/auth/password";
-import { destroyOtherSessions, findUserByName, updatePassword } from "@/lib/auth/session";
+import { destroyOtherSessions } from "@/lib/auth/session";
+import { findUserByName, updatePassword } from "@/db/users";
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "请输入当前密码。"),
