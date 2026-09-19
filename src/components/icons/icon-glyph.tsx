@@ -21,71 +21,64 @@ interface IconGlyphProps {
 }
 
 /**
- * 渲染一种图标。任何一种取不到时回落到首字母标记，
- * 而不是在页面上留一个破图（设计文档 §16）。
+ * 渲染一种图标。
+ *
+ * 图片类图标一律把首字母标记垫在底下，图片叠在上面：`onError` 要等 React 挂载后
+ * 才生效，图片若在水合之前就失败，错误事件没人接、就会一直是个破图。
+ * 垫一层托底就不再依赖事件，任何时刻取不到图都能看到首字母（设计文档 §16）。
  */
 export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps) {
   const [failed, setFailed] = useState(false);
 
-  if (failed || spec.type === "none" || !hasValue(spec)) {
-    return <LetterMark title={title} className={className} />;
+  if (spec.type === "emoji") {
+    return <span className={cn("translate-y-px select-none", className)}>{spec.value}</span>;
   }
 
-  switch (spec.type) {
-    case "emoji":
-      return <span className={cn("translate-y-px select-none", className)}>{spec.value}</span>;
-
-    case "lucide": {
-      // 图标来自运行时查表，用 createElement 渲染，避免在 render 期间动态构造组件
-      const Icon = getLucideIcon(spec.value);
-      if (!Icon) return <LetterMark title={title} className={className} />;
-      return createElement(Icon, { className: cn("text-foreground size-5", className) });
-    }
-
-    case "upload":
-      return (
-        <img
-          src={`/api/icons/file/${spec.value}`}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className={cn("size-5 object-contain", className)}
-          onError={() => setFailed(true)}
-        />
-      );
-
-    case "favicon":
-      return (
-        <img
-          src={faviconSrc}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className={cn("size-5 object-contain", className)}
-          onError={() => setFailed(true)}
-        />
-      );
-
-    // simple-icons 与 iconify 属于第二阶段（设计文档 §40）：现在回落首字母标记，
-    // 不假装可用，也不为此把整库图标打进首页包里
-    case "simple-icons":
-    case "iconify":
-    default:
-      return <LetterMark title={title} className={className} />;
+  if (spec.type === "lucide") {
+    // 图标来自运行时查表，用 createElement 渲染，避免在 render 期间动态构造组件
+    const Icon = getLucideIcon(spec.value);
+    if (!Icon) return <LetterMark title={title} className={className} />;
+    return createElement(Icon, { className: cn("text-foreground size-5", className) });
   }
+
+  if (spec.type === "upload" || spec.type === "favicon") {
+    const src = spec.type === "upload" ? `/api/icons/file/${spec.value}` : faviconSrc;
+    const hasSource = spec.type === "favicon" || Boolean(spec.value?.trim());
+    if (!hasSource) return <LetterMark title={title} className={className} />;
+
+    return (
+      <span className={cn("relative grid size-full place-items-center", className)}>
+        <LetterMark title={title} className="absolute inset-0 grid place-items-center" />
+        {failed ? null : (
+          <img
+            src={src}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="relative size-5 object-contain"
+            onError={() => setFailed(true)}
+          />
+        )}
+      </span>
+    );
+  }
+
+  // none，以及属于第二阶段（设计文档 §40）的 simple-icons / iconify：直接显示首字母，
+  // 不假装可用，也不为此把整库图标打进首页包里
+  return <LetterMark title={title} className={className} />;
 }
 
 function LetterMark({ title, className }: { title: string; className?: string }) {
   return (
-    <span className={cn("text-accent-foreground text-[15px] font-semibold", className)}>
+    <span
+      className={cn(
+        "text-accent-foreground grid place-items-center text-[15px] font-semibold",
+        className,
+      )}
+    >
       {firstLetter(title)}
     </span>
   );
-}
-
-function hasValue(spec: IconSpec): boolean {
-  if (spec.type === "favicon" || spec.type === "none") return true;
-  return Boolean(spec.value && spec.value.trim());
 }
 
 export function firstLetter(title: string): string {

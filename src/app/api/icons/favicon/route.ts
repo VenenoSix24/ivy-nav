@@ -2,9 +2,22 @@ import { binaryBody, jsonError } from "@/lib/api/http";
 import { getSession } from "@/lib/auth/session";
 import { findItem } from "@/lib/portal/mutations";
 import { resolveFavicon } from "@/lib/icons/favicon";
+import { PLACEHOLDER_CACHE_SECONDS, TRANSPARENT_PNG } from "@/lib/icons/placeholder";
 import { parseHttpUrl } from "@/lib/utils/url";
 
 export const dynamic = "force-dynamic";
+
+function placeholderResponse(isAdmin: boolean) {
+  return new Response(binaryBody(TRANSPARENT_PNG), {
+    headers: {
+      "content-type": "image/png",
+      "cache-control": isAdmin
+        ? `private, max-age=${PLACEHOLDER_CACHE_SECONDS}`
+        : `public, max-age=${PLACEHOLDER_CACHE_SECONDS}`,
+      "x-content-type-options": "nosniff",
+    },
+  });
+}
 
 /**
  * 公开站点图标。只按条目编号取，不接受任意 URL：
@@ -30,7 +43,9 @@ export async function GET(request: Request) {
   if (!target) return jsonError("条目网址不合法：请修正后再试。", 400);
 
   const payload = await resolveFavicon(target);
-  if (!payload) return jsonError("没有取到站点图标：可以在编辑里改用 Emoji 或上传。", 404);
+  // 取不到不是错误：回一张透明占位图，图标位的首字母托底就会露出来，
+  // 控制台也不会多一条 404。条目本身不存在才用 404。
+  if (!payload) return placeholderResponse(session !== null);
 
   return new Response(binaryBody(payload.body), {
     headers: {
