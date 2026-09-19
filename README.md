@@ -32,6 +32,14 @@ pnpm dev
 
 打开 http://localhost:3000。首次启动时数据库是空的，页面会引导创建管理员账号。
 
+想先看到真实排版而不是空页面，可以灌入一份演示内容（7 个分类、15 个条目）：
+
+```bash
+pnpm db:seed
+```
+
+数据库里已经有分类时该命令会直接跳过，不会重复写入。
+
 ## 环境变量
 
 全部可选，默认值适用于本机开发。复制 `.env.example` 为 `.env.local` 后按需覆盖。
@@ -54,6 +62,7 @@ pnpm typecheck      # TypeScript 类型检查
 pnpm format         # Prettier 格式化
 pnpm format:check   # 校验格式（CI 使用）
 pnpm db:generate    # 改完 schema 后生成迁移
+pnpm db:seed        # 灌入演示内容（已有数据时跳过）
 ```
 
 ## 目录结构
