@@ -100,15 +100,6 @@ export function PortalShell({ data, isAdmin, initialEditMode = false }: PortalSh
     [scopedItems, query, categoryNames],
   );
 
-  const counts = useMemo(() => {
-    const map = new Map<number, number>();
-    for (const item of matchedItems) {
-      if (item.categoryId === null) continue;
-      map.set(item.categoryId, (map.get(item.categoryId) ?? 0) + 1);
-    }
-    return map;
-  }, [matchedItems]);
-
   const sections = useMemo<Section[]>(() => {
     const list: Section[] = [];
 
@@ -188,8 +179,6 @@ export function PortalShell({ data, isAdmin, initialEditMode = false }: PortalSh
         categories={tabCategories}
         active={active}
         onSelect={setActive}
-        counts={counts}
-        totalCount={matchedItems.length}
       />
 
       <main className="relative z-10 mx-auto w-full max-w-[1080px] px-4 pb-28 sm:px-6">

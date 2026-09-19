@@ -198,6 +198,11 @@
   }
 }
 
+/* 顶栏分类条：右缘渐隐，提示右侧还有可滚动的内容 */
+@utility fade-right {
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 1.75rem), transparent 100%);
+}
+
 /* 横向滚动的分类条不该露出滚动条 */
 @utility no-scrollbar {
   scrollbar-width: none;
