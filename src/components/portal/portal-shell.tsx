@@ -6,8 +6,10 @@ import { toast } from "sonner";
 import { EditableGrid } from "@/components/editor/editable-grid";
 import { EditToolbar } from "@/components/editor/edit-toolbar";
 import { ItemDialog } from "@/components/editor/item-dialog";
+import { CategoryNav } from "@/components/portal/category-nav";
 import { CategorySection } from "@/components/portal/category-section";
 import { EmptyState } from "@/components/portal/empty-state";
+import { PortalFooter } from "@/components/portal/portal-footer";
 import { PortalHeader } from "@/components/portal/portal-header";
 import { SearchBar } from "@/components/portal/search-bar";
 import {
@@ -22,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { portalRequest, type PortalResult } from "@/lib/portal/client";
+import { clearEditModeCookie } from "@/lib/portal/edit-mode";
 import { matchesQuery } from "@/lib/portal/search";
 import {
   ALL_CATEGORIES,
@@ -34,7 +37,6 @@ import { site } from "@/lib/site";
 
 interface PortalShellProps {
   data: PortalData;
-  isAdmin: boolean;
   initialEditMode?: boolean;
 }
 
@@ -52,7 +54,7 @@ interface Section {
   items: PortalItem[];
 }
 
-export function PortalShell({ data, isAdmin, initialEditMode = false }: PortalShellProps) {
+export function PortalShell({ data, initialEditMode = false }: PortalShellProps) {
   const [portal, setPortal] = useState<PortalData>(data);
   const [editing, setEditing] = useState(initialEditMode);
   const [query, setQuery] = useState("");
@@ -169,24 +171,17 @@ export function PortalShell({ data, isAdmin, initialEditMode = false }: PortalSh
 
   return (
     <>
-      <PortalHeader
-        isAdmin={isAdmin}
-        editing={editing}
-        onToggleEdit={() => {
-          setEditing((value) => !value);
-          setActive(ALL_CATEGORIES);
-        }}
-        categories={tabCategories}
-        active={active}
-        onSelect={setActive}
-      />
+      <PortalHeader />
 
       <main className="relative z-10 mx-auto w-full max-w-[1080px] px-4 pb-28 sm:px-6">
         {editing ? (
           <div className="mt-4">
             <EditToolbar
               onAddItem={() => setEditor({ key: "new", item: null, categoryId: null })}
-              onExit={() => setEditing(false)}
+              onExit={() => {
+                document.cookie = clearEditModeCookie();
+                setEditing(false);
+              }}
               searchActive={searching}
             />
           </div>
@@ -200,8 +195,10 @@ export function PortalShell({ data, isAdmin, initialEditMode = false }: PortalSh
           <SearchBar value={query} onChange={setQuery} />
         </section>
 
+        <CategoryNav categories={tabCategories} active={active} onSelect={setActive} />
+
         {/* 换分类时重挂载一次，让入场动画重放，而不是整页刷新（设计文档 §28） */}
-        <div key={active} className="mt-10 space-y-12 sm:mt-14 sm:space-y-16">
+        <div key={active} className="mt-6 space-y-12 sm:mt-8 sm:space-y-16">
           {sections.map((section) => (
             <CategorySection
               key={String(section.filter)}
@@ -276,7 +273,7 @@ export function PortalShell({ data, isAdmin, initialEditMode = false }: PortalSh
               hint="换个关键词，或清空搜索看看全部内容。"
             />
           ) : active !== ALL_CATEGORIES ? (
-            <EmptyState title="这个分类还没有内容" hint="切换到 All 看看其它分类。" />
+            <EmptyState title="这个分类还没有内容" hint="切换到「全部」看看其它分类。" />
           ) : editing ? (
             <EmptyState title="还没有内容" hint="点上方「新建项目」开始添加。" />
           ) : (
@@ -284,6 +281,8 @@ export function PortalShell({ data, isAdmin, initialEditMode = false }: PortalSh
           )
         ) : null}
       </main>
+
+      <PortalFooter />
 
       {editor ? (
         <ItemDialog

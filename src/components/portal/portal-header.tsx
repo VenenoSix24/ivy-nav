@@ -1,65 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil, Settings } from "lucide-react";
-import { CategoryNav } from "@/components/portal/category-nav";
+import { Settings } from "lucide-react";
+import { BrandMark } from "@/components/portal/brand-mark";
 import { ThemeToggle } from "@/components/portal/theme-toggle";
-import { Button } from "@/components/ui/button";
-import type { CategoryFilter, PortalCategory } from "@/lib/portal/types";
 import { site } from "@/lib/site";
 
-interface PortalHeaderProps {
-  isAdmin: boolean;
-  editing: boolean;
-  onToggleEdit: () => void;
-  categories: PortalCategory[];
-  active: CategoryFilter;
-  onSelect: (filter: CategoryFilter) => void;
-}
-
 /**
- * 顶栏：品牌、分类、外观、设置。分类常驻顶部，滚到任何位置都能切换。
- * 分类多的时候让导航自己横向滚动，而不是把整行挤变形。
+ * 顶栏只留品牌与两个图标按钮：分类交给搜索栏下方那条导航，编辑开关在设置页。
+ * 顶栏越安静，越像"自己的空间"而不是工具面板。
  */
-export function PortalHeader({
-  isAdmin,
-  editing,
-  onToggleEdit,
-  categories,
-  active,
-  onSelect,
-}: PortalHeaderProps) {
+export function PortalHeader() {
   return (
     <header className="border-border/60 bg-background/75 sticky top-0 z-40 border-b backdrop-blur-xl">
-      <div className="mx-auto flex h-14 w-full max-w-[1080px] items-center gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex h-14 w-full max-w-[1080px] items-center justify-between gap-4 px-4 sm:px-6">
         <Link
           href="/"
-          className="focus-visible:outline-ring flex shrink-0 items-baseline gap-1.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4"
+          aria-label={`${site.fullName} 首页`}
+          className="focus-visible:outline-ring flex items-center gap-2 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4"
         >
-          <span className="text-[15px] font-semibold tracking-[-0.02em]">{site.name}</span>
-          <span className="text-muted-foreground text-[12px]">{site.nameZh}</span>
+          <BrandMark className="size-[22px] shrink-0" />
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-[15px] font-semibold tracking-[-0.03em]">{site.name}</span>
+            <span className="text-muted-foreground/50 text-[13px]">·</span>
+            <span className="text-muted-foreground text-[13px] tracking-[0.02em]">
+              {site.nameZh}
+            </span>
+          </span>
         </Link>
 
-        <CategoryNav
-          categories={categories}
-          active={active}
-          onSelect={onSelect}
-          className="min-w-0 flex-1"
-        />
-
         <div className="flex shrink-0 items-center gap-0.5">
-          {isAdmin ? (
-            <Button
-              variant={editing ? "default" : "ghost"}
-              onClick={onToggleEdit}
-              aria-label={editing ? "退出编辑模式" : "进入编辑模式"}
-              className="h-9 rounded-full px-3 text-[12px]"
-            >
-              <Pencil className="size-3.5" />
-              <span className="hidden lg:inline">{editing ? "退出编辑" : "编辑模式"}</span>
-            </Button>
-          ) : null}
-
           <ThemeToggle />
 
           {/* 管理入口不公开张扬，做成安静的设置图标（设计文档 §12） */}
