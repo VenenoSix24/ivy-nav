@@ -34,8 +34,12 @@ export function getPortalData(options: { includePrivate: boolean }): PortalData 
   const visible = visibleItems(itemRows, options.includePrivate);
   const shownCategoryIds = new Set(visible.map((item) => item.categoryId));
   const shownCategories = visibleCategories(categoryRows, visible, options.includePrivate);
+  // 匿名访问者的整个门户就是首页那一屏，没在首页显示的分类不必发过去
+  const portalCategoriesSource = options.includePrivate
+    ? shownCategories
+    : shownCategories.filter((category) => category.visibleOnHomepage);
 
-  const portalCategories: PortalCategory[] = shownCategories.map((category) => ({
+  const portalCategories: PortalCategory[] = portalCategoriesSource.map((category) => ({
     id: category.id,
     name: category.name,
     description: category.description,
@@ -43,7 +47,12 @@ export function getPortalData(options: { includePrivate: boolean }): PortalData 
   }));
 
   const portalItems: PortalItem[] = visible
-    .filter((item) => item.url && shownCategoryIds.has(item.categoryId))
+    .filter((item) => {
+      if (!item.url) return false;
+      // 未归档的条目（Inbox）只有管理员看得到，公开页面把它们留在原地
+      if (item.categoryId === null) return options.includePrivate;
+      return shownCategoryIds.has(item.categoryId);
+    })
     .map((item) => ({
       id: item.id,
       categoryId: item.categoryId,
