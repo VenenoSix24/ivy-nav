@@ -2,7 +2,8 @@ import { z } from "zod";
 import { clientIp, firstIssueMessage, jsonError, jsonOk, readJson } from "@/lib/api/http";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { LOGIN_GLOBAL_KEY, loginGlobalLimiter, loginLimiter } from "@/lib/auth/rate-limit";
-import { createSession, findUserByName, setSessionCookie } from "@/lib/auth/session";
+import { createSession, setSessionCookie } from "@/lib/auth/session";
+import { findUserByName } from "@/db/users";
 
 const loginSchema = z.object({
   username: z.string().trim().min(1, "用户名不能为空：请填写后重试。"),

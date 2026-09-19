@@ -9,31 +9,25 @@ import { Label } from "@/components/ui/label";
 import { site } from "@/lib/site";
 
 interface LoginFormProps {
-  mode: "setup" | "login";
+  /** 还没有管理员账号时给出建号指引；建号只能在服务器上做 */
+  needsSetup: boolean;
 }
 
-export function LoginForm({ mode }: LoginFormProps) {
+export function LoginForm({ needsSetup }: LoginFormProps) {
   const router = useRouter();
-  const isSetup = mode === "setup";
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-
-    if (isSetup && password !== confirm) {
-      setError("两次输入的密码不一致：请重新确认。");
-      return;
-    }
-
     setPending(true);
+
     try {
-      const response = await fetch(isSetup ? "/api/auth/setup" : "/api/auth/login", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -41,7 +35,7 @@ export function LoginForm({ mode }: LoginFormProps) {
       const payload: unknown = await response.json().catch(() => null);
 
       if (!response.ok) {
-        setError(readError(payload) ?? `请求失败（HTTP ${response.status}）：请重试。`);
+        setError(readError(payload) ?? `登录失败（HTTP ${response.status}）：请重试。`);
         return;
       }
 
@@ -61,17 +55,26 @@ export function LoginForm({ mode }: LoginFormProps) {
           <span className="text-[17px] font-semibold tracking-[-0.02em]">{site.name}</span>
           <span className="text-muted-foreground text-[14px]">{site.nameZh}</span>
         </div>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em]">
-          {isSetup ? "创建管理员" : "登录"}
-        </h1>
+        <h1 className="text-[22px] font-semibold tracking-[-0.02em]">登录</h1>
         <p className="text-muted-foreground mt-2 text-[13px] leading-relaxed">
-          {isSetup
-            ? "第一次使用，先设置管理员账号。之后分类与项目都在页面上维护。"
-            : "登录后可以进入编辑模式，并看到 Private 内容。"}
+          登录后可以进入编辑模式，并看到 Private 内容。
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="surface space-y-4 rounded-2xl p-6">
+      {needsSetup ? (
+        <div className="border-border bg-secondary/60 mb-4 rounded-2xl border p-4 text-[13px] leading-relaxed">
+          <p className="font-medium">还没有管理员账号</p>
+          <p className="text-muted-foreground mt-1.5">
+            建号只在服务器上进行，不通过网页。请在项目目录执行：
+          </p>
+          <code className="bg-popover mt-2 block rounded-lg px-2.5 py-1.5 font-mono text-[12px]">
+            pnpm admin:create 你的用户名
+          </code>
+        </div>
+      ) : null}
+
+      {/* 显式写 post：万一脚本没跑起来，浏览器不会把密码拼进 URL（表单默认是 GET） */}
+      <form method="post" onSubmit={onSubmit} className="surface space-y-4 rounded-2xl p-6">
         <div className="space-y-2">
           <Label htmlFor="username" className="text-[13px]">
             用户名
@@ -99,29 +102,11 @@ export function LoginForm({ mode }: LoginFormProps) {
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            autoComplete={isSetup ? "new-password" : "current-password"}
+            autoComplete="current-password"
             required
             className="h-11 rounded-xl text-[16px] sm:text-[14px]"
           />
         </div>
-
-        {isSetup ? (
-          <div className="space-y-2">
-            <Label htmlFor="confirm" className="text-[13px]">
-              确认密码
-            </Label>
-            <Input
-              id="confirm"
-              name="confirm"
-              type="password"
-              value={confirm}
-              onChange={(event) => setConfirm(event.target.value)}
-              autoComplete="new-password"
-              required
-              className="h-11 rounded-xl text-[16px] sm:text-[14px]"
-            />
-          </div>
-        ) : null}
 
         {error ? (
           <p role="alert" className="text-destructive text-[13px] leading-relaxed">
@@ -129,12 +114,18 @@ export function LoginForm({ mode }: LoginFormProps) {
           </p>
         ) : null}
 
+        <noscript>
+          <p className="text-destructive text-[13px] leading-relaxed">
+            这个页面需要 JavaScript 才能提交：请在浏览器里启用后刷新重试。
+          </p>
+        </noscript>
+
         <Button
           type="submit"
           disabled={pending}
           className="h-11 w-full rounded-xl text-[14px] font-medium"
         >
-          {pending ? "处理中…" : isSetup ? "创建并登录" : "登录"}
+          {pending ? "处理中…" : "登录"}
         </Button>
       </form>
 
