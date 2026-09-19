@@ -173,7 +173,7 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
     <>
       <PortalHeader />
 
-      <main className="relative z-10 mx-auto w-full max-w-[1080px] px-4 pb-28 sm:px-6">
+      <main className="relative z-10 mx-auto w-full max-w-[1080px] px-4 pb-10 sm:px-6">
         {editing ? (
           <div className="mt-4">
             <EditToolbar
