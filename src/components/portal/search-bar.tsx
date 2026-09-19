@@ -22,7 +22,7 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
         placeholder="搜索网站、项目或工具…"
         autoComplete="off"
         enterKeyHint="search"
-        className="text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-[15px] outline-none [&::-webkit-search-cancel-button]:hidden"
+        className="text-foreground placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-[16px] outline-none sm:text-[15px] [&::-webkit-search-cancel-button]:hidden"
       />
       {value ? (
         <button

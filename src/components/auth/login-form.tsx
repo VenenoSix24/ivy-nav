@@ -85,7 +85,7 @@ export function LoginForm({ mode }: LoginFormProps) {
             autoCapitalize="none"
             spellCheck={false}
             required
-            className="h-11 rounded-xl text-[14px]"
+            className="h-11 rounded-xl text-[16px] sm:text-[14px]"
           />
         </div>
 
@@ -101,7 +101,7 @@ export function LoginForm({ mode }: LoginFormProps) {
             onChange={(event) => setPassword(event.target.value)}
             autoComplete={isSetup ? "new-password" : "current-password"}
             required
-            className="h-11 rounded-xl text-[14px]"
+            className="h-11 rounded-xl text-[16px] sm:text-[14px]"
           />
         </div>
 
@@ -118,7 +118,7 @@ export function LoginForm({ mode }: LoginFormProps) {
               onChange={(event) => setConfirm(event.target.value)}
               autoComplete="new-password"
               required
-              className="h-11 rounded-xl text-[14px]"
+              className="h-11 rounded-xl text-[16px] sm:text-[14px]"
             />
           </div>
         ) : null}
