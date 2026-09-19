@@ -21,9 +21,16 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { IconPicker } from "@/components/icons/icon-picker";
 import { portalRequest } from "@/lib/portal/client";
 import { parseTagInput } from "@/lib/portal/schemas";
-import type { PortalCategory, PortalData, PortalItem, Visibility } from "@/lib/portal/types";
+import type {
+  IconType,
+  PortalCategory,
+  PortalData,
+  PortalItem,
+  Visibility,
+} from "@/lib/portal/types";
 
 const INBOX_VALUE = "inbox";
 
@@ -59,6 +66,8 @@ export function ItemDialog({
   const [tags, setTags] = useState(item?.tags.join(", ") ?? "");
   const [visibility, setVisibility] = useState<Visibility>(item?.visibility ?? "public");
   const [featured, setFeatured] = useState(item?.featured ?? false);
+  const [iconType, setIconType] = useState<IconType>(item?.iconType ?? "favicon");
+  const [iconValue, setIconValue] = useState<string | null>(item?.iconValue ?? null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -80,6 +89,8 @@ export function ItemDialog({
       tagNames: parseTagInput(tags),
       visibility,
       featured,
+      iconType,
+      iconValue,
     };
 
     const result = item
@@ -165,6 +176,16 @@ export function ItemDialog({
               </SelectContent>
             </Select>
           </div>
+
+          <IconPicker
+            spec={{ type: iconType, value: iconValue }}
+            onChange={(next) => {
+              setIconType(next.type);
+              setIconValue(next.value);
+            }}
+            url={url}
+            title={title}
+          />
 
           <div className="space-y-2">
             <Label htmlFor="item-tags">标签</Label>
