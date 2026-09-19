@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { SettingsSection } from "@/components/settings/settings-section";
 import {
@@ -16,6 +16,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { portalRequest } from "@/lib/portal/client";
 import type { PortalCategory, PortalData } from "@/lib/portal/types";
@@ -29,6 +39,9 @@ export function HomepageSettings({ initialPortal }: HomepageSettingsProps) {
   const [portal, setPortal] = useState(initialPortal);
   const [newName, setNewName] = useState("");
   const [pendingDelete, setPendingDelete] = useState<PortalCategory | null>(null);
+  const [editingCategory, setEditingCategory] = useState<PortalCategory | null>(null);
+  const [draftName, setDraftName] = useState("");
+  const [draftDescription, setDraftDescription] = useState("");
   const [busy, setBusy] = useState(false);
 
   const itemCounts = useMemo(() => {
@@ -93,6 +106,7 @@ export function HomepageSettings({ initialPortal }: HomepageSettingsProps) {
                 <span className="block truncate text-[14px] font-medium">{category.name}</span>
                 <span className="text-muted-foreground text-[12px] tabular-nums">
                   {itemCounts.get(category.id) ?? 0} items
+                  {category.description ? `｜${category.description}` : ""}
                 </span>
               </div>
 
@@ -116,6 +130,21 @@ export function HomepageSettings({ initialPortal }: HomepageSettingsProps) {
                   className="rounded-full"
                 >
                   <ArrowDown className="size-3.5" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`编辑「${category.name}」的名称与描述`}
+                  disabled={busy}
+                  onClick={() => {
+                    setEditingCategory(category);
+                    setDraftName(category.name);
+                    setDraftDescription(category.description ?? "");
+                  }}
+                  className="rounded-full"
+                >
+                  <Pencil className="size-3.5" />
                 </Button>
 
                 <Switch
@@ -171,6 +200,76 @@ export function HomepageSettings({ initialPortal }: HomepageSettingsProps) {
           </p>
         ) : null}
       </SettingsSection>
+
+      <Dialog
+        open={editingCategory !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditingCategory(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>编辑分类</DialogTitle>
+            <DialogDescription>描述会显示在首页该分区的标题旁边。</DialogDescription>
+          </DialogHeader>
+
+          <form
+            className="space-y-4"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              const target = editingCategory;
+              if (!target) return;
+              const ok = await run(
+                `/api/categories/${target.id}`,
+                { name: draftName, description: draftDescription.trim() ? draftDescription : null },
+                "PATCH",
+                "已保存分类",
+              );
+              if (ok) setEditingCategory(null);
+            }}
+          >
+            <div className="space-y-2">
+              <Label htmlFor="category-name">名称</Label>
+              <Input
+                id="category-name"
+                value={draftName}
+                onChange={(event) => setDraftName(event.target.value)}
+                required
+                maxLength={40}
+                className="h-10 rounded-xl text-[16px] sm:text-[14px]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category-description">描述</Label>
+              <Textarea
+                id="category-description"
+                value={draftDescription}
+                onChange={(event) => setDraftDescription(event.target.value)}
+                maxLength={200}
+                rows={2}
+                placeholder="例如：自己做的项目"
+                className="min-h-0 rounded-xl"
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditingCategory(null)}
+                disabled={busy}
+                className="h-9 rounded-xl px-4 text-[13px]"
+              >
+                取消
+              </Button>
+              <Button type="submit" disabled={busy} className="h-9 rounded-xl px-4 text-[13px]">
+                保存
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog
         open={pendingDelete !== null}
