@@ -19,10 +19,11 @@ export async function GET(request: Request) {
   const item = findItem(id);
   if (!item) return jsonError("条目不存在：可能已被删除，请刷新页面。", 404);
 
-  // Private 条目的图标也要登录后才能取，否则等于把它暴露出去
+  // Private 条目的图标也要登录后才能取。这里回 404 而不是 401：
+  // 否则匿名者可以靠状态码差异逐个试出哪些编号是 Private。
   const session = await getSession();
   if (item.visibility === "private" && !session) {
-    return jsonError("需要管理员身份才能取该条目的图标。", 401);
+    return jsonError("条目不存在：可能已被删除，请刷新页面。", 404);
   }
 
   const target = parseHttpUrl(item.url);
