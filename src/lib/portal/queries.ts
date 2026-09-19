@@ -32,7 +32,6 @@ export function getPortalData(options: { includePrivate: boolean }): PortalData 
   }
 
   const visible = visibleItems(itemRows, options.includePrivate);
-  const shownCategoryIds = new Set(visible.map((item) => item.categoryId));
   const shownCategories = visibleCategories(categoryRows, visible, options.includePrivate);
   // 匿名访问者的整个门户就是首页那一屏，没在首页显示的分类不必发过去
   const portalCategoriesSource = options.includePrivate
@@ -46,12 +45,16 @@ export function getPortalData(options: { includePrivate: boolean }): PortalData 
     visibleOnHomepage: category.visibleOnHomepage,
   }));
 
+  // 条目按最终要发出去的分类过滤。只过滤分类名而不过滤条目，
+  // 隐藏分类里的条目仍会出现在响应里 —— 浏览器拿到的东西必须和屏幕上的一致。
+  const allowedCategoryIds = new Set(portalCategoriesSource.map((category) => category.id));
+
   const portalItems: PortalItem[] = visible
     .filter((item) => {
       if (!item.url) return false;
       // 未归档的条目（Inbox）只有管理员看得到，公开页面把它们留在原地
       if (item.categoryId === null) return options.includePrivate;
-      return shownCategoryIds.has(item.categoryId);
+      return allowedCategoryIds.has(item.categoryId);
     })
     .map((item) => ({
       id: item.id,
