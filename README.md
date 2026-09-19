@@ -2,13 +2,13 @@
 
 > One page. Many places.
 
-个人专属的网站、项目与常用工具导航 Portal。自托管，内容全部在页面上维护，不需要改代码。
+个人专属的网站、项目与常用工具导航 Portal。自托管，内容全部在页面上维护，不需要修改代码。
 
 ## 是什么
 
-一个单人使用的 Personal Portal：把个人网站、开源项目、常用工具和收藏的站点收在一页里，按分类分区展示，支持 Light / Dark / System 主题、即时搜索，以及 Public / Private 两级可见性。
+一个单人使用的个人导航页：把个人网站、开源项目、常用工具和收藏的站点收在一页里，按分类分区展示，支持 Light / Dark / System 主题、即时搜索，以及 Public / Private 两级可见性。
 
-不是网址大全。视觉方向是 Apple-inspired 的克制与留白，不做彩色 Logo 墙、重渐变或大面积毛玻璃。
+不是网址大全。视觉方向采用 Apple 风格的克制与留白，不做彩色 Logo 墙、重渐变或大面积毛玻璃。
 
 ## 技术栈
 
@@ -31,25 +31,35 @@ pnpm install
 pnpm dev
 ```
 
-打开 http://localhost:3000。第一次打开时数据库是空的，页面会引导创建管理员账号。
+打开 `http://localhost:3000`。
 
-想先看到真实排版而不是空页面，可以灌入一份演示内容：
+数据库为空时先创建管理员账号。建号只在服务器上进行，网页端只提供登录：
+
+```bash
+pnpm admin:create ivy            # 交互式输入密码
+ADMIN_PASSWORD=... pnpm admin:create ivy   # 不走交互，便于脚本化
+pnpm admin:create --reset        # 忘记密码时重置
+```
+
+这样做而不是做一个网页建号页：门户本身是公网可访问的，「谁都能打开的建号页面」本身就是缺口。
+
+如果想先看到完整的页面排版，可以导入一份演示内容：
 
 ```bash
 pnpm db:seed
 ```
 
-数据库里已经有分类时该命令会直接跳过，不会重复写入。
+数据库中已有分类时，该命令会直接跳过，不会重复写入。
 
 ## 环境变量
 
-全部可选，默认值适用于本机开发。复制 `.env.example` 为 `.env.local` 后按需覆盖。
+全部可选，默认值适用于本机开发。复制 `.env.example` 为 `.env.local` 后按需修改。
 
 | 变量                          | 默认值                  | 说明                                               |
 | ----------------------------- | ----------------------- | -------------------------------------------------- |
 | `DATABASE_PATH`               | `./data/portal.db`      | SQLite 数据库文件路径                              |
 | `MIGRATIONS_PATH`             | `./src/db/migrations`   | 迁移文件目录                                       |
-| `SESSION_COOKIE_NAME`         | `ivy_session`           | 会话 Cookie 名                                     |
+| `SESSION_COOKIE_NAME`         | `ivy_session`           | 会话 Cookie 名称                                   |
 | `SESSION_COOKIE_SECURE`       | 生产环境 `true`         | 是否只在 HTTPS 下回传会话 Cookie                   |
 | `TRUST_PROXY_HEADERS`         | `false`                 | 是否读取 `X-Forwarded-For`（仅在可信反代之后开启） |
 | `FAVICON_ALLOW_PRIVATE_HOSTS` | `false`                 | 是否允许抓取内网地址的站点图标                     |
@@ -68,24 +78,44 @@ pnpm lint           # ESLint
 pnpm typecheck      # TypeScript 类型检查
 pnpm format         # Prettier 格式化
 pnpm format:check   # 校验格式（CI 使用）
-pnpm db:generate    # 改完 schema 后生成迁移
-pnpm db:seed        # 灌入演示内容（已有数据时跳过）
+pnpm db:generate    # 修改 schema 后生成迁移
+pnpm db:seed        # 导入演示内容（已有数据时跳过）
 ```
+
+`pnpm dev` 与 `pnpm build` 使用不同的产物目录（`.next-dev` 与 `.next`）。
+两者共用同一个目录时，一次构建就可能让开发服务器引用的脚本失效，
+页面上表现为样式还在、点击全无反应。
 
 ## 界面与交互
 
-- **首页**是「分区 + 顶部分类筛选」：上面是品牌、欢迎语与搜索框，下面是分类 Tab 与按分类分区的卡片流。
-- **分类 Tab** 只显示管理员标记为「首页显示」的分类；移动端横向滚动，不用下拉菜单，也不会把页面撑爆。
-- **搜索**在标题、描述、网址、域名、标签和分类里即时匹配，不刷新页面。
-- **编辑模式**从首页右上角进入。卡片可以拖动把手排序，右上角菜单可以编辑、复制、移动分类、切换可见性、置顶与删除；搜索状态下不开放拖动，避免把一部分结果当成完整顺序写回。
+- **顶栏**常驻页面顶部，放着品牌、分类导航、外观切换与设置入口。分类就在顶栏里切换，滚动到任何位置都能点。
+- **分类导航**只显示管理员标记为「首页显示」的分类；手机上在顶栏内横向滚动，不会把布局撑破。
+- **首页主体**依次是欢迎语、站点口号、搜索框，以及按分类分区的卡片流。
+- **搜索**在标题、描述、网址、域名、标签和分类中即时匹配，不刷新页面。
+- **编辑模式**从首页右上角进入。卡片可以通过拖动把手排序，右上角菜单支持编辑、复制、移动分类、切换可见性、置顶与删除。
+- 搜索状态下不开放拖动，避免把一部分结果当成完整顺序写回。
 - **设置页**（`/settings`）包含外观、首页分类、数据、账号四个分区。
+- **响应式**：手机两列卡片，桌面三列；卡片在窄屏下收窄内边距并把标签与 Open 改成上下排布。
 
 ## 权限模型
 
-- 每个条目有自己的 visibility：`public` 或 `private`。
-- 条目的可见性以自身为准，分类的 visibility 只作为新建条目时的默认值（设计文档 §35）。
-- **Private 内容由服务器端决定是否下发**：匿名访问者的响应里既没有 Private 条目，也没有未在首页显示的分类及其条目。前端隐藏不构成权限，直接调用接口同样会被拒。
-- 所有写接口都要求管理员会话，未登录一律 401。
+每个条目都有自己的 `visibility`：
+
+- `public`
+- `private`
+
+条目的可见性以自身设置为准，分类的 `visibility` 只作为新建条目时的默认值。
+
+**Private 内容由服务器端决定是否下发。**
+
+匿名访问者的响应中不会包含：
+
+- Private 条目
+- 未在首页显示的分类及其条目
+
+前端隐藏不构成权限控制，直接调用接口同样会被拒绝。
+
+所有写接口都要求管理员会话，未登录一律返回 `401`。
 
 ## 图标
 
@@ -93,43 +123,92 @@ pnpm db:seed        # 灌入演示内容（已有数据时跳过）
 
 | 来源   | 说明                                                            |
 | ------ | --------------------------------------------------------------- |
-| 自动   | 读取站点页面的 `<link rel="icon">`，取不到就退回 `/favicon.ico` |
+| 自动   | 读取站点页面的 `<link rel="icon">`，取不到时退回 `/favicon.ico` |
 | Emoji  | 精选约 150 个，支持中英关键词搜索                               |
-| Lucide | 显式登记约 120 个线性图标，只有名单里的会进包                   |
+| Lucide | 显式登记约 120 个线性图标，只有名单里的图标会被打包             |
 | 上传   | PNG / JPG / WEBP / SVG，单张上限 512 KB                         |
 | 无     | 显示标题首字母                                                  |
 
-自动抓取走本地代理 `/api/icons/favicon?item=<id>`：接受条目编号而不是任意网址，匿名访问者无法拿它当扫描内网的跳板；结果按站点落盘缓存 7 天，失败也短期记住，不会每次打开首页都重新抓一轮。上传的文件存放在数据库同级的 `uploads/` 目录，SVG 会被清洗并只作为图片渲染。
+自动抓取通过本地代理 `/api/icons/favicon?item=<id>`：接受条目编号而不是任意网址，匿名访问者无法利用它作为扫描内网的跳板。
+
+结果按站点落盘缓存 7 天，失败请求也会短期缓存，不会每次打开首页都重新抓取。
+
+上传的文件存放在数据库同级的 `uploads/` 目录，SVG 会被清洗，并只作为图片渲染。
 
 ## 备份与恢复
 
-- **导出 / 导入 JSON**：内容是分类、条目、标签、设置与图标集。编号不进文件，条目按分类名与标签名关联，换一套部署也能对上；包含管理员账号与登录状态的部分不在其中，导入后仍然是登录状态。
-- **数据库备份**：`VACUUM INTO` 生成一致快照，放在数据库同级的 `backups/` 目录，形如 `portal-20260919-225913.db`，可列出、下载与恢复。
-- **恢复**要求二次确认，且只覆盖内容表，不会因为恢复一份旧备份把当前管理员换掉或踢下线。
+### JSON 导出 / 导入
 
-备份文件是数据库的完整副本，里面包含管理员密码的哈希值，请存放在安全的位置。
+内容包括分类、条目、标签、设置与图标集。
+
+编号不会写入导出文件，条目通过分类名与标签名建立关联，换一套部署也能对应。
+
+管理员账号与登录状态不包含在其中，导入后仍保持当前登录状态。
+
+### 数据库备份
+
+数据库备份使用 `VACUUM INTO` 生成一致快照，放在数据库同级的 `backups/` 目录。
+
+文件名格式：
+
+```text
+portal-20260919-225913.db
+```
+
+备份可以列出、下载与恢复。
+
+恢复需要二次确认，且只覆盖内容表，不会因为恢复一份旧备份而修改当前管理员账号或使当前会话失效。
+
+> 数据库备份是数据库的完整副本，其中包含管理员密码哈希，请存放在安全的位置。
 
 ## 部署
 
-推荐自有服务器：Next.js + Node.js + SQLite，不需要额外的数据库服务。
+推荐部署在自有服务器上：Next.js + Node.js + SQLite，不需要额外的数据库服务。
+
+### 方式一：部署整个项目（推荐）
+
+服务器上保留完整项目，用 `pnpm start` 运行。建号、迁移、备份都能直接在服务器上执行，不需要回到开发机。
 
 ```bash
+# 服务器上
+git clone <你的仓库地址> /srv/ivy-nav
+cd /srv/ivy-nav
 pnpm install --frozen-lockfile
 pnpm build
 
-# 组装部署目录：standalone 产物 + 静态资源
-mkdir -p /srv/ivy-nav/.next
-cp -r .next/standalone/. /srv/ivy-nav/
-cp -r .next/static /srv/ivy-nav/.next/static
-# 本项目自身不放静态文件；若你后来在 public/ 下添加了资源，再执行 cp -r public /srv/ivy-nav/public
+# 创建管理员（首次部署时执行一次）
+DATABASE_PATH=/srv/ivy-nav/data/portal.db ADMIN_PASSWORD='你的密码' pnpm admin:create ivy
 
-cd /srv/ivy-nav
-DATABASE_PATH=/srv/ivy-nav/data/portal.db PORT=3000 HOSTNAME=127.0.0.1 node server.js
+# 启动
+DATABASE_PATH=/srv/ivy-nav/data/portal.db PORT=3000 HOSTNAME=127.0.0.1 pnpm start
 ```
 
-首次启动会自动建表，然后访问 `/login` 创建管理员账号。
+数据库文件不存在时会自动建表，所以建号与启动的 `DATABASE_PATH` 要指向同一个位置。
 
-systemd 单元示例：
+### 方式二：standalone 产物（体积小，但服务器上没有建号工具）
+
+standalone 产物自带运行依赖，不含 tsx 与 drizzle-kit，所以**建号要在有工具链的机器上做**。
+
+```bash
+# 开发机上
+pnpm install --frozen-lockfile
+pnpm build
+
+mkdir -p /tmp/ivy-deploy/.next
+cp -r .next/standalone/. /tmp/ivy-deploy/
+cp -r .next/static /tmp/ivy-deploy/.next/static
+
+# 在开发机上先建号，再把数据目录一起带过去
+DATABASE_PATH=/tmp/ivy-deploy/data/portal.db ADMIN_PASSWORD='你的密码' pnpm admin:create ivy
+
+rsync -a /tmp/ivy-deploy/ server:/srv/ivy-nav/
+# 之后在服务器上启动
+cd /srv/ivy-nav && DATABASE_PATH=/srv/ivy-nav/data/portal.db PORT=3000 HOSTNAME=127.0.0.1 node server.js
+```
+
+> 本项目自身不放静态文件；如果后来在 `public/` 下添加了资源，再执行 `cp -r public /srv/ivy-nav/public`。
+
+### systemd
 
 ```ini
 [Unit]
@@ -143,6 +222,7 @@ Environment=NODE_ENV=production
 Environment=DATABASE_PATH=/srv/ivy-nav/data/portal.db
 Environment=PORT=3000
 Environment=HOSTNAME=127.0.0.1
+# 方式一用 ExecStart=/usr/bin/pnpm start
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
 
@@ -152,29 +232,29 @@ WantedBy=multi-user.target
 
 部署到反向代理之后：
 
-- 用 HTTPS 对外，保持 `SESSION_COOKIE_SECURE` 为默认的 `true`。
-- 只有在代理可信时再设 `TRUST_PROXY_HEADERS=true`。
+- 使用 HTTPS，保持 `SESSION_COOKIE_SECURE` 为默认的 `true`。
+- 只有在代理可信时再设置 `TRUST_PROXY_HEADERS=true`。
 - 备份与数据库目录（`data/`、`backups/`、`uploads/`）需要在应用目录之外单独做快照。
 
-放在 Vercel 这类 Serverless 环境时，SQLite 不能依赖本地临时文件做长期存储；需要持久化数据库时请换用 SQLite-compatible 的托管服务，或保持自有服务器部署。
+部署到 Vercel 这类 Serverless 环境时，SQLite 不能依赖本地临时文件做长期存储。需要持久化数据库时，请换用 SQLite-compatible 的托管服务，或保持自有服务器部署。
 
 ## 安全
 
-- 密码用 `node:crypto` 的 scrypt 加盐哈希，参数随哈希存储，校验用定时安全比较。
-- 会话只把令牌的 SHA-256 摘要写库，拿到数据库文件也无法重放会话；Cookie 为 HttpOnly + SameSite=Lax，生产环境默认 Secure。
-- 登录失败按用户名限流并附加全局限流，不按 IP 计数（`X-Forwarded-For` 由客户端自己写）。
-- 网址只接受 `http:` 与 `https:`，写入、导入与恢复三条路径都做校验，`javascript:` 与 `data:` 一律拒绝。
-- 上传校验文件头与声明类型是否一致；SVG 清洗脚本、事件属性、远程引用与实体声明，响应另加 CSP `sandbox` 与 `nosniff`。
+- 密码使用 `node:crypto` 的 scrypt 加盐哈希，参数随哈希存储，校验使用定时安全比较。
+- 会话只把令牌的 SHA-256 摘要写入数据库，拿到数据库文件也无法直接重放会话；Cookie 使用 HttpOnly + SameSite=Lax，生产环境默认 Secure。
+- 登录失败按用户名限流，并附加全局限流，不按 IP 计数（`X-Forwarded-For` 由客户端自己写）。
+- 网址只接受 `http:` 与 `https:`，写入、导入与恢复三条路径都会进行校验，`javascript:` 与 `data:` 一律拒绝。
+- 上传校验文件头与声明类型是否一致；SVG 会清洗脚本、事件属性、远程引用与实体声明，响应另加 CSP `sandbox` 与 `nosniff`。
 - 抓取站点图标时拒绝回环、link-local 与保留地址，并逐跳校验跳转目标。
-- 接口响应统一 `private, no-store`；`/api/` 与管理页面不出现在 `robots.txt` 里。
+- 接口响应统一使用 `private, no-store`；`/api/` 与管理页面不出现在 `robots.txt` 中。
 
 ## 目录结构
 
-```
+```text
 src/
 ├── app/                   路由、页面与 API
 │   ├── api/               服务器端接口
-│   ├── login/             管理员登录 / 首次建号
+│   ├── login/             管理员登录
 │   ├── management/        管理入口（转到首页编辑模式）
 │   └── settings/          系统设置
 ├── components/
@@ -196,11 +276,19 @@ src/
 
 ## 已知边界
 
-这些是有意留在后续阶段的能力，不打算伪装成已完成：
+这些功能暂时留在后续阶段：
 
-- Simple Icons 与 Iconify 图标源、图标集（`icons.zip`）导入、浏览器书签导入、定时自动备份、网站状态检查、访问统计、PWA 属于第二 / 第三阶段。
-- 移动端的拖动由把手发起（长按 200ms 起拖），而不是长按整张卡片。
-- 恢复与导入会重建条目行，编号会变化；因此两者完成后页面会重新加载。
+- Simple Icons 与 Iconify 图标源
+- 图标集（`icons.zip`）导入
+- 浏览器书签导入
+- 定时自动备份
+- 网站状态检查
+- 访问统计
+- PWA
+
+移动端的拖动由把手发起（长按 200ms 起拖），而不是长按整张卡片。
+
+恢复与导入会重建条目行，编号会发生变化；操作完成后页面会重新加载。
 
 ## 许可
 
