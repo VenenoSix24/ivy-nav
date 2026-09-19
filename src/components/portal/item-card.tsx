@@ -39,7 +39,11 @@ export function ItemCard({
   const body = (
     <>
       <div className="flex items-start justify-between gap-2">
-        <ItemIcon type={item.iconType} value={item.iconValue} title={item.title} url={item.url} />
+        <ItemIcon
+          spec={{ type: item.iconType, value: item.iconValue }}
+          title={item.title}
+          itemId={item.id}
+        />
         <div className="flex items-center gap-1">
           {showState && item.visibility === "private" ? (
             <span

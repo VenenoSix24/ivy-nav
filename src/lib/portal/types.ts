@@ -1,6 +1,6 @@
 import type { IconType, Visibility } from "@/db/schema";
 
-export type { Visibility };
+export type { IconType, Visibility };
 
 export interface PortalItem {
   id: number;
