@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn } from "cn";
@@ -11,12 +11,15 @@ const MODES = [
   { value: "system", label: "跟随系统", Icon: Monitor },
 ] as const;
 
+// 主题只有挂载后才在客户端可知，用外部存储读法拿到这个事实，
+// 服务端渲染为未挂载，避免水合前后图标不一致
+const subscribe = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  // 主题只有挂载后才知道，先渲染固定尺寸的占位，避免水合前后闪烁
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
 
   const activeIndex = MODES.findIndex((mode) => mode.value === theme);
 
