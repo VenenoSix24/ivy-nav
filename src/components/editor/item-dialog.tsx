@@ -119,7 +119,7 @@ export function ItemDialog({
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col gap-4">
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-0.5">
+          <div className="no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-0.5">
             <div className="space-y-2">
               <Label htmlFor="item-title">标题</Label>
               <Input

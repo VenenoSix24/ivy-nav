@@ -120,7 +120,7 @@ export function IconPicker({ spec, onChange, url, title }: IconPickerProps) {
             onChange={setEmojiQuery}
             placeholder={`搜索 ${emojiCatalog.length} 个常用 emoji，支持中文`}
           />
-          <div className="mt-3 grid max-h-52 grid-cols-8 gap-1 overflow-y-auto">
+          <div className="no-scrollbar mt-3 grid max-h-52 grid-cols-8 gap-1 overflow-y-auto">
             {emojiResults.map((entry) => (
               <button
                 key={entry.char}
@@ -149,7 +149,7 @@ export function IconPicker({ spec, onChange, url, title }: IconPickerProps) {
             onChange={setLucideQuery}
             placeholder={`搜索 ${lucideNames.length} 个线性图标（英文名）`}
           />
-          <div className="mt-3 grid max-h-52 grid-cols-8 gap-1 overflow-y-auto">
+          <div className="no-scrollbar mt-3 grid max-h-52 grid-cols-8 gap-1 overflow-y-auto">
             {lucideResults.map((name) => {
               const Icon = lucideRegistry[name as keyof typeof lucideRegistry];
               const active = spec.type === "lucide" && spec.value === name;

@@ -3,7 +3,8 @@ import { cn } from "cn";
 import { ItemIcon } from "@/components/portal/item-icon";
 import type { PortalItem } from "@/lib/portal/types";
 
-const MAX_VISIBLE_TAGS = 2;
+// 右边有位置就该多显示几个，超过再折叠成 +N
+const MAX_VISIBLE_TAGS = 4;
 
 interface ItemCardProps {
   item: PortalItem;
@@ -78,7 +79,7 @@ export function ItemCard({
       ) : null}
 
       <div className="mt-auto flex flex-col items-start gap-2 pt-4 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:pt-5">
-        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
           {visibleTags.map((tag) => (
             <span
               key={tag}
