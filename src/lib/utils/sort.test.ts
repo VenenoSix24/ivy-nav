@@ -47,12 +47,11 @@ describe("toSortOrderPayload", () => {
 
 describe("nextSortOrder", () => {
   it("appends after the current maximum", () => {
-    expect(
-      nextSortOrder([
-        { id: 1, sortOrder: 0 },
-        { id: 2, sortOrder: 4 },
-      ]),
-    ).toBe(5);
+    expect(nextSortOrder([{ sortOrder: 0 }, { sortOrder: 4 }])).toBe(5);
+  });
+
+  it("only needs the sort orders, not full rows", () => {
+    expect(nextSortOrder([{ sortOrder: 7 }])).toBe(8);
   });
 
   it("starts at zero for an empty list", () => {

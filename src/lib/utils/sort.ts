@@ -26,6 +26,7 @@ export function toSortOrderPayload(orderedIds: number[]): { id: number; sortOrde
   return orderedIds.map((id, index) => ({ id, sortOrder: index }));
 }
 
-export function nextSortOrder(rows: Ordered[]): number {
+/** 新条目排到最后一位，只需要现有最大序号，所以不要求带 id。 */
+export function nextSortOrder(rows: { sortOrder: number }[]): number {
   return rows.reduce((max, row) => Math.max(max, row.sortOrder), -1) + 1;
 }
