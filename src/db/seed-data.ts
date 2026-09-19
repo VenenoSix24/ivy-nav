@@ -24,10 +24,10 @@ const CATEGORY_SEED: CategorySeed[] = [
   { name: "My Projects", description: "自己做的项目", visibleOnHomepage: true },
   { name: "Frequently Used", description: "每天都会打开", visibleOnHomepage: true },
   { name: "Development", description: "开发与部署", visibleOnHomepage: true },
-  { name: "Design", description: "设计与素材", visibleOnHomepage: false },
-  { name: "Resources", description: "资料与阅读", visibleOnHomepage: false },
-  { name: "Tools", description: "在线工具", visibleOnHomepage: false },
-  { name: "Entertainment", description: "影音娱乐", visibleOnHomepage: false },
+  { name: "Design", description: "设计与素材", visibleOnHomepage: true },
+  { name: "Resources", description: "资料与阅读", visibleOnHomepage: true },
+  { name: "Tools", description: "在线工具", visibleOnHomepage: true },
+  { name: "Entertainment", description: "影音娱乐", visibleOnHomepage: true },
 ];
 
 const ITEM_SEED: ItemSeed[] = [
