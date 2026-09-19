@@ -44,7 +44,6 @@ next-env.d.ts
 # runtime data: SQLite database, backups, uploaded icons
 /data
 /backups
-/public/uploads
 
 # local planning notes (not part of the public repo)
 TASKS.md
