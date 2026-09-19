@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import type { ZodError } from "zod";
 
+/**
+ * 接口返回的都是随会话变化的数据（/api/portal 含 Private 条目），
+ * 必须显式禁止任何中间缓存保存，否则共享缓存可能把管理数据发给别人。
+ */
 export function jsonOk<T>(data: T, init?: ResponseInit) {
-  return NextResponse.json(data, init);
+  return NextResponse.json(data, {
+    ...init,
+    headers: { "cache-control": "private, no-store", ...init?.headers },
+  });
 }
 
 /** 错误信息写清原因与怎么修，前端直接展示（开发规范 §2.3）。 */
@@ -32,7 +39,13 @@ export function binaryBody(bytes: Buffer): ArrayBuffer {
   return copy.buffer as ArrayBuffer;
 }
 
+/**
+ * 只在显式声明「我前面有可信代理」时读转发头。默认返回 unknown：
+ * 客户端可以随意伪造 X-Forwarded-For，拿它做限流键或审计记录都不可靠。
+ */
 export function clientIp(request: Request): string {
+  if (process.env.TRUST_PROXY_HEADERS !== "true") return "unknown";
+
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0]!.trim();
   return request.headers.get("x-real-ip") ?? "unknown";
