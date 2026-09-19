@@ -195,10 +195,15 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
           <SearchBar value={query} onChange={setQuery} />
         </section>
 
-        <CategoryNav categories={tabCategories} active={active} onSelect={setActive} />
+        <CategoryNav
+          categories={tabCategories}
+          active={active}
+          onSelect={setActive}
+          className="mt-9 sm:mt-12"
+        />
 
         {/* 换分类时重挂载一次，让入场动画重放，而不是整页刷新（设计文档 §28） */}
-        <div key={active} className="mt-6 space-y-12 sm:mt-8 sm:space-y-16">
+        <div key={active} className="mt-10 space-y-12 sm:mt-14 sm:space-y-16">
           {sections.map((section) => (
             <CategorySection
               key={String(section.filter)}
