@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.next-dev/
 /out/
 
 # production
@@ -50,3 +51,6 @@ TASKS.md
 
 # editor local history
 .history
+
+# next dev 每次自动生成，提交它只会反复产生噪音
+AGENTS.md

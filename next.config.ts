@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // 开发与构建分开产物目录：两者共用 .next 时，一次 build 就可能让 dev 的
+  // chunk 引用失效，页面上表现为样式还在、点击全无反应
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
+
   // 自托管部署用 standalone 输出：产物自带所需依赖，服务器上不需要再装一遍 node_modules
   output: "standalone",
 

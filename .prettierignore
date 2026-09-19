@@ -1,5 +1,6 @@
 node_modules
 .next
+.next-dev
 out
 build
 coverage
@@ -7,4 +8,5 @@ pnpm-lock.yaml
 data
 backups
 TASKS.md
+AGENTS.md
 .history
