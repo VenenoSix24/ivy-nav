@@ -14,6 +14,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -78,21 +79,26 @@ export function ItemMenu({
             <FolderInput />
             移动分类
           </DropdownMenuSubTrigger>
+          {/* Label 属于分组的一部分：直接放在菜单里会抛 Base UI error #31 并把整页打崩 */}
           <DropdownMenuSubContent className="max-h-72 w-44 overflow-y-auto">
-            <DropdownMenuLabel>移动到</DropdownMenuLabel>
-            <DropdownMenuItem disabled={item.categoryId === null} onClick={() => onMove(null)}>
-              未分类（Inbox）
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {categories.map((category) => (
-              <DropdownMenuItem
-                key={category.id}
-                disabled={item.categoryId === category.id}
-                onClick={() => onMove(category.id)}
-              >
-                {category.name}
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>移动到</DropdownMenuLabel>
+              <DropdownMenuItem disabled={item.categoryId === null} onClick={() => onMove(null)}>
+                未分类（Inbox）
               </DropdownMenuItem>
-            ))}
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              {categories.map((category) => (
+                <DropdownMenuItem
+                  key={category.id}
+                  disabled={item.categoryId === category.id}
+                  onClick={() => onMove(category.id)}
+                >
+                  {category.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
           </DropdownMenuSubContent>
         </DropdownMenuSub>
 

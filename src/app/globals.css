@@ -192,8 +192,30 @@
   /* 触摸设备没有真正的悬停，加上限制免得点击后卡片停在抬起状态 */
   @media (hover: hover) and (pointer: fine) {
     &:hover {
-      transform: translateY(-4px) scale(1.005);
+      /* 只做位移不做缩放：缩放会让文字在动画期间被反复栅格化，
+         观感上就是"清晰—模糊—清晰"地抖一下 */
+      transform: translateY(-3px);
       box-shadow: var(--surface-shadow-hover);
+    }
+  }
+}
+
+/* 滚动驱动动画：光斑随页面下移一点，页面不再是"背景钉死、内容滑动"。
+   浏览器不支持 animation-timeline 时这段整体不生效，退回 fixed 的静态效果。 */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes ambient-drift {
+      from {
+        transform: translate3d(0, 0, 0);
+      }
+      to {
+        transform: translate3d(0, -16vh, 0);
+      }
+    }
+
+    .ambient-layer {
+      animation: ambient-drift linear both;
+      animation-timeline: scroll(root block);
     }
   }
 }
