@@ -216,6 +216,8 @@
     .ambient-layer {
       animation: ambient-drift linear both;
       animation-timeline: scroll(root block);
+      /* 把位移映射到第一屏的滚动范围内，视差才看得出来 */
+      animation-range: 0 120vh;
     }
   }
 }

@@ -59,7 +59,7 @@ export function ThemeToggle() {
       {hint ? (
         <span
           role="status"
-          className="surface text-foreground pointer-events-none absolute top-11 right-0 rounded-lg px-2.5 py-1 text-[12px] whitespace-nowrap"
+          className="surface text-foreground pointer-events-none absolute top-10 left-1/2 -translate-x-1/2 rounded-lg px-2.5 py-1 text-[12px] whitespace-nowrap"
         >
           {hint}
         </span>
