@@ -56,6 +56,25 @@ describe("sanitizeSvg", () => {
     expect(clean).toContain('xlink:href="./a.png"');
   });
 
+  it("drops style blocks and url() in style attributes", () => {
+    const clean = sanitizeSvg(
+      '<svg><style>@import url("http://evil.test/x.css");</style><rect style="fill:url(http://evil.test/a)"/><circle style="fill:red"/></svg>',
+    );
+    expect(clean).not.toContain("evil.test");
+    expect(clean).not.toContain("@import");
+    expect(clean).toContain("<circle");
+    expect(clean).toContain('style="fill:red"');
+  });
+
+  it("removes the doctype and entity declarations", () => {
+    const clean = sanitizeSvg(
+      '<!DOCTYPE svg [<!ENTITY x SYSTEM "file:///etc/passwd">]><svg><text>&x;</text></svg>',
+    );
+    expect(clean.toLowerCase()).not.toContain("doctype");
+    expect(clean.toLowerCase()).not.toContain("entity");
+    expect(clean).toContain("<svg>");
+  });
+
   it("is idempotent", () => {
     const once = sanitizeSvg('<svg><script>x</script><rect onload="x"/></svg>');
     expect(sanitizeSvg(once)).toBe(once);

@@ -2,6 +2,7 @@
 const FORBIDDEN_ELEMENTS = ["script", "foreignObject", "iframe", "embed", "object", "handler"];
 
 const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
+const REMOTE_IN_STYLE = /url\s*\(|@import|expression\s*\(/i;
 
 /**
  * 只允许同文档内的引用（#fragment 与相对路径）：外部地址既能外传数据，
@@ -18,13 +19,23 @@ function keepOnlyLocalReferences(svg: string): string {
   );
 }
 
+/** style 里同样能塞 url() 与 @import，放行等于留下一条对外请求的通道。 */
+function dropRemoteStyles(svg: string): string {
+  return svg
+    .replace(/<\s*style\b[^>]*>[\s\S]*?<\s*\/\s*style\s*>/gi, "")
+    .replace(/\sstyle\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, (match, raw: string) =>
+      REMOTE_IN_STYLE.test(raw.replace(/^["']|["']$/g, "")) ? "" : match,
+    );
+}
+
 /**
  * 用户上传的 SVG 不能直接信任。这里的清洗是纵深防御的一层：
  * 真正兜底的是 /api/icons/file 上的 CSP sandbox，以及图标只用 <img> 渲染
  * （通过 img 加载的 SVG 不会执行脚本）。
  */
 export function sanitizeSvg(source: string): string {
-  let out = source;
+  // DOCTYPE 里可以声明实体，实体能读本地文件，整段去掉
+  let out = source.replace(/<!DOCTYPE[\s\S]*?>/gi, "").replace(/<!ENTITY[^>]*>/gi, "");
 
   for (const tag of FORBIDDEN_ELEMENTS) {
     out = out.replace(
@@ -35,6 +46,7 @@ export function sanitizeSvg(source: string): string {
   }
 
   out = out.replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+  out = dropRemoteStyles(out);
   out = keepOnlyLocalReferences(out);
 
   return out;
