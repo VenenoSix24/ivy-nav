@@ -1,18 +1,7 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
 import { cn } from "cn";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ALL_CATEGORIES, type CategoryFilter, type PortalCategory } from "@/lib/portal/types";
-
-/** 平铺几个分类，其余进「更多」。窄屏只留一个，免得和右侧按钮挤在一起。 */
-const MAX_INLINE = 3;
 
 interface CategoryNavProps {
   categories: PortalCategory[];
@@ -22,104 +11,64 @@ interface CategoryNavProps {
 }
 
 /**
- * 顶栏分类导航：平铺前几个，其余进「更多」下拉。
- * 当前选中的分类一定出现在平铺区，否则用户看不见自己在筛什么；
- * 容器保持可裁剪可滚动，任何宽度下都不会盖到右侧的外观与设置按钮。
+ * 分类导航：一条吸顶的条带，居中放分段控件。
+ * 条带自带背衬与模糊，滚动时不会有卡片从控件两侧透出来；
+ * 分类多了就在控件内部横向滚动。
  */
 export function CategoryNav({ categories, active, onSelect, className }: CategoryNavProps) {
   if (categories.length === 0) return null;
 
-  const inline = categories.slice(0, MAX_INLINE);
-  const overflow = categories.slice(MAX_INLINE);
-  const activeCategory = categories.find((category) => category.id === active);
-  const activeOutsideInline = activeCategory !== undefined && !inline.includes(activeCategory);
-
   return (
     <nav
       aria-label="分类筛选"
-      className={cn("no-scrollbar fade-right -mr-1 overflow-x-auto pr-1", className)}
+      className={cn(
+        "border-border/50 bg-background/80 sticky top-14 z-30 border-b backdrop-blur-xl",
+        className,
+      )}
     >
-      <ul className="flex w-max items-center gap-1">
-        <NavItem
-          label="全部"
-          active={active === ALL_CATEGORIES}
-          onSelect={() => onSelect(ALL_CATEGORIES)}
-        />
-
-        {inline.map((category, index) => (
-          <NavItem
-            key={category.id}
-            // 手机上只平铺第一个，其余交给「更多」，避免把顶栏挤满
-            className={index === 0 ? undefined : "hidden sm:block"}
-            label={category.name}
-            active={active === category.id}
-            onSelect={() => onSelect(category.id)}
-          />
-        ))}
-
-        {activeOutsideInline && activeCategory ? (
-          <NavItem
-            label={activeCategory.name}
-            active
-            onSelect={() => onSelect(activeCategory.id)}
-          />
-        ) : null}
-
-        {overflow.length > 0 ? (
-          <li>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label="更多分类"
-                className="text-muted-foreground hover:bg-secondary/60 hover:text-foreground focus-visible:outline-ring flex items-center gap-1 rounded-full px-3 py-1.5 text-[13px] whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-              >
-                更多
-                <ChevronDown className="size-3.5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
-                <DropdownMenuRadioGroup
-                  value={String(active)}
-                  onValueChange={(value) =>
-                    onSelect(value === ALL_CATEGORIES ? ALL_CATEGORIES : Number(value))
-                  }
-                >
-                  <DropdownMenuRadioItem value={ALL_CATEGORIES}>全部</DropdownMenuRadioItem>
-                  {overflow.map((category) => (
-                    <DropdownMenuRadioItem key={category.id} value={String(category.id)}>
-                      {category.name}
-                    </DropdownMenuRadioItem>
-                  ))}
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </li>
-        ) : null}
-      </ul>
+      <div className="mx-auto flex max-w-[1080px] justify-center px-4 py-2 sm:px-6">
+        <div className="bg-secondary/70 inline-flex max-w-full rounded-full p-1">
+          <ul className="no-scrollbar flex items-center gap-0.5 overflow-x-auto">
+            <Segment
+              label="全部"
+              active={active === ALL_CATEGORIES}
+              onSelect={() => onSelect(ALL_CATEGORIES)}
+            />
+            {categories.map((category) => (
+              <Segment
+                key={category.id}
+                label={category.name}
+                active={active === category.id}
+                onSelect={() => onSelect(category.id)}
+              />
+            ))}
+          </ul>
+        </div>
+      </div>
     </nav>
   );
 }
 
-function NavItem({
+function Segment({
   label,
   active,
   onSelect,
-  className,
 }: {
   label: string;
   active: boolean;
   onSelect: () => void;
-  className?: string;
 }) {
   return (
-    <li className={className}>
+    <li>
       <button
         type="button"
         onClick={onSelect}
         aria-current={active ? "true" : undefined}
         className={cn(
-          "focus-visible:outline-ring rounded-full px-3 py-1.5 text-[13px] whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2",
+          "focus-visible:outline-ring block rounded-full px-3 py-1.5 text-[13px] whitespace-nowrap transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2",
           active
-            ? "bg-secondary text-foreground font-medium"
-            : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
+            ? "bg-popover text-foreground font-medium shadow-sm"
+            : "text-muted-foreground hover:text-foreground",
         )}
       >
         {label}
