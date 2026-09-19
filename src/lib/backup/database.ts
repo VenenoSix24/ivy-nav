@@ -4,6 +4,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { getDb, getSqlite, resolveDatabasePath, schema } from "@/db/client";
 import { applyBackupDocument, buildBackupDocument } from "./document";
+import { parseBackupDocument } from "./schema";
 
 const SNAPSHOT_PATTERN = /^portal-\d{8}-\d{6}\.db$/;
 
@@ -84,13 +85,24 @@ export function restoreSnapshot(name: string): { categories: number; items: numb
   if (!fs.existsSync(target)) throw new RestoreError("备份文件不存在：请刷新列表后重试。");
 
   const snapshot = new Database(target, { readonly: true });
+  let document;
   try {
-    const snapshotDb = drizzle(snapshot, { schema });
-    const document = buildBackupDocument(snapshotDb);
-    return applyBackupDocument(getDb(), document);
+    document = buildBackupDocument(drizzle(snapshot, { schema }));
   } catch {
     throw new RestoreError("备份文件无法读取：它可能不是本项目的数据库快照。");
   } finally {
     snapshot.close();
+  }
+
+  // 备份文件也要过一遍校验：恢复不能成为绕过网址协议检查的入口
+  const parsed = parseBackupDocument(document);
+  if (!parsed.ok || !parsed.document) {
+    throw new RestoreError(`备份内容不合法：${parsed.error ?? "格式不符合预期"}`);
+  }
+
+  try {
+    return applyBackupDocument(getDb(), parsed.document);
+  } catch {
+    throw new RestoreError("写入失败：请检查数据库是否可写，然后重试。");
   }
 }
