@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { clientIp, firstIssueMessage, jsonError, jsonOk, readJson } from "@/lib/api/http";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
-import { loginLimiter } from "@/lib/auth/rate-limit";
+import { LOGIN_GLOBAL_KEY, loginGlobalLimiter, loginLimiter } from "@/lib/auth/rate-limit";
 import { createSession, findUserByName, setSessionCookie } from "@/lib/auth/session";
 
 const loginSchema = z.object({
@@ -18,29 +18,34 @@ async function timingDecoyHash(): Promise<string> {
 }
 
 export async function POST(request: Request) {
-  const ip = clientIp(request);
-  const limit = loginLimiter.check(ip);
-  if (!limit.allowed) {
-    return jsonError(`尝试次数过多：请等待 ${limit.retryAfterSeconds} 秒后再试。`, 429);
-  }
-
   const parsed = loginSchema.safeParse(await readJson(request));
   if (!parsed.success) return jsonError(firstIssueMessage(parsed.error), 400);
+
+  // 限流按用户名与全局两个维度计。IP 不作为键：转发头由客户端自己写，
+  // 每次换一个值就等于换一个新桶，那样的限流形同虚设。
+  const userKey = `user:${parsed.data.username.toLowerCase()}`;
+  const perUser = loginLimiter.check(userKey);
+  const global = loginGlobalLimiter.check(LOGIN_GLOBAL_KEY);
+  if (!perUser.allowed || !global.allowed) {
+    const wait = Math.max(perUser.retryAfterSeconds, global.retryAfterSeconds);
+    return jsonError(`尝试次数过多：请等待 ${wait} 秒后再试。`, 429);
+  }
 
   const user = findUserByName(parsed.data.username);
   const storedHash = user?.passwordHash ?? (await timingDecoyHash());
   const passwordMatches = await verifyPassword(parsed.data.password, storedHash);
 
   if (!user || !passwordMatches) {
-    loginLimiter.recordFailure(ip);
+    loginLimiter.recordFailure(userKey);
+    loginGlobalLimiter.recordFailure(LOGIN_GLOBAL_KEY);
     return jsonError("用户名或密码不正确：请检查后重试。", 401);
   }
 
-  loginLimiter.reset(ip);
+  loginLimiter.reset(userKey);
 
   const { token, expiresAt } = createSession(user.id, {
     userAgent: request.headers.get("user-agent"),
-    ip,
+    ip: clientIp(request),
   });
   await setSessionCookie(token, expiresAt);
 
