@@ -30,7 +30,7 @@ export function ItemCard({
   const hiddenTagCount = item.tags.length - visibleTags.length;
 
   const className = cn(
-    "surface surface-hover group flex h-full flex-col rounded-2xl p-5",
+    "surface surface-hover group flex h-full flex-col rounded-2xl p-4 sm:p-5",
     interactive &&
       "focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
   );
@@ -43,6 +43,7 @@ export function ItemCard({
           spec={{ type: item.iconType, value: item.iconValue }}
           title={item.title}
           itemId={item.id}
+          className="size-10 sm:size-11"
         />
         <div className="flex items-center gap-1">
           {showState && item.visibility === "private" ? (
@@ -66,17 +67,17 @@ export function ItemCard({
         </div>
       </div>
 
-      <h3 className="mt-6 text-[15px] leading-snug font-semibold tracking-[-0.01em]">
+      <h3 className="mt-4 text-[14px] leading-snug font-semibold tracking-[-0.01em] sm:mt-6 sm:text-[15px]">
         {item.title}
       </h3>
 
       {item.description ? (
-        <p className="text-muted-foreground mt-1.5 line-clamp-2 text-[13px] leading-relaxed">
+        <p className="text-muted-foreground mt-1.5 line-clamp-2 text-[12px] leading-relaxed sm:text-[13px]">
           {item.description}
         </p>
       ) : null}
 
-      <div className="mt-auto flex items-end justify-between gap-3 pt-5">
+      <div className="mt-auto flex flex-col items-start gap-2 pt-4 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:pt-5">
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           {visibleTags.map((tag) => (
             <span
