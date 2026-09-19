@@ -15,13 +15,11 @@ interface PortalHeaderProps {
   categories: PortalCategory[];
   active: CategoryFilter;
   onSelect: (filter: CategoryFilter) => void;
-  counts: Map<number, number>;
-  totalCount: number;
 }
 
 /**
- * 顶栏：品牌、分类导航、外观与设置。分类就在这里切换，
- * 所以它常驻在页面顶部，滚动时始终可点。
+ * 顶栏：品牌、分类、外观、设置。分类常驻顶部，滚到任何位置都能切换。
+ * 分类多的时候让导航自己横向滚动，而不是把整行挤变形。
  */
 export function PortalHeader({
   isAdmin,
@@ -30,30 +28,26 @@ export function PortalHeader({
   categories,
   active,
   onSelect,
-  counts,
-  totalCount,
 }: PortalHeaderProps) {
   return (
-    <header className="border-border/70 bg-background/70 sticky top-0 z-40 border-b backdrop-blur-xl">
-      <div className="mx-auto flex h-14 w-full max-w-[1080px] items-center gap-3 px-4 sm:px-6">
+    <header className="border-border/60 bg-background/75 sticky top-0 z-40 border-b backdrop-blur-xl">
+      <div className="mx-auto flex h-14 w-full max-w-[1080px] items-center gap-4 px-4 sm:px-6">
         <Link
           href="/"
           className="focus-visible:outline-ring flex shrink-0 items-baseline gap-1.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4"
         >
           <span className="text-[15px] font-semibold tracking-[-0.02em]">{site.name}</span>
-          <span className="text-muted-foreground hidden text-[13px] sm:inline">{site.nameZh}</span>
+          <span className="text-muted-foreground text-[12px]">{site.nameZh}</span>
         </Link>
 
         <CategoryNav
           categories={categories}
           active={active}
           onSelect={onSelect}
-          counts={counts}
-          totalCount={totalCount}
-          className="flex-1"
+          className="min-w-0 flex-1"
         />
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-0.5">
           {isAdmin ? (
             <Button
               variant={editing ? "default" : "ghost"}
