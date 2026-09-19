@@ -22,6 +22,16 @@ export async function readJson(request: Request): Promise<unknown> {
   }
 }
 
+/**
+ * 把 Buffer 变成可以直接当响应体的 ArrayBuffer。必须复制：
+ * Buffer 常常是共享内存池上的视图，直接交出 .buffer 会带上相邻数据。
+ */
+export function binaryBody(bytes: Buffer): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer as ArrayBuffer;
+}
+
 export function clientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0]!.trim();
