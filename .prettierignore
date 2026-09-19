@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+build
+coverage
+pnpm-lock.yaml
+data
+backups
+public/uploads
+TASKS.md
+.history
