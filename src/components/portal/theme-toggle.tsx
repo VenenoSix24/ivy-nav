@@ -1,9 +1,9 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn } from "cn";
+import { useMounted } from "@/hooks/use-mounted";
 
 const MODES = [
   { value: "light", label: "浅色", Icon: Sun },
@@ -11,15 +11,9 @@ const MODES = [
   { value: "system", label: "跟随系统", Icon: Monitor },
 ] as const;
 
-// 主题只有挂载后才在客户端可知，用外部存储读法拿到这个事实，
-// 服务端渲染为未挂载，避免水合前后图标不一致
-const subscribe = () => () => {};
-const getClientSnapshot = () => true;
-const getServerSnapshot = () => false;
-
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const mounted = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
+  const mounted = useMounted();
 
   const activeIndex = MODES.findIndex((mode) => mode.value === theme);
 
@@ -42,8 +36,7 @@ export function ThemeToggle() {
       title={`外观：${current.label}`}
       aria-label={`外观：${current.label}，点击切换`}
       className={cn(
-        "text-muted-foreground hover:text-foreground hover:bg-secondary inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[12px] transition-colors",
-        "focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
+        "text-muted-foreground hover:text-foreground hover:bg-secondary focus-visible:outline-ring inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[12px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2",
       )}
     >
       <Icon className="size-4" />
