@@ -16,7 +16,10 @@ export function resolveMigrationsPath(): string {
 }
 
 // Next.js dev reloads modules per request; a module-level handle would leak connections.
-const globalForDb = globalThis as unknown as { __ivyNavDb?: Db };
+const globalForDb = globalThis as unknown as {
+  __ivyNavDb?: Db;
+  __ivyNavSqlite?: Database.Database;
+};
 
 /**
  * Lazily opens the database and brings the schema up to date. Migrations run on first
@@ -36,7 +39,16 @@ export function getDb(): Db {
   migrate(db, { migrationsFolder: resolveMigrationsPath() });
 
   globalForDb.__ivyNavDb = db;
+  globalForDb.__ivyNavSqlite = sqlite;
   return db;
+}
+
+/** 需要执行 drizzle 不覆盖的语句时用（目前只有 VACUUM INTO）。 */
+export function getSqlite(): Database.Database {
+  getDb();
+  const sqlite = globalForDb.__ivyNavSqlite;
+  if (!sqlite) throw new Error("数据库尚未初始化");
+  return sqlite;
 }
 
 export { schema };
