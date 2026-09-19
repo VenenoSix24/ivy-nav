@@ -1,5 +1,7 @@
 import type { IconType, Visibility } from "@/db/schema";
 
+export type { Visibility };
+
 export interface PortalItem {
   id: number;
   categoryId: number | null;
@@ -28,4 +30,6 @@ export interface PortalData {
 }
 
 export const ALL_CATEGORIES = "all" as const;
-export type CategoryFilter = typeof ALL_CATEGORIES | number;
+/** 未归档条目的伪分类，只在管理视图里出现（设计文档 §19）。 */
+export const INBOX = "inbox" as const;
+export type CategoryFilter = typeof ALL_CATEGORIES | typeof INBOX | number;
