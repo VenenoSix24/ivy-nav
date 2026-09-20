@@ -49,6 +49,7 @@ export function createItem(input: ItemInput) {
       iconValue: input.iconValue ?? null,
       iconPlate: input.iconPlate ?? true,
       iconMono: input.iconMono ?? false,
+      iconFit: input.iconFit ?? null,
       visibility,
       featured: input.featured ?? false,
       sortOrder,
@@ -83,6 +84,7 @@ export function updateItem(id: number, input: Partial<ItemInput>) {
       iconValue: input.iconValue === undefined ? existing.iconValue : input.iconValue,
       iconPlate: input.iconPlate ?? existing.iconPlate,
       iconMono: input.iconMono ?? existing.iconMono,
+      iconFit: input.iconFit === undefined ? existing.iconFit : (input.iconFit ?? null),
       visibility: input.visibility ?? existing.visibility,
       featured: input.featured ?? existing.featured,
       // 换分类后落到目标分类末尾，避免沿用原分类里的位置造成顺序错乱

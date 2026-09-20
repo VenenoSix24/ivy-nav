@@ -71,6 +71,29 @@ assert("首页 data-palette 变成 clay", after.includes('data-palette="clay"'))
 const back = await call("/api/settings", { method: "PATCH", body: { palette: "leaf" } });
 assert("切回默认配色", back.status === 200 && (await home()).includes('data-palette="leaf"'));
 
+// 7b. 图标默认摆法：同一个接口的第二个偏好项
+const fitBad = await call("/api/settings", { method: "PATCH", body: { iconFit: "stretch" } });
+assert("未知的图标摆法被拒", fitBad.status === 400, `HTTP ${fitBad.status}`);
+const fitOk = await call("/api/settings", { method: "PATCH", body: { iconFit: "auto" } });
+assert(
+  "写入图标摆法成功",
+  fitOk.status === 200 && fitOk.json?.iconFit === "auto",
+  JSON.stringify(fitOk.json),
+);
+const fitHome = await call("/api/portal");
+assert(
+  "首页拿到新的默认摆法",
+  fitHome.json?.portal?.defaultIconFit === "auto",
+  `${fitHome.json?.portal?.defaultIconFit}`,
+);
+const fitBack = await call("/api/settings", { method: "PATCH", body: { iconFit: "contain" } });
+assert("图标摆法改回默认", fitBack.status === 200 && fitBack.json?.iconFit === "contain");
+// 只发配色时不该把另一个偏好项一起抹掉
+assert(
+  "只改配色不影响图标摆法",
+  (await call("/api/portal")).json?.portal?.defaultIconFit === "contain",
+);
+
 // 8. 设置跟着备份走
 const exported = await call("/api/backup/export");
 assert(

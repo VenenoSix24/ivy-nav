@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { iconFitSchema } from "@/lib/icons/fit";
 import { layoutSchema } from "@/lib/settings/homepage";
 import { normalizeUrl, parseHttpUrl } from "@/lib/utils/url";
 
@@ -54,6 +55,7 @@ export const itemInputSchema = z.object({
   iconValue: z.string().trim().max(500, "图标值过长：上限 500 个字符。").nullish(),
   iconPlate: z.boolean().optional(),
   iconMono: z.boolean().optional(),
+  iconFit: iconFitSchema.nullish(),
   visibility: z.enum(visibilityValues).optional(),
   featured: z.boolean().optional(),
 });

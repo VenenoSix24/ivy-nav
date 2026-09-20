@@ -6,6 +6,13 @@ import { createElement, useCallback, useState } from "react";
 import { cn } from "cn";
 import type { IconType } from "@/db/schema";
 import { getLucideIcon } from "@/components/icons/lucide-registry";
+import {
+  DEFAULT_ICON_FIT,
+  trimTransform,
+  type AlphaBox,
+  type FitTransform,
+  type IconFitId,
+} from "@/lib/icons/fit";
 
 export interface IconSpec {
   type: IconType;
@@ -18,7 +25,20 @@ export interface IconSpec {
    * 颜色交给 `currentColor`，于是深色里它是浅的。两个主题各显示一份，CSS 切换，不用 JS。
    */
   mono?: boolean;
+  /**
+   * 图标在底板里怎么摆。取回来的图标有的顶格、有的四周留一圈透明边，同一个底板下
+   * 就显得大小不一 —— 这一档决定按原样放、还是裁掉透明边/铺满。空值即默认（原样）。
+   */
+  fit?: IconFitId | null;
 }
+
+/** 四种摆法对应的 object-fit；自动裁边先按原样放，量出透明边之后再补一个 transform */
+const FIT_CLASS: Record<IconFitId, string> = {
+  contain: "object-contain",
+  auto: "object-contain",
+  cover: "object-cover",
+  fill: "object-fill",
+};
 
 interface IconGlyphProps {
   spec: IconSpec;
@@ -58,15 +78,29 @@ export function iconBox(plate: boolean): React.CSSProperties {
  */
 export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps) {
   const [phase, setPhase] = useState<"pending" | "ready" | "none">("pending");
+  /** 「自动裁边」量出来的缩放与平移；带上是哪张图，换图之后旧的那份就不作数了 */
+  const [trim, setTrim] = useState<{ src: string; transform: FitTransform | null } | null>(null);
+
+  const fit = spec.fit ?? DEFAULT_ICON_FIT;
 
   /**
    * 只靠 onLoad / onError 会漏：图片若在水合之前就已经加载完（本地接口很快、浏览器又缓存了），
    * 事件早已错过，回调永远不会跑，首字母就压不掉了。挂载时补看一次 `complete`。
+   *
+   * 「自动裁边」也在这里量：图片已经在手里了，画进一张 48×48 的画布数一遍不透明像素的
+   * 范围即可 —— 另起一个 Image 再解码一遍是白费一次解码。
    */
   const decide = useCallback((image: HTMLImageElement | null) => {
     if (!image || !image.complete) return;
     const ready = image.naturalWidth > 1 && image.naturalHeight > 1;
     setPhase((current) => (current === "pending" ? (ready ? "ready" : "none") : current));
+    if (!ready) return;
+
+    const transform = trimTransform(
+      measureAlphaBox(image),
+      image.naturalWidth / image.naturalHeight,
+    );
+    setTrim({ src: image.src, transform });
   }, []);
 
   if (spec.type === "emoji") {
@@ -102,9 +136,20 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
 
     // 蒙版只对 SVG 有意义：位图的 alpha 是整个方块，蒙出来就是一块实心色
     const darkMono = spec.mono === true && /\.svg(\?|$)/i.test(src);
+    // 裁边最多放大到 1.6 倍，超出图形框的那部分要由外层裁掉
+    const applied = trim && trim.src === src ? trim.transform : null;
+    const transform = applied
+      ? `scale(${applied.scale}) translate(${applied.x * 100}%, ${applied.y * 100}%)`
+      : undefined;
 
     return (
-      <span className={cn("relative grid size-full place-items-center", className)}>
+      <span
+        className={cn(
+          "relative grid size-full place-items-center",
+          applied && "overflow-hidden",
+          className,
+        )}
+      >
         {phase === "ready" ? null : (
           <LetterMark
             title={title}
@@ -118,9 +163,11 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
             loading="lazy"
             decoding="async"
             className={cn(
-              "relative size-[var(--icon-glyph,1.25rem)] object-contain",
+              "relative size-[var(--icon-glyph,1.25rem)]",
+              FIT_CLASS[fit],
               darkMono && "dark:hidden",
             )}
+            style={transform ? { transform } : undefined}
             ref={decide}
             // 占位图是 1×1 的透明 PNG：它「加载成功」但没有内容，仍要露首字母
             onLoad={(event) => decide(event.currentTarget)}
@@ -128,7 +175,9 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
           />
         )}
         {/* 深色那一份：同一张 SVG 当蒙版，形状照旧、颜色交给主题 */}
-        {darkMono ? <MaskGlyph src={src} className="hidden dark:block" /> : null}
+        {darkMono ? (
+          <MaskGlyph src={src} transform={transform} className="hidden dark:block" />
+        ) : null}
       </span>
     );
   }
@@ -142,7 +191,15 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
  * 深色里那份单色图标：拿 SVG 的 alpha 当蒙版，颜色用 `currentColor`（主题前景色）。
  * 图片只能走蒙版这一条路 —— `<img>` 里的 `currentColor` 不认页面的颜色。
  */
-function MaskGlyph({ src, className }: { src: string; className?: string }) {
+function MaskGlyph({
+  src,
+  transform,
+  className,
+}: {
+  src: string;
+  transform?: string;
+  className?: string;
+}) {
   const mask = {
     maskImage: `url("${src}")`,
     WebkitMaskImage: `url("${src}")`,
@@ -158,9 +215,68 @@ function MaskGlyph({ src, className }: { src: string; className?: string }) {
     <span
       aria-hidden
       className={cn("size-[var(--icon-glyph,1.25rem)] bg-current", className)}
-      style={mask}
+      style={transform ? { ...mask, transform } : mask}
     />
   );
+}
+
+/**
+ * 量出图片里不透明像素的范围（图片自身的 0..1 坐标）。画进一张 48×48 的小画布数一遍就够：
+ * 这一步只用来判断「四周有多少透明边」，不需要原图分辨率。
+ *
+ * 图片走的都是本站的代理或上传接口，同源，所以画布不会被污染；万一将来换成远端地址，
+ * `getImageData` 会抛，这里按「量不出来」处理，退回原样显示。
+ */
+function measureAlphaBox(image: HTMLImageElement): AlphaBox | null {
+  const side = 48;
+  const canvas = document.createElement("canvas");
+  canvas.width = side;
+  canvas.height = side;
+
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return null;
+
+  // 按 contain 摆进去，和元素里看到的位置一致，量出来的坐标才好跟 CSS 对上
+  const scale = side / Math.max(image.naturalWidth, image.naturalHeight);
+  const width = image.naturalWidth * scale;
+  const height = image.naturalHeight * scale;
+  const originX = (side - width) / 2;
+  const originY = (side - height) / 2;
+
+  let pixels: Uint8ClampedArray;
+  try {
+    context.clearRect(0, 0, side, side);
+    context.drawImage(image, originX, originY, width, height);
+    pixels = context.getImageData(0, 0, side, side).data;
+  } catch {
+    return null;
+  }
+
+  let minX = side;
+  let minY = side;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < side; y += 1) {
+    for (let x = 0; x < side; x += 1) {
+      // 阈值给得低一点：半透明的投影也算「图的一部分」，不然会把带阴影的图标裁掉一块
+      if (pixels[(y * side + x) * 4 + 3]! > 12) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+
+  if (maxX < 0) return null;
+
+  return {
+    x0: (minX - originX) / width,
+    y0: (minY - originY) / height,
+    x1: (maxX + 1 - originX) / width,
+    y1: (maxY + 1 - originY) / height,
+  };
 }
 
 function LetterMark({ title, className }: { title: string; className?: string }) {

@@ -247,6 +247,7 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
       iconValue: item.iconValue,
       iconPlate: item.iconPlate,
       iconMono: item.iconMono,
+      iconFit: item.iconFitOwn,
       visibility: item.visibility,
       featured: item.featured,
     };
@@ -449,6 +450,7 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
           item={editor.item}
           defaultCategoryId={editor.categoryId}
           categories={portal.categories}
+          defaultIconFit={portal.defaultIconFit}
           onSaved={(next) => setPortal(next)}
         />
       ) : null}

@@ -1,6 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { categories, itemTags, items, tags } from "@/db/schema";
+import { getDefaultIconFit } from "@/lib/settings/icon-fit";
 import { toDomain } from "@/lib/utils/url";
 import { sortByOrder } from "@/lib/utils/sort";
 import { privateCategoryIds, visibleCategories, visibleItems } from "@/lib/utils/visibility";
@@ -51,6 +52,8 @@ export function getPortalData(options: { includePrivate: boolean }): PortalData 
   // 条目按最终要发出去的分类过滤。只过滤分类名而不过滤条目，
   // 隐藏分类里的条目仍会出现在响应里 —— 浏览器拿到的东西必须和屏幕上的一致。
   const allowedCategoryIds = new Set(portalCategoriesSource.map((category) => category.id));
+  // 条目自己设过就听它的，没设过跟随设置页里的默认：解析放在这里，渲染处不必再关心
+  const defaultIconFit = getDefaultIconFit();
 
   const portalItems: PortalItem[] = visible
     .filter((item) => {
@@ -70,10 +73,12 @@ export function getPortalData(options: { includePrivate: boolean }): PortalData 
       iconValue: item.iconValue,
       iconPlate: item.iconPlate,
       iconMono: item.iconMono,
+      iconFit: item.iconFit ?? defaultIconFit,
+      iconFitOwn: item.iconFit,
       tags: tagsByItem.get(item.id) ?? [],
       visibility: item.visibility,
       featured: item.featured,
     }));
 
-  return { categories: portalCategories, items: portalItems };
+  return { categories: portalCategories, items: portalItems, defaultIconFit };
 }

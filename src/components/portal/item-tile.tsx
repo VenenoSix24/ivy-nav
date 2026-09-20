@@ -44,6 +44,7 @@ export function ItemTile({
           value: item.iconValue,
           plate: item.iconPlate,
           mono: item.iconMono,
+          fit: item.iconFit,
         }}
         title={item.title}
         itemId={item.id}

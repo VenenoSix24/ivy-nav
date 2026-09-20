@@ -20,6 +20,7 @@ import {
   type IconSourceId,
 } from "@/lib/icons/sources";
 import { libraryIconSrc, previewFaviconSrc } from "@/lib/icons/urls";
+import { DEFAULT_ICON_FIT, ICON_FITS, type IconFitId } from "@/lib/icons/fit";
 import { parseHttpUrl } from "@/lib/utils/url";
 
 interface IconPickerProps {
@@ -119,14 +120,21 @@ export function IconPicker({
 
   /**
    * 网址一填好就自己去抓一次候选，不必先点「获取图标」（按钮留着当「重新获取」）。
-   * 同一个网址只自动抓一次，且只在「自动」这一档上抓 —— 每个来源都要出一次网，
-   * 用户在别的档上打字时不该被这些请求陪着。
+   *
+   * 只在**打开面板之后新输入的网址**上抓：编辑已有条目时，重开一次面板就重新抓一轮
+   * 是白费一次出网（每个候选来源都要走一遍），打开时就有的那个网址不自动抓 ——
+   * 想看别的候选点按钮即可。只有这一档抓：每个来源都要出一次网，用户在别的档上
+   * 打字时不该被这些请求陪着。
    */
   const autoUrl = parseHttpUrl(url) ? url.trim() : "";
-  const lastAutoFetch = useRef("");
+  /** 打开面板那一刻的网址：就是它不触发自动获取 */
+  const openedUrl = useRef(url.trim());
+  const lastAutoFetch = useRef(url.trim());
 
   useEffect(() => {
-    if (!autoUrl || tab !== "favicon" || lastAutoFetch.current === autoUrl) return;
+    if (!autoUrl || tab !== "favicon") return;
+    if (autoUrl === openedUrl.current || lastAutoFetch.current === autoUrl) return;
+
     const timer = setTimeout(() => {
       lastAutoFetch.current = autoUrl;
       void fetchCandidates();
@@ -415,6 +423,10 @@ export function IconPicker({
   const plate = spec.plate !== false;
   const mono = spec.mono === true;
   const canMono = spec.type === "upload" && Boolean(spec.value?.endsWith(".svg"));
+  // 摆法只对图片类有意义（Emoji、Lucide 与首字母都是矢量字体，铺不铺满由字号说了算）
+  const canFit = spec.type === "upload" || spec.type === "favicon";
+  const fit = spec.fit ?? DEFAULT_ICON_FIT;
+  const fitHint = ICON_FITS.find((entry) => entry.id === fit)?.hint ?? "";
 
   const builtIns = libraries.filter((entry) => !entry.removable);
   const sets = libraries.filter((entry) => entry.removable);
@@ -443,7 +455,7 @@ export function IconPicker({
           style={iconBox(plate)}
           className={cn(
             "inline-grid size-12 shrink-0 place-items-center leading-none",
-            plate && "icon-plate rounded-lg",
+            plate && "border-hairline bg-glass-strong rounded-lg border",
           )}
         >
           <IconGlyph
@@ -500,6 +512,33 @@ export function IconPicker({
             : "底板：图标底下那层描边与玻璃底，应用类图标自带外形时可以不套"}
         </span>
       </div>
+
+      {canFit ? (
+        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span className="text-muted-foreground text-[12px]">图标大小</span>
+          <div className="flex gap-1">
+            {ICON_FITS.map((entry) => (
+              <button
+                key={entry.id}
+                type="button"
+                aria-pressed={fit === entry.id}
+                onClick={() => onChange({ ...spec, fit: entry.id as IconFitId })}
+                className={cn(
+                  "focus-visible:outline-ring rounded-full px-2.5 py-1 text-[11px] transition-colors focus-visible:outline-2",
+                  fit === entry.id
+                    ? "bg-secondary text-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
+                )}
+              >
+                {entry.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-muted-foreground min-w-0 flex-1 truncate text-[11px]">
+            {fitHint}
+          </span>
+        </div>
+      ) : null}
 
       <Tabs value={tab} onValueChange={(value) => setTab(value as TabId)}>
         <TabsList className="w-full">

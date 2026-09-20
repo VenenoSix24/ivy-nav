@@ -412,6 +412,56 @@ assert(
   `HTTP ${flagsBack.status}`,
 );
 
+// ---- 图标摆法（原样 / 自动裁边 / 裁剪铺满 / 拉伸）：这一列要能存能取
+const fitPatch = await call(`/api/items/${firstItem?.id}`, {
+  method: "PATCH",
+  body: { title: firstItem?.title, url: firstItem?.url, iconFit: "auto" },
+});
+assert(
+  "图标摆法存得进去",
+  fitPatch.status === 200 &&
+    fitPatch.json?.portal?.items?.find((entry) => entry.id === firstItem?.id)?.iconFit === "auto" &&
+    fitPatch.json.portal.items.find((entry) => entry.id === firstItem?.id)?.iconFitOwn === "auto",
+  `HTTP ${fitPatch.status} ${JSON.stringify(fitPatch.json?.portal?.items?.[0]?.iconFit)}`,
+);
+
+const fitBad = await call(`/api/items/${firstItem?.id}`, {
+  method: "PATCH",
+  body: { title: firstItem?.title, url: firstItem?.url, iconFit: "stretch" },
+});
+assert("认不出的图标摆法被拒", fitBad.status === 400, `HTTP ${fitBad.status}`);
+
+// 默认值：条目没设过就跟设置页里那个走，设过就听条目自己的
+const fitDefault = await call("/api/settings", { method: "PATCH", body: { iconFit: "cover" } });
+assert("设置默认图标摆法", fitDefault.status === 200, `HTTP ${fitDefault.status}`);
+const fitFollows = (await call("/api/portal")).json?.portal;
+assert(
+  "没设过的条目跟随默认",
+  fitFollows?.defaultIconFit === "cover" &&
+    fitFollows.items
+      .filter((entry) => entry.iconFitOwn === null)
+      .every((entry) => entry.iconFit === "cover"),
+  JSON.stringify({ default: fitFollows?.defaultIconFit }),
+);
+assert(
+  "设过的条目不受默认影响",
+  fitFollows?.items.find((entry) => entry.id === firstItem?.id)?.iconFit === "auto",
+  JSON.stringify(fitFollows?.items.find((entry) => entry.id === firstItem?.id)?.iconFit),
+);
+const fitReset = await call("/api/settings", { method: "PATCH", body: { iconFit: "contain" } });
+assert("默认摆法改回原样", fitReset.status === 200, `HTTP ${fitReset.status}`);
+
+const fitClear = await call(`/api/items/${firstItem?.id}`, {
+  method: "PATCH",
+  body: { title: firstItem?.title, url: firstItem?.url, iconFit: null },
+});
+assert(
+  "条目可以交还给默认",
+  fitClear.status === 200 &&
+    fitClear.json?.portal?.items?.find((entry) => entry.id === firstItem?.id)?.iconFitOwn === null,
+  `HTTP ${fitClear.status}`,
+);
+
 // ---- F8：管理数据响应禁止中间缓存
 const portalAgain = await call("/api/portal");
 assert(

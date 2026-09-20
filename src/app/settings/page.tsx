@@ -10,10 +10,12 @@ import { AppearanceSettings } from "@/components/settings/appearance-settings";
 import { BookmarkImport } from "@/components/settings/bookmark-import";
 import { EditModeSettings } from "@/components/settings/edit-mode-settings";
 import { DataSettings } from "@/components/settings/data-settings";
+import { IconFitSettings } from "@/components/settings/icon-fit-settings";
 import { IconSetSettings } from "@/components/settings/icon-set-settings";
 import { EDIT_MODE_COOKIE } from "@/lib/portal/edit-mode";
 import { listIconSets } from "@/lib/icons/library/sets";
 import { getPreferredPalette } from "@/lib/settings/appearance-server";
+import { getDefaultIconFit } from "@/lib/settings/icon-fit";
 import { getSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -59,6 +61,7 @@ export default async function SettingsPage() {
           <AppearanceSettings initialPalette={getPreferredPalette()} />
           <EditModeSettings initialEnabled={editMode} />
           <IconSetSettings initialSets={listIconSets()} />
+          <IconFitSettings initialFit={getDefaultIconFit()} />
           <BookmarkImport />
           <DataSettings />
           <AccountSettings

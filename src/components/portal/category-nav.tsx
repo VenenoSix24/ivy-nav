@@ -23,12 +23,13 @@ interface CategoryNavProps {
  * 需要筛选时它就在搜索栏下面。分类多了整排横向滚动。
  *
  * 桌面端没有触摸滑动，只靠 `overflow-x-auto` 会让人以为到头了：所以除了滚轮，
- * 还给了**鼠标按住拖**与**两端的箭头**。箭头只在真的还有内容被挡住时出现 ——
- * 装得下的时候整排是居中的，这时既不渐隐也不出箭头。
+ * 还给了**鼠标按住拖**与**两端的箭头**。箭头只在鼠标扫到这一排时浮出来，
+ * 并且只在那个方向真的还有内容被挡住时才有 —— 平时不占视线。
  */
 export function CategoryNav({ categories, active, onSelect, className }: CategoryNavProps) {
   const scroller = useRef<HTMLUListElement>(null);
   const [edges, setEdges] = useState({ left: false, right: false });
+  const [hovering, setHovering] = useState(false);
   const drag = useRef({ active: false, from: 0, left: 0, moved: false });
 
   useEffect(() => {
@@ -93,7 +94,12 @@ export function CategoryNav({ categories, active, onSelect, className }: Categor
   if (categories.length === 0) return null;
 
   return (
-    <div className={cn("relative", className)}>
+    <div
+      className={cn("relative", className)}
+      // 箭头平时不占视线：鼠标扫到这一排才浮出来
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+    >
       <nav
         aria-label="分类筛选"
         className={cn(
@@ -135,8 +141,8 @@ export function CategoryNav({ categories, active, onSelect, className }: Categor
         </ul>
       </nav>
 
-      {edges.left ? <Arrow direction="left" onClick={() => nudge(-1)} /> : null}
-      {edges.right ? <Arrow direction="right" onClick={() => nudge(1)} /> : null}
+      {hovering && edges.left ? <Arrow direction="left" onClick={() => nudge(-1)} /> : null}
+      {hovering && edges.right ? <Arrow direction="right" onClick={() => nudge(1)} /> : null}
     </div>
   );
 }
