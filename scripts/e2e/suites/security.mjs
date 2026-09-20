@@ -11,6 +11,21 @@ function assert(label, condition, detail) {
   if (!condition) failures += 1;
 }
 
+/**
+ * 响应体是不是那张 1×1 的透明占位图。
+ * 不去数字节数：占位图换个编码就变长变短（曾经断言 70 字节，于是换一张正常 PNG 就误报），
+ * 读 IHDR 里的宽高才是它真正的特征。
+ */
+function isPlaceholderBody(buffer) {
+  return (
+    buffer.length >= 24 &&
+    buffer[0] === 0x89 &&
+    buffer.toString("latin1", 1, 4) === "PNG" &&
+    buffer.readUInt32BE(16) === 1 &&
+    buffer.readUInt32BE(20) === 1
+  );
+}
+
 async function call(path, { method = "GET", body, auth = true, headers: extra = {} } = {}) {
   const headers = { ...extra };
   if (body !== undefined && typeof body === "string") headers["Content-Type"] = "application/json";
@@ -111,7 +126,7 @@ const internalIconBody = Buffer.from(await internalIcon.arrayBuffer());
 assert(
   "回环地址只回透明占位图（未发起抓取）",
   internalIcon.status === 200 &&
-    internalIconBody.length === 70 &&
+    isPlaceholderBody(internalIconBody) &&
     internalIcon.headers.get("content-type") === "image/png",
   `HTTP ${internalIcon.status} ${internalIconBody.length}B`,
 );
@@ -130,7 +145,7 @@ const linkLocalIconBody = Buffer.from(await linkLocalIcon.arrayBuffer());
 assert(
   "link-local 地址只回透明占位图（未发起抓取）",
   linkLocalIcon.status === 200 &&
-    linkLocalIconBody.length === 70 &&
+    isPlaceholderBody(linkLocalIconBody) &&
     linkLocalIcon.headers.get("content-type") === "image/png",
   `HTTP ${linkLocalIcon.status} ${linkLocalIconBody.length}B`,
 );
@@ -149,7 +164,7 @@ const hexIconBody = Buffer.from(await hexIcon.arrayBuffer());
 assert(
   "0x7f000001 这类写法只回透明占位图（未发起抓取）",
   hexIcon.status === 200 &&
-    hexIconBody.length === 70 &&
+    isPlaceholderBody(hexIconBody) &&
     hexIcon.headers.get("content-type") === "image/png",
   `HTTP ${hexIcon.status} ${hexIconBody.length}B`,
 );

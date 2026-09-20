@@ -13,7 +13,15 @@ const SOURCE = join(ROOT, "scripts/brand/source/yiye.png");
 /** 图标底板：一道 135° 的深青渐变，白叶压在上面才有足够对比 */
 const PLATE_TOP = [0x3d, 0x9b, 0x86];
 const PLATE_BOTTOM = [0x16, 0x53, 0x4b];
-const PLATE_RADIUS_RATIO = 0.2237;
+
+/**
+ * 站点图标一律满幅不透明，不做圆角。
+ *
+ * 做过圆角的一版在浏览器标签页、书签和桌面上，圆角后面是一圈黑 —— 透明像素在
+ * 那些位置没有被合成到页面底色上。留白交给浏览器与系统自己加圆角，
+ * 这也是各家应用图标的通行做法（iOS 会自己套 mask）。
+ */
+const PLATE_RADIUS_RATIO = 0;
 
 /** 叶子在底板里占的边长比例，留出呼吸空间 */
 const LEAF_RATIO_TILE = 0.62;

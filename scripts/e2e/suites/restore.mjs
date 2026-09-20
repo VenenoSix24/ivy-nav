@@ -17,6 +17,21 @@ function assert(label, condition, detail) {
   if (!condition) failures += 1;
 }
 
+/**
+ * 响应体是不是那张 1×1 的透明占位图。
+ * 不去数字节数：占位图换个编码就变长变短（曾经断言 70 字节，于是换一张正常 PNG 就误报），
+ * 读 IHDR 里的宽高才是它真正的特征。
+ */
+function isPlaceholderBody(buffer) {
+  return (
+    buffer.length >= 24 &&
+    buffer[0] === 0x89 &&
+    buffer.toString("latin1", 1, 4) === "PNG" &&
+    buffer.readUInt32BE(16) === 1 &&
+    buffer.readUInt32BE(20) === 1
+  );
+}
+
 async function call(path, { method = "GET", body, auth = true } = {}) {
   const headers = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -101,7 +116,7 @@ if (EXPECTED === "blocked") {
   const iconBody = Buffer.from(await icon.arrayBuffer());
   assert(
     "默认不向回环地址抓取，只回透明占位图",
-    icon.status === 200 && iconBody.length === 70,
+    icon.status === 200 && isPlaceholderBody(iconBody),
     `HTTP ${icon.status} ${iconBody.length}B`,
   );
 } else {
