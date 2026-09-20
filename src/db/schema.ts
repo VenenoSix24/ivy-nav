@@ -65,14 +65,14 @@ export const items = sqliteTable("items", {
     .default("favicon"),
   iconValue: text("icon_value"),
   /**
-   * 图标底下那层底板（描边 + 玻璃底）。应用类图标自带圆角外形，再套一层底板就成了
+   * 图标底下那层图标遮罩（描边 + 玻璃底）。应用类图标自带圆角外形，再套一层图标遮罩就成了
    * 大圆套小圆，所以这张卡片可以按条目关掉它。
    */
   iconPlate: integer("icon_plate", { mode: "boolean" }).notNull().default(true),
   /** 单色图标按主题前景色渲染（CSS mask 上色）。彩色图标开这个会变成剪影。 */
   iconMono: integer("icon_mono", { mode: "boolean" }).notNull().default(false),
   /**
-   * 图标在底板里怎么摆（原样 / 自动裁边 / 裁剪铺满 / 拉伸）。空值表示跟随设置页里的默认。
+   * 图标在图标遮罩里怎么摆（原样 / 自动裁边 / 裁剪铺满 / 拉伸）。空值表示跟随设置页里的默认。
    * 取值必须与 src/lib/icons/fit.ts 的 ICON_FITS 一致，那边是可选项的唯一出处。
    */
   iconFit: text("icon_fit", { enum: ["contain", "auto", "cover", "fill"] }),

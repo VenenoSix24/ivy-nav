@@ -8,7 +8,7 @@ interface BrandMarkProps {
 /**
  * 站点标记：一片叶子，由 scripts/brand/generate-assets.mjs 从源图生成。
  *
- * 不留底板、不加投影：试过 30px 的淡色圆托，它的底色和叶子亮部太近，
+ * 不留图标遮罩、不加投影：试过 30px 的淡色圆托，它的底色和叶子亮部太近，
  * 22px 下反而糊成一片。裸叶子在浅色与深色下都够清楚（设计文档 §47 的 Calm）。
  */
 export function BrandMark({ className }: BrandMarkProps) {

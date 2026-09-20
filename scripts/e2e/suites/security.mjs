@@ -374,11 +374,11 @@ assert(
   `HTTP ${setDeleteMissing.status}`,
 );
 
-// ---- 图标底板与单色跟随主题：两个新列要能存能取（迁移在既有库上加的列）
+// ---- 图标图标遮罩与单色跟随主题：两个新列要能存能取（迁移在既有库上加的列）
 const portalBefore = await call("/api/portal");
 const firstItem = (portalBefore.json?.portal?.items ?? [])[0];
 assert(
-  "新建条目默认带底板、不跟随主题",
+  "新建条目默认带图标遮罩、不跟随主题",
   firstItem?.iconPlate === true && firstItem?.iconMono === false,
   JSON.stringify({ plate: firstItem?.iconPlate, mono: firstItem?.iconMono }),
 );
@@ -393,7 +393,7 @@ const flagPatch = await call(`/api/items/${firstItem?.id}`, {
   },
 });
 assert(
-  "底板与跟随主题存得进去",
+  "图标遮罩与跟随主题存得进去",
   flagPatch.status === 200 &&
     flagPatch.json?.portal?.items?.find((entry) => entry.id === firstItem?.id)?.iconPlate ===
       false &&

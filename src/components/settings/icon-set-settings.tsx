@@ -101,7 +101,7 @@ export function IconSetSettings({ initialSets }: IconSetSettingsProps) {
   return (
     <SettingsSection
       title="图标库"
-      description="编辑条目的图标时可以直接搜 Simple Icons、Iconify 与 Lucide；这里再加自建的 JSON 图标集。抓回来只存清单，挑中哪张才把哪张下载到本地。"
+      description="这里可以添加自建的 JSON 图标集。只存清单，并不会全量下载。"
     >
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -136,8 +136,9 @@ export function IconSetSettings({ initialSets }: IconSetSettingsProps) {
 
         <p className="text-muted-foreground text-[12px] leading-relaxed">
           地址要指向原始 JSON（形如 {`{name, description, icons: [{name, url}]}`}，也接受数组或{" "}
-          {`{名字: 地址}`}）。图标地址在 raw.githubusercontent 上的话，勾上「镜像加速」会改走
-          jsDelivr —— 那个域名在不少网络里更稳。
+          {`{名字: 地址}`}）。
+          <br />
+          图标地址在 raw.githubusercontent 上的话，勾上「镜像加速」会改走 jsDelivr。
         </p>
 
         {sets.length === 0 ? (

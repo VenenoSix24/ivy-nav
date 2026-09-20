@@ -142,7 +142,7 @@ export function AccountSettings({ username, sessionExpiresAt }: AccountSettingsP
         </form>
       </SettingsSection>
 
-      <SettingsSection title="会话" description="退出所有设备会立即吊销全部会话，包括当前这台。">
+      <SettingsSection title="会话" description="退出所有设备会立即注销全部会话，包括当前设备。">
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
