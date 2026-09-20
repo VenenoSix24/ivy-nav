@@ -15,7 +15,7 @@ export const iconTypeValues = [
   "none",
 ] as const;
 
-/** 只接受 http(s)，并把裸域名补成 https —— 存进去之前就挡住 javascript: 之类（设计文档 §45）。 */
+/** 只接受 http(s)，并把裸域名补成 https */
 const urlField = z
   .string()
   .trim()
@@ -67,7 +67,7 @@ export const reorderSchema = z.object({
 export type CategoryInput = z.infer<typeof categoryInputSchema>;
 export type ItemInput = z.infer<typeof itemInputSchema>;
 
-/** 标签按大小写不敏感去重，顺手去掉用户习惯带的 # 前缀。 */
+/** 标签按大小写不敏感去重，去掉 # 前缀 */
 export function normalizeTagNames(names: string[]): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
@@ -84,7 +84,7 @@ export function normalizeTagNames(names: string[]): string[] {
   return result;
 }
 
-/** 表单里标签用空格或逗号分隔，一个字段收完。 */
+/** 表单里标签用空格或逗号分隔 */
 export function parseTagInput(value: string): string[] {
   return normalizeTagNames(value.split(/[,，\s]+/));
 }

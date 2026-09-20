@@ -27,16 +27,13 @@ async function call(path, { method = "GET", body, auth = true } = {}) {
   let json = null;
   try {
     json = JSON.parse(text);
-  } catch {
-    /* html */
-  }
+  } catch {}
   return { status: response.status, json, text };
 }
 
 const home = () =>
   fetch(`${BASE}/`, { headers: cookie ? { Cookie: cookie } : {} }).then((r) => r.text());
 
-// 1. 未登录时的边界
 const guard = await call("/api/items", {
   method: "POST",
   body: { title: "x", url: "example.com" },
@@ -49,8 +46,6 @@ assert("匿名读取管理数据被拒", portalGuard.status === 401, `HTTP ${por
 
 const beforeHtml = await home();
 assert("匿名首页不含 Private 条目", !beforeHtml.includes("个人服务器"));
-
-// 2. 建号并登入
 
 // 账号由 pnpm admin:create 预先创建
 async function signIn() {
@@ -86,7 +81,6 @@ assert(
 const development = portal.json.portal.categories.find((c) => c.name === "Development");
 const tools = portal.json.portal.categories.find((c) => c.name === "Tools");
 
-// 3. 新建条目
 const created = await call("/api/items", {
   method: "POST",
   body: {
@@ -111,7 +105,6 @@ assert("默认可见性为 public", newItem?.visibility === "public");
 const developmentItems = created.json.portal.items.filter((i) => i.categoryId === development.id);
 assert("新条目排在所属分类末尾", developmentItems[developmentItems.length - 1]?.id === newItem?.id);
 
-// 4. 改条目
 const patched = await call(`/api/items/${newItem.id}`, {
   method: "PATCH",
   body: { visibility: "private", description: "只有登录后可见的测试工具。" },
@@ -137,7 +130,6 @@ const badUrl = await call(`/api/items/${newItem.id}`, {
 });
 assert("危险协议被拒", badUrl.status === 400, `HTTP ${badUrl.status} ${badUrl.json?.error ?? ""}`);
 
-// 5. 移动分类
 const moved = await call(`/api/items/${newItem.id}`, {
   method: "PATCH",
   body: { categoryId: tools.id },
@@ -147,7 +139,6 @@ assert("移动到 Tools", movedItem?.categoryId === tools.id);
 const toolsItems = moved.json.portal.items.filter((i) => i.categoryId === tools.id);
 assert("移动后落到目标分类末尾", toolsItems[toolsItems.length - 1]?.id === newItem.id);
 
-// 6. 排序
 const reversed = [...toolsItems].reverse().map((i) => i.id);
 const reordered = await call("/api/items/reorder", {
   method: "POST",
@@ -162,7 +153,6 @@ assert(
   JSON.stringify(afterOrder),
 );
 
-// 7. 分类
 const newCategory = await call("/api/categories", {
   method: "POST",
   body: { name: "Reading", visibleOnHomepage: false },
@@ -201,7 +191,6 @@ assert(
     JSON.stringify(categoryOrder),
 );
 
-// 8. 删除
 const deletedItem = await call(`/api/items/${newItem.id}`, { method: "DELETE" });
 assert(
   "删除条目",
@@ -227,7 +216,6 @@ assert("存在的分类仍可改", missing.status === 200);
 const gone = await call(`/api/items/999999`, { method: "DELETE" });
 assert("删除不存在的条目返回 404", gone.status === 404, `HTTP ${gone.status}`);
 
-// 9. 登录后首页看到 Private，匿名看不到
 const adminHtml = await home();
 assert("管理员首页含 Private 条目", adminHtml.includes("个人服务器"));
 assert("管理员首页含新分类", adminHtml.includes("Reading"));
@@ -236,7 +224,6 @@ const anonymous = await fetch(`${BASE}/`).then((r) => r.text());
 assert("匿名首页仍不含 Private 条目", !anonymous.includes("个人服务器"));
 assert("匿名首页含首页分类的条目", anonymous.includes("GitHub"));
 
-// 9b. 编辑态的首页：分类的入口都在这里（名字、描述、布局、顺序）
 const editingHtml = await fetch(`${BASE}/`, {
   headers: { Cookie: `${cookie}; ivy_edit=1` },
 }).then((r) => r.text());
@@ -253,7 +240,6 @@ assert(
   !settingsHtml.text.includes("首页分类") && settingsHtml.text.includes("整理分类"),
 );
 
-// 10. 退出
 const loggedOut = await call("/api/auth/logout", { method: "POST" });
 assert("退出登录", loggedOut.status === 200);
 const afterLogout = await call("/api/portal");

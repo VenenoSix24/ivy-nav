@@ -35,7 +35,7 @@ const LAYOUT_ICONS: Record<LayoutId, typeof List> = {
 
 interface CategoryMenuProps {
   category: PortalCategory;
-  /** 在首页的分区里排第几个、一共几个 —— 决定上移/下移是否可用 */
+  /** 在首页的分区里排第几个、一共几个 */
   position: { index: number; total: number };
   onEdit: () => void;
   onLayout: (layout: LayoutId) => void;
@@ -46,10 +46,7 @@ interface CategoryMenuProps {
   onDelete: () => void;
 }
 
-/**
- * 分区标题右边的「⋯」：分类本身的事都在这儿，不必再去设置页 ——
- * 看着这一组内容改这一组的名字、描述、布局，改完立刻就能看到效果。
- */
+/** 分区标题右边的「⋯」菜单：分类的名字、描述、布局、顺序与可见性 */
 export function CategoryMenu({
   category,
   position,

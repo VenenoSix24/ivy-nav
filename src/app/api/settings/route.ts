@@ -7,10 +7,7 @@ import { writeSetting } from "@/lib/settings/store";
 
 export const dynamic = "force-dynamic";
 
-/**
- * 界面偏好。它不属于门户内容（不放进 PortalData），所以单独回一个最小的结果。
- * 响应同样禁止缓存：偏好跟会话走，共享缓存存下来会串到别人身上。
- */
+/** 界面偏好；响应禁止缓存。 */
 export async function PATCH(request: Request) {
   return withAdmin(async () => {
     const parsed = settingsPatchSchema.safeParse(await readJson(request));

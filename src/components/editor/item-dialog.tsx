@@ -76,21 +76,15 @@ export function ItemDialog({
   const [iconPlate, setIconPlate] = useState(item?.iconPlate ?? true);
   const [iconMono, setIconMono] = useState(item?.iconMono ?? false);
   const [iconFit, setIconFit] = useState<IconFitId>(item?.iconFitOwn ?? defaultIconFit);
-  /**
-   * 用户有没有在这一次里动过「图标大小」。没动过就原样带回去（可能是空值 = 跟随默认），
-   * 别因为一次保存就把当前默认值焊死在这条上。
-   */
+  /** 用户有没有在这一轮里动过「图标大小」 */
   const [iconFitTouched, setIconFitTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  /** 标题是不是用户自己写过的：写过就不再让网址覆盖它 */
+  /** 标题是不是用户自己写过的 */
   const [titleTouched, setTitleTouched] = useState(item !== null);
   const [titleHint, setTitleHint] = useState<string | null>(null);
 
-  /**
-   * 只填了网址就来保存，会被「标题必填」挡住 —— 那就照网页自己把标题填上：
-   * 停手 900ms 后取一次 og:site_name / <title>，取不到就提示手动填。
-   */
+  /** 只填了网址就保存时，自动从网页取一次标题 */
   useEffect(() => {
     const target = url.trim();
     if (!target || titleTouched || !parseHttpUrl(target)) return;
@@ -127,7 +121,6 @@ export function ItemDialog({
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    // 标题空着不算错：用域名兜底，总比拦着不让保存好（网址本身仍然必填、必须合法）
     const fallback = parseHttpUrl(url)?.hostname.replace(/^www\./, "") ?? "";
     const finalTitle = title.trim() || fallback;
     if (!finalTitle) {

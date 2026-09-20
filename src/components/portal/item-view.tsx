@@ -15,13 +15,7 @@ export interface ItemViewProps {
   onEdit?: () => void;
 }
 
-/**
- * 按布局选形状。三种形状是各自独立的 DOM（一行、一块卡片、一块小方块没法只靠 class 互转），
- * 所以这里只做分发；图标兜底、Private 与置顶这些共用判断放在各自的形状里调同一份实现。
- *
- * 逐项传参而不是整包展开：紧凑布局没有「编辑」的位置（改它走右上角菜单），
- * 与其让它声明一个用不到的 prop，不如在分发表格上写清楚每种形状收什么。
- */
+/** 按布局选形状 */
 export function ItemView({
   item,
   layout,

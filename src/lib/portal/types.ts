@@ -17,7 +17,7 @@ export interface PortalItem {
   iconPlate: boolean;
   /** 单色图标是否跟随主题前景色 */
   iconMono: boolean;
-  /** 图标在图标遮罩里怎么摆 —— 算好之后的结果（条目没设过就是设置页里那个默认） */
+  /** 图标在图标遮罩里怎么摆（条目没设过就是设置页里那个默认） */
   iconFit: IconFitId;
   /** 条目自己设的那一份；空值表示跟随 defaultIconFit */
   iconFitOwn: IconFitId | null;
@@ -31,13 +31,13 @@ export interface PortalCategory {
   name: string;
   description: string | null;
   visibleOnHomepage: boolean;
-  /** private 表示整类对匿名隐藏（条目自己的可见性在公开分类里仍然算数） */
+  /** private 表示整类对匿名隐藏 */
   visibility: Visibility;
   /** 空值表示跟随默认布局（卡片） */
   layout: LayoutId | null;
 }
 
-/** Exactly what a visitor's browser receives — nothing outside this shape leaves the server. */
+/** Exactly what a visitor's browser receives. */
 export interface PortalData {
   categories: PortalCategory[];
   items: PortalItem[];
@@ -46,6 +46,6 @@ export interface PortalData {
 }
 
 export const ALL_CATEGORIES = "all" as const;
-/** 未归档条目的伪分类，只在管理视图里出现（设计文档 §19）。 */
+/** 未归档条目的伪分类，只在管理视图里出现 */
 export const INBOX = "inbox" as const;
 export type CategoryFilter = typeof ALL_CATEGORIES | typeof INBOX | number;

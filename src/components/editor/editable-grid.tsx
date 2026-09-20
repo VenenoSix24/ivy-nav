@@ -27,7 +27,7 @@ interface EditableGridProps {
   items: PortalItem[];
   layout: LayoutId;
   categories: PortalCategory[];
-  /** 搜索状态下顺序只是一部分结果，禁止拖动，避免写回残缺的排序 */
+  /** 搜索中禁止拖动 */
   sortable: boolean;
   onReorder: (orderedIds: number[]) => void;
   onEdit: (item: PortalItem) => void;
@@ -70,13 +70,10 @@ export function EditableGrid({
 
   return (
     <DndContext
-      // 显式给 id：不给的话 dnd-kit 用递增计数器生成 `DndDescribedBy-N`，而 StrictMode
-      // 在开发模式下把渲染跑两遍 —— 服务端 1、2、3，客户端成了 2、4、6，拖动把手的
-      // aria-describedby 因此每次都在控制台报水合不一致
+      // id 必须显式给：生成式 id 在 StrictMode 下服务端与客户端不一致，会报水合失败
       id={`section-${items[0]?.categoryId ?? "inbox"}`}
-      // 传感器数组的长度必须恒定：dnd-kit 内部拿它当 deps 用，搜索时换成空数组会让
-      // React 报「useEffect 的依赖数组长度在两次渲染之间变了」。不可拖动改用
-      // useSortable 的 disabled，见 SortableItem
+      // sensors 数组长度必须恒定：dnd-kit 拿它当 deps，长度一变 React 就报错。
+      // 不可拖动改用 useSortable 的 disabled，见 SortableItem
       sensors={sensors}
       collisionDetection={closestCenter}
       modifiers={[restrictToParentElement]}
@@ -84,7 +81,6 @@ export function EditableGrid({
     >
       <SortableContext
         items={items.map((item) => item.id)}
-        // 一列排开的列表要按纵向而非矩形算落点，否则跨行判定会偏
         strategy={layout === "list" ? verticalListSortingStrategy : rectSortingStrategy}
       >
         <ItemGrid layout={layout}>

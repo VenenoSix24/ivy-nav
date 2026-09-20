@@ -13,7 +13,6 @@ interface EditModeSettingsProps {
   initialEnabled: boolean;
 }
 
-/** 编辑开关放在设置里：顶栏保持安静，需要管理时再进来打开。 */
 export function EditModeSettings({ initialEnabled }: EditModeSettingsProps) {
   const router = useRouter();
   const [enabled, setEnabled] = useState(initialEnabled);

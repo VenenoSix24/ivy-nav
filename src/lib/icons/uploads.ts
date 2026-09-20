@@ -29,7 +29,7 @@ export function uploadDir(): string {
 
 export class UploadError extends Error {}
 
-/** 文件头要和声明的类型对得上，改扩展名绕过检查这条路也就堵住了。 */
+/** 文件头要和声明的类型对得上 */
 function sniffMatches(bytes: Buffer, contentType: string): boolean {
   if (contentType === "image/png") {
     return bytes.length > 8 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e;
@@ -50,10 +50,7 @@ function sniffMatches(bytes: Buffer, contentType: string): boolean {
   return false;
 }
 
-/**
- * 存一份图标。`preferred` 可选：图标库挑来的那张要一个**确定的名字**（同一个库、同一个名字、
- * 同一个颜色算出来总是同一个），同一张挑两次不会在目录里堆两份；不合规的名字一律换随机名。
- */
+/** 存一份图标；`preferred` 是图标库挑来的那张要用的确定名字，不合规就换随机名 */
 export function saveUpload(bytes: Buffer, contentType: string, preferred?: string): string {
   const extension = EXTENSIONS[contentType];
   if (!extension) {
@@ -81,11 +78,7 @@ export function saveUpload(bytes: Buffer, contentType: string, preferred?: strin
   return filename;
 }
 
-/**
- * 只接受本模块生成的文件名，杜绝 ../ 之类的路径穿越。
- * 前缀只是给人看的（图标库里挑来的那张写成了 `simple-icons-github_<hash>.svg`），
- * 字符集里没有 `.` 也没有 `/`，拼不出别的路径；结尾仍是那 16 位十六进制。
- */
+/** 只接受本模块生成的文件名，杜绝 ../ 之类的路径穿越 */
 export function isServableName(name: string): boolean {
   const match = /^(?:[a-z0-9-]{1,48}_)?[a-f0-9]{16}\.([a-z0-9]+)$/.exec(name);
   return match !== null && SERVABLE.has(match[1]!);

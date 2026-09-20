@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { site } from "@/lib/site";
 
 interface LoginFormProps {
-  /** 还没有管理员账号时给出建号指引；建号只能在服务器上做 */
+  /** 还没有管理员账号时给出建号指引 */
   needsSetup: boolean;
 }
 
@@ -77,7 +77,7 @@ export function LoginForm({ needsSetup }: LoginFormProps) {
         </div>
       ) : null}
 
-      {/* 显式写 post：万一脚本没跑起来，浏览器不会把密码拼进 URL（表单默认是 GET） */}
+      {/* method 必须显式写 post：脚本没跑起来时表单默认 GET，会把密码拼进 URL */}
       <form method="post" onSubmit={onSubmit} className="surface space-y-4 rounded-2xl p-6">
         <div className="space-y-2">
           <Label htmlFor="username" className="text-[13px]">

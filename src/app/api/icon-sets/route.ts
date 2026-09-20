@@ -11,7 +11,7 @@ import { parseHttpUrl } from "@/lib/utils/url";
 
 export const dynamic = "force-dynamic";
 
-/** 自建图标集：一份 JSON 一份集合，抓回来存进 `icon_sets`，跟着备份走。 */
+/** 自建图标集：一份 JSON 一份集合，存在 `icon_sets` 里。 */
 export async function GET() {
   return withAdmin(async () => jsonOk({ sets: listIconSets() }));
 }
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const mirror = body?.mirror === true;
 
     try {
-      // 同名即「重新抓一份」：saveIconSet 按名字覆盖，不会堆出两份
+      // 同名即覆盖，不会堆出两份
       const payload = await downloadIconSet(target, mirror);
       return jsonOk({
         id: saveIconSet(payload),

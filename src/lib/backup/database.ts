@@ -31,7 +31,7 @@ function timestamp(now: Date): string {
   );
 }
 
-/** VACUUM INTO 产出的是一致快照，开着 WAL 也不会有半个事务的状态。 */
+/** VACUUM INTO 产出的是一致快照 */
 export function createSnapshot(now = new Date()): SnapshotInfo {
   const dir = backupsDir();
   fs.mkdirSync(dir, { recursive: true });
@@ -39,7 +39,7 @@ export function createSnapshot(now = new Date()): SnapshotInfo {
   const name = `portal-${timestamp(now)}.db`;
   const target = path.join(dir, name);
 
-  // VACUUM INTO 不接受参数绑定；文件名由本模块生成，仅需转义单引号
+  // VACUUM INTO 不接受参数绑定
   getSqlite().exec(`VACUUM INTO '${target.replace(/'/g, "''")}'`);
 
   return { name, size: fs.statSync(target).size, createdAt: now.toISOString() };
@@ -75,10 +75,7 @@ export function readSnapshot(name: string): Buffer | null {
 
 export class RestoreError extends Error {}
 
-/**
- * 从快照恢复内容。快照里也有用户与会话，但恢复只覆盖内容表，
- * 不会因为恢复一份旧备份就把当前登录踢掉或把管理员换掉。
- */
+/** 从快照恢复内容，只覆盖内容表 */
 export function restoreSnapshot(name: string): { categories: number; items: number } {
   const target = snapshotPath(name);
   if (!target) throw new RestoreError("备份文件名不合法：请从列表中选择。");
@@ -94,7 +91,7 @@ export function restoreSnapshot(name: string): { categories: number; items: numb
     snapshot.close();
   }
 
-  // 备份文件也要过一遍校验：恢复不能成为绕过网址协议检查的入口
+  // 备份文件也要过一遍校验
   const parsed = parseBackupDocument(document);
   if (!parsed.ok || !parsed.document) {
     throw new RestoreError(`备份内容不合法：${parsed.error ?? "格式不符合预期"}`);

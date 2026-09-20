@@ -7,11 +7,7 @@ import { sortByOrder } from "@/lib/utils/sort";
 import { privateCategoryIds, visibleCategories, visibleItems } from "@/lib/utils/visibility";
 import type { PortalCategory, PortalData, PortalItem } from "./types";
 
-/**
- * The only way portal content reaches a page. Filtering happens here, on the server, so a
- * guest's payload never contains private rows — hiding them in the browser would still
- * have shipped the URLs (设计文档 §10).
- */
+/** The only way portal content reaches a page; filtering happens here, on the server. */
 export function getPortalData(options: { includePrivate: boolean }): PortalData {
   const db = getDb();
 
@@ -35,7 +31,7 @@ export function getPortalData(options: { includePrivate: boolean }): PortalData 
   const hiddenCategories = privateCategoryIds(categoryRows, options.includePrivate);
   const visible = visibleItems(itemRows, options.includePrivate, hiddenCategories);
   const shownCategories = visibleCategories(categoryRows, visible, options.includePrivate);
-  // 匿名访问者的整个门户就是首页那一屏，没在首页显示的分类不必发过去
+  // 匿名访问者只拿首页显示的分类
   const portalCategoriesSource = options.includePrivate
     ? shownCategories
     : shownCategories.filter((category) => category.visibleOnHomepage);
@@ -49,16 +45,15 @@ export function getPortalData(options: { includePrivate: boolean }): PortalData 
     layout: category.layout,
   }));
 
-  // 条目按最终要发出去的分类过滤。只过滤分类名而不过滤条目，
-  // 隐藏分类里的条目仍会出现在响应里 —— 浏览器拿到的东西必须和屏幕上的一致。
+  // 条目按最终要发出去的分类过滤
   const allowedCategoryIds = new Set(portalCategoriesSource.map((category) => category.id));
-  // 条目自己设过就听它的，没设过跟随设置页里的默认：解析放在这里，渲染处不必再关心
+  // 条目自己设过就听它的，没设过跟随设置页里的默认
   const defaultIconFit = getDefaultIconFit();
 
   const portalItems: PortalItem[] = visible
     .filter((item) => {
       if (!item.url) return false;
-      // 未归档的条目（Inbox）只有管理员看得到，公开页面把它们留在原地
+      // 未归档的条目（Inbox）只有管理员看得到
       if (item.categoryId === null) return options.includePrivate;
       return allowedCategoryIds.has(item.categoryId);
     })

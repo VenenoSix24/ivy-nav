@@ -3,10 +3,7 @@ import { readUpload, uploadContentType } from "@/lib/icons/uploads";
 
 export const dynamic = "force-dynamic";
 
-/**
- * 上传的图标。SVG 会被当作可执行内容对待：CSP 锁死外部资源并加 sandbox，
- * 即使有人直接打开这个地址也拿不到脚本执行能力。
- */
+/** 上传的图标；SVG 走 CSP + sandbox 当静态内容发。 */
 export async function GET(_request: Request, { params }: { params: Promise<{ name: string }> }) {
   const { name } = await params;
   const body = readUpload(name);

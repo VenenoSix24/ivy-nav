@@ -18,7 +18,7 @@ export const users = sqliteTable("users", {
   updatedAt: updatedAt(),
 });
 
-/** Opaque session tokens; only the SHA-256 digest of the token is persisted. */
+/** Session tokens; only the SHA-256 digest is persisted. */
 export const sessions = sqliteTable("sessions", {
   id: text("id").primaryKey(),
   userId: integer("user_id")
@@ -39,10 +39,7 @@ export const categories = sqliteTable("categories", {
   description: text("description"),
   sortOrder: integer("sort_order").notNull().default(0),
   visibleOnHomepage: integer("visible_on_homepage", { mode: "boolean" }).notNull().default(true),
-  /**
-   * 这个分类在首页用哪种排布。空值表示用默认（卡片）。
-   * 取值必须与 src/lib/settings/homepage.ts 的 LAYOUTS 一致，有测试盯着两边。
-   */
+  /** 首页排布；空值表示默认（卡片），取值与 src/lib/settings/homepage.ts 的 LAYOUTS 一致 */
   layout: text("layout", { enum: ["card", "list", "compact"] }),
   visibility: text("visibility", { enum: ["public", "private"] })
     .notNull()
@@ -51,7 +48,7 @@ export const categories = sqliteTable("categories", {
   updatedAt: updatedAt(),
 });
 
-/** A null categoryId is the Inbox: captured but not filed yet. */
+/** A null categoryId is the Inbox. */
 export const items = sqliteTable("items", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   categoryId: integer("category_id").references(() => categories.id, { onDelete: "set null" }),
@@ -64,17 +61,11 @@ export const items = sqliteTable("items", {
     .notNull()
     .default("favicon"),
   iconValue: text("icon_value"),
-  /**
-   * 图标底下那层图标遮罩（描边 + 玻璃底）。应用类图标自带圆角外形，再套一层图标遮罩就成了
-   * 大圆套小圆，所以这张卡片可以按条目关掉它。
-   */
+  /** 图标遮罩（描边 + 玻璃底），可按条目关掉 */
   iconPlate: integer("icon_plate", { mode: "boolean" }).notNull().default(true),
-  /** 单色图标按主题前景色渲染（CSS mask 上色）。彩色图标开这个会变成剪影。 */
+  /** 单色图标按主题前景色渲染（CSS mask 上色） */
   iconMono: integer("icon_mono", { mode: "boolean" }).notNull().default(false),
-  /**
-   * 图标在图标遮罩里怎么摆（原样 / 自动裁边 / 裁剪铺满 / 拉伸）。空值表示跟随设置页里的默认。
-   * 取值必须与 src/lib/icons/fit.ts 的 ICON_FITS 一致，那边是可选项的唯一出处。
-   */
+  /** 图标在图标遮罩里的摆法；空值表示跟随设置页的默认，取值与 src/lib/icons/fit.ts 一致 */
   iconFit: text("icon_fit", { enum: ["contain", "auto", "cover", "fill"] }),
   visibility: text("visibility", { enum: ["public", "private"] })
     .notNull()

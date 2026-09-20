@@ -7,11 +7,7 @@ export interface SearchSubject extends Pick<
   categoryName: string | null;
 }
 
-/**
- * Space-separated terms all have to match, so "git api" narrows rather than widens.
- * The haystack is the same set the design doc lists: title, description, URL, domain,
- * tags and category.
- */
+/** Space-separated terms all have to match, across title, description, URL, domain, tags and category. */
 export function matchesQuery(subject: SearchSubject, query: string): boolean {
   const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (terms.length === 0) return true;

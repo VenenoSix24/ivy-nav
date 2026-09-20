@@ -7,10 +7,7 @@ import { cn } from "cn";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { ICON_FITS, type IconFitId } from "@/lib/icons/fit";
 
-/**
- * 条目图标的默认摆法。单个条目可以在图标选择器里自己改，这里的值只负责没设过的那些。
- * 与配色不同，它不影响首屏结构，所以改完不必刷新页面。
- */
+/** 条目图标的默认摆法 */
 export function IconFitSettings({ initialFit }: { initialFit: IconFitId }) {
   const [fit, setFit] = useState<IconFitId>(initialFit);
   const [busy, setBusy] = useState(false);

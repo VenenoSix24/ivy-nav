@@ -3,10 +3,7 @@ interface Bucket {
   resetAt: number;
 }
 
-/**
- * 内存计数即可满足自托管单实例的登录防爆破；进程重启会清空，这是可接受的代价。
- * 不落库是为了避免把「谁在尝试登录」这类信息写进数据库。
- */
+/** 内存计数的登录防爆破，进程重启会清空 */
 export class AttemptLimiter {
   private readonly buckets = new Map<string, Bucket>();
 
@@ -55,11 +52,7 @@ export const loginLimiter = new AttemptLimiter(
   Number(process.env.LOGIN_ATTEMPT_WINDOW_MS ?? 15 * 60 * 1000),
 );
 
-/**
- * 单管理员场景下用 IP 计数没有意义：X-Forwarded-For 由客户端自己写，
- * 每次换一个值就是一个新桶，限流等于不存在。所以按用户名计，再加一道全局上限，
- * 换用户名也拿不到更多额度。
- */
+/** 全局上限：按用户名计之外再加一道，换用户名也拿不到更多额度 */
 export const loginGlobalLimiter = new AttemptLimiter(
   Number(process.env.LOGIN_GLOBAL_ATTEMPT_LIMIT ?? 30),
   Number(process.env.LOGIN_ATTEMPT_WINDOW_MS ?? 15 * 60 * 1000),

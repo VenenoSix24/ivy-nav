@@ -4,7 +4,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { iconifySource } from "./iconify";
 
-/** 只挡在 fetch 上：解析、缓存、地址拼装都还是真跑。 */
+/** 只挡在 fetch 上，解析、缓存、地址拼装还是真跑 */
 function stubSearch(payload: unknown, ok = true) {
   const calls: string[] = [];
   vi.stubGlobal(
@@ -59,7 +59,7 @@ describe("iconifySource.search", () => {
     expect(hits[1]?.note).toBe("SVG Logos · CC0 1.0");
     expect(calls[0]).toContain("/search?query=home");
 
-    // 第二次问同一个关键词应该吃缓存，不再打外网
+    // 第二次问同一个关键词吃缓存
     await iconifySource.search("home");
     expect(calls).toHaveLength(1);
   });

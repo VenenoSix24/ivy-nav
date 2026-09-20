@@ -32,7 +32,7 @@ describe("拖拽后的本地顺序", () => {
     const items = [item(1), item(2), item(3), item(4)];
     const next = reorderWithin(items, [2, 1]);
     expect(next.map((entry) => entry.id)).toEqual([2, 1, 3, 4]);
-    // 4 号仍在最后一位，说明没被卷进来
+    // 4 号仍在最后一位
     expect(next[3]!.id).toBe(4);
   });
 
@@ -42,8 +42,7 @@ describe("拖拽后的本地顺序", () => {
   });
 
   it("给的是子集时只在它们占着的位置之间重排，没提到的留在原位", () => {
-    // 调用点给的一律是整个分区的完整顺序；这里把子集语义写下来，
-    // 免得以后有人以为它是「未提到的也要跟着挪」
+    // 调用点给的一律是整个分区的完整顺序，这里把子集语义写下来
     const items = [item(1), item(2), item(3)];
     expect(reorderWithin(items, [3, 1]).map((e) => e.id)).toEqual([3, 2, 1]);
   });

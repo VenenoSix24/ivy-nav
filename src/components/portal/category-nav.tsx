@@ -8,7 +8,7 @@ import { ALL_CATEGORIES, type CategoryFilter, type PortalCategory } from "@/lib/
 
 /** 箭头一次挪多远：大约三枚胶囊 */
 const SCROLL_STEP = 240;
-/** 拖过这么多像素才算拖动，否则当成一次点击 */
+/** 拖动判定阈值（像素） */
 const DRAG_THRESHOLD = 4;
 
 interface CategoryNavProps {
@@ -18,11 +18,7 @@ interface CategoryNavProps {
   className?: string;
 }
 
-/**
- * 分类导航：搜索栏下方的一排胶囊，不吸顶、不加底衬，分类多了整排横向滚动。
- * 桌面没有触摸滑动，只靠 `overflow-x-auto` 会让人以为到头了，所以另给了鼠标按住拖与两端箭头；
- * 箭头只在鼠标扫到这一排、且那个方向确实还有内容时浮出来。
- */
+/** 分类导航：搜索栏下方的一排胶囊，分类多了整排横向滚动 */
 export function CategoryNav({ categories, active, onSelect, className }: CategoryNavProps) {
   const scroller = useRef<HTMLUListElement>(null);
   const [edges, setEdges] = useState({ left: false, right: false });
@@ -36,13 +32,11 @@ export function CategoryNav({ categories, active, onSelect, className }: Categor
     const update = () => {
       const left = node.scrollLeft > 1;
       const right = node.scrollLeft + node.clientWidth < node.scrollWidth - 1;
-      // 值没变就返回原对象，免得每次滚动都重渲染一遍
       setEdges((current) =>
         current.left === left && current.right === right ? current : { left, right },
       );
     };
 
-    // ResizeObserver 挂上时自己会回调一次，初值不用在 effect 里同步再设一遍
     const observer = new ResizeObserver(update);
     observer.observe(node);
     node.addEventListener("scroll", update, { passive: true });
@@ -59,7 +53,6 @@ export function CategoryNav({ categories, active, onSelect, className }: Categor
   }
 
   function onPointerDown(event: React.PointerEvent<HTMLUListElement>) {
-    // 触屏交给浏览器自己的滑动手势，别去抢
     if (event.pointerType === "touch" || !scrollable) return;
 
     const node = scroller.current;
@@ -93,7 +86,6 @@ export function CategoryNav({ categories, active, onSelect, className }: Categor
   return (
     <div
       className={cn("relative", className)}
-      // 箭头平时不占视线：鼠标扫到这一排才浮出来
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
     >
@@ -110,7 +102,6 @@ export function CategoryNav({ categories, active, onSelect, className }: Categor
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
-          // 拖完那一下不算点击，否则松手时会顺手切了分类
           onClickCapture={(event) => {
             if (!drag.current.moved) return;
             event.preventDefault();

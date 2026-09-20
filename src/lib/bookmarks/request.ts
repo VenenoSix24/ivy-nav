@@ -1,22 +1,16 @@
 import type { DuplicatePolicy } from "./plan";
 import { isDuplicatePolicy } from "./plan";
 
-/** 4 MB 足够放几万条书签；再大就不像浏览器的导出文件了 */
+/** 文件大小上限 4 MB */
 export const BOOKMARK_FILE_MAX = 4 * 1024 * 1024;
-/** 顶层目录最多这么多组，防止一个畸形文件把选择清单撑爆 */
+/** 顶层目录组数上限 */
 export const BOOKMARK_GROUP_MAX = 500;
 
 export type BookmarkBody =
   | { ok: true; html: string; duplicates: DuplicatePolicy; groups: string[] | null }
   | { ok: false; error: string };
 
-/**
- * 预览与导入收的是同一份东西（文件正文 + 重复网址怎么处理 + 挑哪几个目录），
- * 检查也放在一处，免得两个接口对「什么算合法请求」有不同说法。
- *
- * `groups` 缺省表示「全要」；给空数组表示一个都不要（前端在勾选清单里可能全取消，
- * 这时导入 0 条是用户的明确意思，不是错误）。
- */
+/** 预览与导入共用的请求校验，groups 缺省表示全要 */
 export function readBookmarkBody(input: unknown): BookmarkBody {
   if (!input || typeof input !== "object") {
     return { ok: false, error: "没有收到文件内容：请重新选择浏览器导出的书签文件。" };

@@ -117,10 +117,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-/**
- * 显式登记而不是全量引入：只有这里列出的图标会进包，首页不会因为一个图标
- * 拖进整库（设计文档 §43）。图标选择器也以这份名单为搜索范围。
- */
+/** 显式登记而不是全量引入：只有这里列出的图标会进包 */
 export const lucideRegistry = {
   activity: Activity,
   airplay: Airplay,

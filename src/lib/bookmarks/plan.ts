@@ -1,21 +1,10 @@
-/**
- * 把书签树映射成本站的内容。
- *
- * 一级目录当分类，二级及更深的目录当标签；浏览器自带的那层壳直接下钻；顶层散着的落进 Inbox；
- * A/B/C 里的书签 → 分类 A + 标签 B、C。去重按「分类 + 网址」算，同一个网址出现在两个分类里
- * 就各建一条，只有同一个分类里重复出现才留第一次。
- *
- * 顶层目录各成一组，预览里一组一行，用户可以只挑其中几组导入。
- *
- * 这个模块是纯函数：不碰数据库、不碰网络，现有的分类 / 标签 / 条目由调用方以索引形式传入，
- * 所以预览与实际导入走的是同一段逻辑。
- */
+/** 把书签树映射成本站的内容 */
 
 import { normalizeTagNames } from "@/lib/portal/schemas";
 import { normalizeUrl, toDomain } from "@/lib/utils/url";
 import { countLinks, type BookmarkFolder } from "./parse";
 
-/** 与 portal/schemas.ts 里的上限保持一致，超出的在这里就截掉并记一笔 */
+/** 与 portal/schemas.ts 保持一致的上限 */
 const TITLE_MAX = 80;
 const DESCRIPTION_MAX = 300;
 const CATEGORY_MAX = 40;
@@ -26,7 +15,7 @@ const TAGS_PER_ITEM = 12;
 const PREVIEW_INVALID_MAX = 50;
 const PREVIEW_TAG_MAX = 100;
 const PREVIEW_SAMPLE = 20;
-/** 单个分组的样例只留前几条，不然几十个目录的响应很大 */
+/** 单个分组的样例条数 */
 const GROUP_SAMPLE = 5;
 const SHARED_SAMPLE = 5;
 
@@ -40,8 +29,7 @@ export function isDuplicatePolicy(value: unknown): value is DuplicatePolicy {
   return typeof value === "string" && (DUPLICATE_POLICIES as readonly string[]).includes(value);
 }
 
-/** 浏览器自带的顶层目录：它们是「书签存在哪儿」的容器，不是用户分的类。
- *  只在第一层认，用户自己建一个叫「收藏夹」的子目录仍算分类。 */
+/** 浏览器自带的顶层目录 */
 const WRAPPER_ROOTS = [
   "书签栏",
   "书签工具栏",
@@ -71,7 +59,7 @@ export interface BookmarkIndex {
   categories: string[];
   /** 现有标签名 */
   tags: string[];
-  /** 现有条目：按「分类 + 网址」比对，见 itemKey */
+  /** 现有条目，按分类 + 网址比对 */
   items: { id: number; url: string; categoryName: string | null }[];
 }
 
@@ -81,14 +69,14 @@ export interface PlannedItem {
   description: string | null;
   categoryName: string | null;
   tags: string[];
-  /** 这一类里已经有同一个网址；「覆盖」策略下更新它，「跳过」策略下略过它 */
+  /** 这一类里已有同一个网址时命中的条目 */
   existingItemId: number | null;
 }
 
 export interface PlannedCategory {
   name: string;
   count: number;
-  /** 库里已有同名分类（大小写不敏感），导入时直接复用 */
+  /** 库里已有同名分类（大小写不敏感） */
   existing: boolean;
 }
 
@@ -104,11 +92,11 @@ export interface InvalidRow {
   reason: string;
 }
 
-/** 一份计划的可视化统计；分组之间的数字可以直接相加（见 mergePreview） */
+/** 一份计划的统计 */
 export interface BookmarkPreview {
   total: number;
   importable: number;
-  /** 同一个分类里重复出现的网址，只留第一次 */
+  /** 同一个分类里重复出现的网址数 */
   repeatsInFile: number;
   /** 同一个分类里库里已经有这个网址的条数 */
   existingDuplicates: number;
@@ -124,7 +112,7 @@ export interface BookmarkPreview {
   sample: { title: string; url: string; categoryName: string | null; tags: string[] }[];
 }
 
-/** 预览里的一行：一个顶层目录（或「未分类」那一堆） */
+/** 预览里的一行：一个顶层目录或未分类 */
 export interface PlannedGroup {
   key: string;
   name: string;
@@ -135,10 +123,10 @@ export interface PlannedGroup {
   preview: BookmarkPreview;
 }
 
-/** 同一个网址被放进了多个分类：不合并，各分类各建一条，只在预览里提醒一声 */
+/** 同一个网址出现在多个分类的情况 */
 export interface SharedSummary {
   urls: number;
-  /** 因此比「一个网址一条」多出来的条目数 */
+  /** 比「一个网址一条」多出来的条目数 */
   extra: number;
   sample: { title: string; url: string; categories: string[] }[];
 }
@@ -149,24 +137,24 @@ export interface BookmarkPlan {
   items: PlannedItem[];
   /** 选中范围的合计 */
   preview: BookmarkPreview;
-  /** 整份文件的跨分类情况，与选了哪几组无关 */
+  /** 整份文件的跨分类情况 */
   shared: SharedSummary;
   ignoredRoots: string[];
   /** 文件里的书签总数，含重复与无效的 */
   total: number;
 }
 
-/** 发给前端的部分：条目明细留在服务端，导入时按同一份文件重新算一遍 */
+/** 发给前端的预览数据 */
 export interface BookmarkPreviewPayload {
   total: number;
   groups: PlannedGroup[];
-  /** 「全部选中」时的合计；前端勾掉某几组时用 mergePreview 现算 */
+  /** 「全部选中」时的合计 */
   merged: BookmarkPreview;
   shared: SharedSummary;
   ignoredRoots: string[];
 }
 
-/** 去重的依据：同一个分类里的同一个网址才算重复 */
+/** 去重的依据：同一个分类里的同一个网址 */
 export function itemKey(categoryName: string | null, url: string): string {
   return `${categoryName?.toLowerCase() ?? ""}\n${url}`;
 }
@@ -196,9 +184,9 @@ export function planBookmarkImport(
   );
 
   const ignoredRoots = new Set<string>();
-  /** 分类 + 网址：同一个分类里只留第一次 */
+  /** 分类 + 网址，已出现过的键 */
   const seen = new Set<string>();
-  /** 网址 → 它落在哪些分类里，用来提醒跨分类重复 */
+  /** 网址对应它落在哪些分类里 */
   const byUrl = new Map<string, { title: string; url: string; categories: string[] }>();
 
   const seeds: Seed[] = [];
@@ -280,7 +268,6 @@ export function planBookmarkImport(
 
       let title = clip(link.title, TITLE_MAX);
       if (!title.value) {
-        // 没标题的书签本身是有效的，用域名顶上比整条丢掉有用
         title = { value: toDomain(url) ?? url, truncated: false };
         derivedTitles += 1;
       }
@@ -392,10 +379,7 @@ export function toPreviewPayload(plan: BookmarkPlan): BookmarkPreviewPayload {
   };
 }
 
-/**
- * 把几组统计加起来。前后端共用：服务端用它算「全部选中」的合计，前端勾掉某几组时用它现算，
- * 不必为一个勾选框再跑一趟接口。
- */
+/** 把几组统计加起来 */
 export function mergePreview(previews: BookmarkPreview[]): BookmarkPreview {
   const categories = new Map<string, PlannedCategory>();
   const tags = new Map<string, PlannedTag>();

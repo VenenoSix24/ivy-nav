@@ -15,16 +15,13 @@ export function resolveMigrationsPath(): string {
   return process.env.MIGRATIONS_PATH ?? path.join(process.cwd(), "src", "db", "migrations");
 }
 
-// Next.js dev reloads modules per request; a module-level handle would leak connections.
+// 连接句柄挂在 globalThis 上：dev 下模块会被反复加载
 const globalForDb = globalThis as unknown as {
   __ivyNavDb?: Db;
   __ivyNavSqlite?: Database.Database;
 };
 
-/**
- * Lazily opens the database and brings the schema up to date. Migrations run on first
- * access so a fresh self-hosted deployment needs no separate migration step.
- */
+/** 懒开数据库，首次访问时跑迁移。 */
 export function getDb(): Db {
   if (globalForDb.__ivyNavDb) return globalForDb.__ivyNavDb;
 
@@ -43,7 +40,7 @@ export function getDb(): Db {
   return db;
 }
 
-/** 需要执行 drizzle 不覆盖的语句时用（目前只有 VACUUM INTO）。 */
+/** 直接拿 better-sqlite3 句柄（目前只有 VACUUM INTO 用）。 */
 export function getSqlite(): Database.Database {
   getDb();
   const sqlite = globalForDb.__ivyNavSqlite;

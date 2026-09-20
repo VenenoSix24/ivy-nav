@@ -13,10 +13,7 @@ interface TagInputProps {
   id?: string;
 }
 
-/**
- * 胶囊式标签输入：回车或逗号把当前输入变成一个标签，退格删掉最后一个，
- * 粘贴 "a, b, c" 会一次拆成三个。比让人自己用逗号分隔字符串少出错。
- */
+/** 胶囊式标签输入：回车或逗号提交，退格删掉最后一个，粘贴按逗号拆开 */
 export function TagInput({
   value,
   onChange,
@@ -79,7 +76,6 @@ export function TagInput({
         value={draft}
         onChange={(event) => {
           const next = event.target.value;
-          // 输入逗号即提交，省一次回车
           if (/[,，]$/.test(next)) commit(next);
           else setDraft(next);
         }}

@@ -36,7 +36,6 @@ const CARD = "grid-cols-2";
 const LIST = "grid-cols-1";
 const COMPACT = "sm:grid-cols-4";
 
-// 匿名不能改分类
 const anon = await call("/api/categories/1", {
   method: "PATCH",
   body: { layout: "list" },
@@ -97,7 +96,6 @@ assert(
   reset.status === 200 && reset.json?.portal?.categories?.find((c) => c.id === 1)?.layout === null,
 );
 
-// 布局不再走设置接口
 const wrongRoute = await call("/api/settings", { method: "PATCH", body: { layout: "list" } });
 assert(
   "设置接口拒绝 layout（布局挂在分类上）",
@@ -107,7 +105,6 @@ assert(
 const palette = await call("/api/settings", { method: "PATCH", body: { palette: "clay" } });
 assert("设置接口仍然接受配色", palette.status === 200 && palette.json?.palette === "clay");
 
-// 布局跟着备份走
 const exported = await call("/api/backup/export");
 assert("导出里带上分类布局", exported.text.includes('"layout"'), `HTTP ${exported.status}`);
 

@@ -17,11 +17,7 @@ function assert(label, condition, detail) {
   if (!condition) failures += 1;
 }
 
-/**
- * 响应体是不是那张 1×1 的透明占位图。
- * 不去数字节数：占位图换个编码就变长变短（曾经断言 70 字节，于是换一张正常 PNG 就误报），
- * 读 IHDR 里的宽高才是它真正的特征。
- */
+/** 响应体是不是那张 1×1 的透明占位图（按 IHDR 里的宽高判断）。 */
 function isPlaceholderBody(buffer) {
   return (
     buffer.length >= 24 &&
@@ -49,13 +45,11 @@ async function call(path, { method = "GET", body, auth = true } = {}) {
   let json = null;
   try {
     json = JSON.parse(text);
-  } catch {
-    /* html 或二进制 */
-  }
+  } catch {}
+
   return { status: response.status, json, text, headers: response.headers };
 }
 
-// 登录（沿用限流前的干净实例）
 const login = await call("/api/auth/login", {
   method: "POST",
   body: { username: USER, password: PASSWORD },
@@ -67,7 +61,6 @@ assert(
   `HTTP ${login.status}`,
 );
 
-// ---- F4：备份里的危险网址必须被拦下
 const dbPath = path.join(DATA_DIR, "portal.db");
 const backupsDir = path.join(DATA_DIR, "..", "backups");
 fs.mkdirSync(backupsDir, { recursive: true });
@@ -90,7 +83,6 @@ assert(
   `HTTP ${restoreTainted.status} ${restoreTainted.json?.error}`,
 );
 
-// 同一个文件走导入接口也应该被拒
 const exported = await call("/api/backup/export");
 const document = JSON.parse(exported.text);
 document.items[0].url = "javascript:alert(1)";
@@ -102,7 +94,6 @@ assert("导入拒绝危险网址", importTainted.status === 400, `HTTP ${importT
 
 fs.rmSync(crafted, { force: true });
 
-// ---- 抓取链路：默认拒绝，显式放开后可用
 const portal = await call("/api/portal");
 const categoryId = portal.json.portal.categories[0].id;
 const created = await call("/api/items", {

@@ -3,10 +3,7 @@ import type { PortalData } from "./types";
 
 export type PortalResult = { ok: true; portal: PortalData } | { ok: false; error: string };
 
-/**
- * 所有写操作都走这个出口：服务器校验通过后回最新全量数据，
- * 前端直接替换本地状态，不需要「先猜结果再等刷新」。
- */
+/** 所有写操作都走这个出口：服务器校验通过后回最新全量数据 */
 export async function portalRequest(
   path: string,
   body?: unknown,
@@ -54,7 +51,7 @@ function readPortal(payload: unknown): PortalData | null {
   return {
     categories: candidate.categories,
     items: candidate.items,
-    // 老响应里可能没有这一项：缺了就按默认摆法，不值得因此判整个响应无效
+    // 老响应里可能没有这一项，缺了取默认摆法
     defaultIconFit: candidate.defaultIconFit ?? DEFAULT_ICON_FIT,
   };
 }

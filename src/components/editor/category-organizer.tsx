@@ -37,20 +37,14 @@ interface CategoryOrganizerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categories: PortalCategory[];
-  /** 每个分类有几个条目，摆在名字下面当参考 */
+  /** 每个分类有几个条目 */
   counts: Map<number, number>;
   onReorder: (orderedIds: number[]) => void;
   onCreate: (name: string) => Promise<boolean>;
   onEdit: (category: PortalCategory) => void;
 }
 
-/**
- * 整理分类：**排序不再是一条竖着拖的长名单**。
- *
- * 分类一多，竖排里要挪一个到底部就得一路拖过整屏；这里改成两列的紧凑网格，
- * 一屏能摊下二十来个，拖到哪儿都只是一小段距离，顺带也看得见谁被隐藏了。
- * 改名字与描述还是走同一个对话框（点每行右边的铅笔）。
- */
+/** 整理分类：两列的紧凑网格，拖动排序 */
 export function CategoryOrganizer({
   open,
   onOpenChange,
@@ -92,8 +86,7 @@ export function CategoryOrganizer({
         </DialogHeader>
 
         <DndContext
-          // 显式给 id：不给的话 dnd-kit 用递增计数器生成，而 StrictMode 在开发模式下
-          // 渲染两遍，服务端与客户端算出来的不一样，控制台会报水合不一致
+          // id 必须显式给：生成式 id 在 StrictMode 下服务端与客户端不一致，会报水合失败
           id="category-organizer"
           sensors={sensors}
           collisionDetection={closestCenter}

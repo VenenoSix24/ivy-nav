@@ -44,10 +44,7 @@ export function createSession(
   return { token, expiresAt };
 }
 
-/**
- * 校验 Cookie 里的令牌。数据库只存令牌摘要，所以拿到库文件也无法重放会话；
- * 活跃时顺延有效期，长时间不用则自然过期。
- */
+/** 校验 Cookie 里的令牌；活跃时顺延有效期 */
 export function readSession(token: string): AdminSession | null {
   const db = getDb();
   const id = hashSessionToken(token);
@@ -82,7 +79,7 @@ export function readSession(token: string): AdminSession | null {
   return row;
 }
 
-/** 只读当前会话，供服务端组件使用（组件里不能写 Cookie）。 */
+/** 只读当前会话，供服务端组件使用 */
 export async function getSession(): Promise<AdminSession | null> {
   const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
   if (!token) return null;
@@ -127,5 +124,5 @@ export async function readSessionToken(): Promise<string | null> {
   return (await cookies()).get(SESSION_COOKIE_NAME)?.value ?? null;
 }
 
-// 重新导出：调用方只从 auth 层取会话相关能力，用户查询本身在 db/users.ts
+// 重新导出：用户查询本身在 db/users.ts
 export { needsSetup };

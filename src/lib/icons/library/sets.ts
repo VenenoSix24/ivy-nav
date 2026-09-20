@@ -12,13 +12,7 @@ import {
   type SearchOptions,
 } from "./types";
 
-/**
- * 自建图标集：一份 JSON（形如 `{name, description, icons: [{name, url}]}`），
- * 在设置页填个地址抓回来存进 `icon_sets`，之后搜索、预览、挑选都从本地那份走。
- *
- * 图标本体仍在原来的图床上（那份 wool_scripts 的图标有 1608 张、都在
- * raw.githubusercontent 上），所以照旧「搜到哪张取哪张」，只把挑中的那张下载到本地。
- */
+/** 自建图标集：抓一份 JSON 存进 `icon_sets`，搜索与预览都从本地那份走 */
 
 const MAX_SET_BYTES = 4 * 1024 * 1024;
 const MAX_ICONS = 20_000;
@@ -33,7 +27,7 @@ export interface SetIcon {
 export interface SetPayload {
   name: string;
   description: string | null;
-  /** 这份 JSON 的来源地址：留着是为了「重新抓一份」 */
+  /** 这份 JSON 的来源地址 */
   url: string;
   mirrored: boolean;
   icons: SetIcon[];
@@ -41,11 +35,7 @@ export interface SetPayload {
 
 export class SetError extends Error {}
 
-/**
- * GitHub 的 raw 域名在很多网络里连不上（本机实测直接超时），而同一份文件在
- * jsDelivr 上有镜像。这是「可选加速」而不是悄悄改写：导入时勾一下，
- * 存进 metadata 让用户随时知道这份集合走的是哪条路。
- */
+/** 把 GitHub raw 地址换成 jsDelivr 镜像地址，其它地址原样返回 */
 export function mirrorUrl(url: string): string {
   const match = /^https?:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)$/.exec(
     url,
@@ -87,11 +77,7 @@ function readIconEntry(entry: unknown, mirror: boolean): SetIcon | null {
   return { name, url: mirror ? mirrorUrl(target) : target };
 }
 
-/**
- * 解析一份图标集 JSON。三种常见形状都收：
- * 官方那份是 `{name, description, icons: [{name, url}]}`，也有人直接给数组，
- * 还有人给 `{图标名: 地址}` 的映射 —— 都是「名字 + 图片地址」，不必为形状挑刺。
- */
+/** 解析一份图标集 JSON，收数组、`{icons: [...]}` 与 `{名字: 地址}` 三种形状 */
 export function parseIconSet(raw: string, mirror: boolean, fallbackName: string): SetPayload {
   let parsed: unknown;
   try {
@@ -116,7 +102,7 @@ export function parseIconSet(raw: string, mirror: boolean, fallbackName: string)
     if (Array.isArray(record.icons)) {
       list = record.icons;
     } else {
-      // `{名字: 地址}` 这种映射：把键折回名字里
+      // 映射形状：把键折回名字里
       list = Object.entries(record)
         .filter(([key]) => key !== "name" && key !== "description")
         .map(([key, value]) =>
@@ -134,7 +120,7 @@ export function parseIconSet(raw: string, mirror: boolean, fallbackName: string)
   for (const entry of list) {
     const icon = readIconEntry(entry, mirror);
     if (!icon) continue;
-    // 同一份集合里重名的很多（wool_scripts 里光 fmz200 就有十几张），按名字去重
+    // 按名字去重
     if (seen.has(icon.name)) continue;
     seen.add(icon.name);
     icons.push(icon);
@@ -223,7 +209,7 @@ export function deleteIconSet(id: number): boolean {
   return true;
 }
 
-/** 抓一份图标集 JSON。抓取走统一出口检查与超时，读正文失败也只当拿不到。 */
+/** 抓一份图标集 JSON */
 export async function downloadIconSet(url: URL, mirror: boolean): Promise<SetPayload> {
   const response = await fetchWithTimeout(
     url.toString(),
@@ -245,7 +231,7 @@ export async function downloadIconSet(url: URL, mirror: boolean): Promise<SetPay
   return { ...parseIconSet(text, mirror, fallback), url: url.toString() };
 }
 
-/** 自建集也当成一个来源：搜索在本地那份清单上做，取图才去外网。 */
+/** 自建集也当成一个来源，搜索在本地那份清单上做 */
 export function setSource(row: IconSet, icons: SetIcon[]): LibrarySource {
   const byName = new Map(icons.map((icon) => [icon.name, icon]));
 

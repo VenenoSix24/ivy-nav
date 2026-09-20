@@ -1,8 +1,4 @@
-/**
- * 取图标的「方案」清单。这张表同时被两边用：服务端按它决定去问谁、按什么顺序问；
- * 选择器拿它的名称给用户看「这一张是谁给的」。所以这里一个 node 模块都不许引
- * （`favicon.ts` 依赖它，反向依赖会把 fs / crypto 拖进浏览器包）。
- */
+/** 取图标的方案清单；这里不引 node 模块，浏览器端也要用 */
 export const ICON_SOURCE_IDS = [
   /** 页面里 <link rel="icon"> 声明的 */
   "declared",
@@ -19,7 +15,7 @@ export interface IconSourceMeta {
   id: IconSourceId;
   /** 缩略图下面那行字 */
   label: string;
-  /** 第三方服务要标明：这一张不是站点自己给的 */
+  /** 第三方服务要标明 */
   thirdParty: boolean;
 }
 
@@ -31,10 +27,7 @@ export const ICON_SOURCES: readonly IconSourceMeta[] = [
   { id: "icon.horse", label: "icon.horse", thirdParty: true },
 ];
 
-/**
- * 一次来源尝试的结果。三种状态分开报，用户才知道该不该点它：
- * 「服务活着但只回它自己那张占位图」与「压根没取到」在看图的时候是两件事。
- */
+/** 一次来源尝试的结果：ok / placeholder / miss */
 export type IconCandidateStatus = "ok" | "placeholder" | "miss";
 
 export interface IconCandidate {
@@ -53,7 +46,7 @@ export function isIconSourceId(value: unknown): value is IconSourceId {
   return typeof value === "string" && BY_ID.has(value as IconSourceId);
 }
 
-/** 条目上存的图标来源（favicon 类型专有）—— 空值就是「按顺序自己挑」。 */
+/** 条目上存的图标来源（favicon 类型专有），空值表示按顺序自己挑 */
 export function normalizeIconSource(value: string | null | undefined): IconSourceId | null {
   return isIconSourceId(value) ? value : null;
 }

@@ -8,7 +8,7 @@ export interface CachedBinary {
   contentType: string;
 }
 
-/** 缓存目录与数据库同级：备份、迁移、换盘都跟着数据走，不用另外记一个路径。 */
+/** 缓存目录与数据库同级 */
 export function cacheDir(namespace: string): string {
   return path.join(path.dirname(resolveDatabasePath()), `${namespace}-cache`);
 }
@@ -40,7 +40,5 @@ export function writeCache(namespace: string, key: string, payload: CachedBinary
     fs.mkdirSync(cacheDir(namespace), { recursive: true });
     fs.writeFileSync(body, payload.body);
     fs.writeFileSync(meta, JSON.stringify({ contentType: payload.contentType }));
-  } catch {
-    // 缓存写不进去不影响这次响应
-  }
+  } catch {}
 }

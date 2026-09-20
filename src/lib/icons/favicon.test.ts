@@ -6,7 +6,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { listFaviconCandidates, resolveFavicon, resolveIconSource } from "./favicon";
 
-/** 文件头能过 sniff 的最短样本：三种格式各取一份，用来分辨「取到的到底是哪个来源的」。 */
+/** 能过文件头检查的最短样本，三种格式各取一份 */
 const PNG = Buffer.concat([
   Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
   Buffer.alloc(8),
@@ -14,7 +14,7 @@ const PNG = Buffer.concat([
 const GIF = Buffer.from("GIF89a---------", "latin1");
 const ICO = Buffer.concat([Buffer.from([0x00, 0x00, 0x01, 0x00]), Buffer.alloc(8)]);
 
-/** 一个三个来源都有的站点：声明 png、manifest 里给 gif、/favicon.ico 是 ico。 */
+/** 三个来源都有的站点：声明 png、manifest 给 gif、/favicon.ico 是 ico */
 function richSite(): Promise<{ server: Server; base: string }> {
   const server = createServer((request, response) => {
     switch (request.url) {
@@ -55,10 +55,7 @@ function richSite(): Promise<{ server: Server; base: string }> {
   });
 }
 
-/**
- * 只有响应头到、正文读到一半连接就断。这是「图标接口 500」的真实形状：
- * `fetch` 已经成功返回，`AbortSignal` 的定时器还管着正文，读正文在这里抛。
- */
+/** 只有响应头到、正文读到一半连接就断的服务端 */
 function brokenBodyServer(): Promise<{ server: Server; base: string }> {
   const server = createServer((request, response) => {
     if (request.url === "/") {
@@ -84,7 +81,7 @@ const running: Server[] = [];
 let cacheDir: string;
 
 beforeEach(() => {
-  // 每条测试用一份自己的缓存目录：缓存是落盘的，串了就跑不出稳定的结果
+  // 每条测试用一份自己的缓存目录
   cacheDir = fs.mkdtempSync(path.join(os.tmpdir(), "ivy-nav-icons-"));
   process.env.DATABASE_PATH = path.join(cacheDir, "portal.db");
   process.env.FAVICON_ALLOW_PRIVATE_HOSTS = "true";
@@ -103,8 +100,7 @@ describe("resolveFavicon", () => {
     const { server, base } = await brokenBodyServer();
     running.push(server);
 
-    // 取图标是尽力而为：读正文失败应该落到「取不到」，让页面用首字母托底，
-    // 而不是把异常抛给路由、在控制台留下一条 500
+    // 读正文失败应该落到「取不到」，而不是抛出 500
     await expect(resolveFavicon(new URL(base))).resolves.toBeNull();
   });
 
@@ -113,11 +109,11 @@ describe("resolveFavicon", () => {
     const { server, base } = await richSite();
     running.push(server);
 
-    // 自动链上「网站声明」排在前面，所以不指定时拿到的是 png
+    // 不指定来源时走自动链，「网站声明」排在前面
     await expect(resolveFavicon(new URL(base))).resolves.toMatchObject({
       contentType: "image/png",
     });
-    // 用户点的是 /favicon.ico，就得给 ico —— 挑的是那张图，不是「随便来一张」
+    // 用户点的是 /favicon.ico，就得给 ico
     await expect(resolveFavicon(new URL(base), "/favicon.ico")).resolves.toMatchObject({
       contentType: "image/x-icon",
     });
@@ -128,7 +124,7 @@ describe("resolveFavicon", () => {
     const { server, base } = await richSite();
     running.push(server);
 
-    // 选过的来源这会儿取不到（favicon.im 被关掉了），不该让图标位空着
+    // 选过的来源取不到时回到自动链
     await expect(resolveFavicon(new URL(base), "favicon.im")).resolves.toMatchObject({
       contentType: "image/png",
     });
@@ -141,7 +137,7 @@ describe("listFaviconCandidates", () => {
     const { server, base } = await richSite();
     running.push(server);
 
-    // 第三方兜底被关掉时，链子上就不该出现它们 —— 否则选择器会列出两个永远取不到的空位
+    // 第三方兜底被关掉时，链子上不出现它们
     await expect(listFaviconCandidates(new URL(base))).resolves.toEqual([
       { source: "declared", label: "网站声明", status: "ok" },
       { source: "manifest", label: "PWA 清单", status: "ok" },

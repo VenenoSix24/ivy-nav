@@ -8,10 +8,7 @@ export class UnauthorizedError extends Error {
   }
 }
 
-/**
- * 每个写接口都必须先过这里。前端只负责界面，权限判断一律在服务器完成：
- * 有人直接 PUT /api/items/1 也一样会被拦下（设计文档 §14）。
- */
+/** 每个写接口都必须先过这里 */
 export async function requireAdmin(): Promise<AdminSession> {
   const session = await getSession();
   if (!session) throw new UnauthorizedError();

@@ -12,15 +12,12 @@ import {
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_HTML_BYTES = 256 * 1024;
 const MAX_ICON_BYTES = 512 * 1024;
-/** 取不到时也记一小会儿，别让匿名请求每次都去撞两轮外网。 */
+/** 取不到时也记一小会儿 */
 const MISS_TTL_MS = 10 * 60 * 1000;
 
 const CACHE_NAMESPACE = "favicon";
 
-/**
- * 兜底的第三方图标服务，前一个拿不到就用下一个：只在前面的直连都失败时才轮到它们。
- * 代价是把域名给了第三方，所以留了开关 FAVICON_FALLBACK_SOURCES=false。
- */
+/** 兜底的第三方图标服务，前一个拿不到就用下一个 */
 const FALLBACK_URLS: Partial<Record<IconSourceId, (host: string) => string>> = {
   "favicon.im": (host) => `https://favicon.im/${host}`,
   "icon.horse": (host) => `https://icon.horse/icon/${host}`,
@@ -34,7 +31,7 @@ function fallbackEnabled(): boolean {
   return process.env.FAVICON_FALLBACK_SOURCES !== "false";
 }
 
-/** 按顺序问这些来源；第三方服务被关掉时就不出现在链子上。 */
+/** 按顺序问这些来源 */
 function sourcesInOrder(): IconSourceId[] {
   return ICON_SOURCES.filter((entry) => !isFallback(entry.id) || fallbackEnabled()).map(
     (entry) => entry.id,
@@ -46,7 +43,7 @@ export interface IconPayload {
   contentType: string;
 }
 
-/** 缓存按来源分开存：选择器要一次列出每个方案各拿到什么。`auto` 是自动链最终选中的那一份。 */
+/** 缓存按来源分开存；`auto` 是自动链最终选中的那一份 */
 type CacheKey = IconSourceId | "auto";
 
 function readCache(origin: string, source: CacheKey): IconPayload | null {
@@ -57,7 +54,7 @@ function writeCache(origin: string, source: CacheKey, payload: IconPayload): voi
   writeCached(CACHE_NAMESPACE, `${source}\n${origin}`, payload);
 }
 
-/** 图标格式靠文件头判断，不信 Content-Type —— 很多站点把 .ico 报成 octet-stream。 */
+/** 图标格式靠文件头判断，不看 Content-Type */
 export function sniffImageType(body: Buffer): string | null {
   const head = body.subarray(0, 16);
   if (body.length < 4) return null;
@@ -87,7 +84,7 @@ function attribute(tag: string, name: string): string | null {
   return match[1].replace(/^["']|["']$/g, "");
 }
 
-/** 取某个 rel 的第一个 <link> 目标（绝对化之后）。 */
+/** 取某个 rel 的第一个 <link> 目标（已绝对化） */
 function linkHref(html: string, rel: string, base: URL): string | null {
   for (const tag of html.match(/<link\b[^>]*>/gi) ?? []) {
     const value = (attribute(tag, "rel") ?? "").toLowerCase().split(/\s+/);
@@ -103,7 +100,7 @@ function linkHref(html: string, rel: string, base: URL): string | null {
   return null;
 }
 
-/** 从 <link rel="icon"> 里挑一个尽量大的尺寸；页面里什么都没写就返回 null。 */
+/** 从 <link rel="icon"> 里挑一个尽量大的尺寸 */
 function declaredIconHref(html: string, base: URL): string | null {
   const tags = html.match(/<link\b[^>]*>/gi) ?? [];
   let best: { href: string; score: number } | null = null;
@@ -133,12 +130,12 @@ function declaredIconHref(html: string, base: URL): string | null {
   }
 }
 
-/** 声明里挑不到就退回 /favicon.ico：自动链上这一条必然有得试。 */
+/** 声明里挑不到就退回 /favicon.ico */
 export function pickIconHref(html: string, base: URL): string {
   return declaredIconHref(html, base) ?? new URL("/favicon.ico", base.origin).toString();
 }
 
-/** HTML 实体只认最常见的几个：标题里主要是 &amp; &#39; 这类，不值得引一个解析器。 */
+/** HTML 实体只认最常见的几个 */
 const ENTITIES: Record<string, string> = {
   amp: "&",
   lt: "<",
@@ -167,7 +164,7 @@ function decodeEntities(value: string): string {
   });
 }
 
-/** 标题优先 og:site_name → og:title → `<title>`：后两者常带一句副标题。 */
+/** 标题优先 og:site_name、og:title、`<title>` */
 export function pickSiteTitle(html: string): string | null {
   const meta = (key: string): string | null => {
     const tag = html.match(
@@ -191,7 +188,7 @@ export function pickSiteTitle(html: string): string | null {
   return null;
 }
 
-/** 取网页标题：与取图标共用同一套出口检查与超时，拿不到就返回 null（这一层不抛错）。 */
+/** 取网页标题，拿不到返回 null */
 export async function fetchSiteTitle(pageUrl: URL): Promise<string | null> {
   try {
     const response = await fetchWithTimeout(pageUrl.toString(), "text/html,*/*;q=0.8");
@@ -203,7 +200,7 @@ export async function fetchSiteTitle(pageUrl: URL): Promise<string | null> {
   }
 }
 
-/** 有些站点不在 HTML 里写 `<link rel="icon">`，图标只放在 PWA manifest 里。 */
+/** 从 PWA manifest 里取图标候选 */
 async function manifestIconCandidates(html: string, base: URL): Promise<string[]> {
   const href = linkHref(html, "manifest", base);
   if (!href) return [];
@@ -225,7 +222,7 @@ async function manifestIconCandidates(html: string, base: URL): Promise<string[]
     .map((entry) => {
       const icon = entry as { src?: unknown; sizes?: unknown; type?: unknown };
       if (typeof icon.src !== "string") return null;
-      // 尺寸写 "512x512" 的取较大边；写 "any" 或没写的当成中等
+      // 尺寸写 "512x512" 的取较大边，其它当成中等
       const size = /(\d+)\s*x\s*(\d+)/i.exec(typeof icon.sizes === "string" ? icon.sizes : "");
       const score = size ? Math.max(Number(size[1]), Number(size[2])) : 64;
       try {
@@ -248,8 +245,7 @@ async function download(candidates: string[]): Promise<IconPayload | null> {
     try {
       buffer = Buffer.from(await response.arrayBuffer());
     } catch {
-      // 读 body 不在 fetch 的 try 里：对端中途断流、或响应头到了而正文拖过超时，
-      // 都会在这里抛（AbortSignal 的定时器管到正文读完为止）。放它出去整条路由就是 500。
+      // 读 body 在这里也会抛，跳过这个候选
       continue;
     }
     if (buffer.length === 0 || buffer.length > MAX_ICON_BYTES) continue;
@@ -260,11 +256,7 @@ async function download(candidates: string[]): Promise<IconPayload | null> {
   return null;
 }
 
-/**
- * 服务「查不到图标」时会回自己那张占位图：favicon.im 固定一份 SVG，icon.horse 按首字母生成。
- * 哨兵域名取「同一个首字母 + 必然不存在」，字节撞上就说明这不是真图标 ——
- * 否则会把服务自己生成的图当成站点图标，比露首字母还糟。
- */
+/** 第三方服务查不到时回的那张占位图的字节缓存 */
 const SENTINEL_CACHE = new Map<string, Promise<string | null>>();
 
 function sentinelFor(source: IconSourceId, host: string): Promise<string | null> {
@@ -293,7 +285,7 @@ function sentinelFor(source: IconSourceId, host: string): Promise<string | null>
   return job;
 }
 
-/** 一次来源尝试的结果。「服务活着但只回占位图」与「压根没取到」对用户是两件事。 */
+/** 一次来源尝试的结果 */
 interface SourceResult {
   payload: IconPayload | null;
   /** 走到了第三方服务、拿到的却是它自己生成的占位图 */
@@ -325,15 +317,12 @@ async function fetchFallback(source: IconSourceId, host: string): Promise<Source
   return { payload: { body: buffer, contentType }, placeholder: false };
 }
 
-/** 只有「读页面里声明的东西」这两条来源需要先有 HTML。 */
+/** 这两条来源需要先有 HTML */
 function needsPageHtml(source: IconSourceId): boolean {
   return source === "declared" || source === "manifest";
 }
 
-/**
- * 朝某一个来源要一次图标。`html` 由调用方给：一次列出全部方案时页面只抓一遍，
- * 声明与 manifest 两条都从这份 HTML 里读。
- */
+/** 朝某一个来源要一次图标 */
 async function fetchFromSource(
   source: IconSourceId,
   pageUrl: URL,
@@ -360,7 +349,7 @@ async function fetchFromSource(
   return fetchFallback(source, pageUrl.hostname);
 }
 
-/** 抓一次页面 HTML。读正文同样会抛（对端断流、正文拖过超时），这里一律当拿不到。 */
+/** 抓一次页面 HTML，拿不到返回 null */
 async function pageHtml(pageUrl: URL): Promise<string | null> {
   const response = await fetchWithTimeout(pageUrl.toString(), "text/html,*/*;q=0.8");
   if (!response?.ok) return null;
@@ -371,7 +360,7 @@ async function pageHtml(pageUrl: URL): Promise<string | null> {
   }
 }
 
-/** 把每个方案都真问一遍，让用户在选择器里看着挑；各方案并行，页面 HTML 只抓一遍。 */
+/** 把每个方案都真问一遍，供选择器展示 */
 export async function listFaviconCandidates(pageUrl: URL): Promise<IconCandidate[]> {
   const html = await pageHtml(pageUrl);
 
@@ -400,7 +389,7 @@ export async function listFaviconCandidates(pageUrl: URL): Promise<IconCandidate
   );
 }
 
-/** 取某一个来源的图标，不做退让：缩略图要的就是「这个方案给的是哪张」。 */
+/** 取某一个来源的图标，不做退让 */
 export async function resolveIconSource(
   pageUrl: URL,
   source: IconSourceId,
@@ -433,10 +422,7 @@ function recentlyMissed(origin: string, now: number): boolean {
   return true;
 }
 
-/**
- * 取站点图标：按方案顺序问，第一个拿到的就是它，结果按 origin 落盘。
- * `preferred` 是用户在选择器里点过的那一个方案：先只问它，取不到再回到自动链。
- */
+/** 取站点图标，按方案顺序问，结果按 origin 落盘 */
 export async function resolveFavicon(
   pageUrl: URL,
   preferred?: string | null,
@@ -457,12 +443,12 @@ export async function resolveFavicon(
   if (pending) return pending;
 
   const job = (async (): Promise<IconPayload | null> => {
-    /** 页面 HTML 按需抓：选择器刚把每个方案都取过一遍，缓存命中时一个请求都不该多发。 */
+    /** 页面 HTML 按需抓 */
     let page: string | null | undefined;
 
     try {
       for (const source of sourcesInOrder()) {
-        // 单来源的缓存先看：命中了就不用再问一次外网，也不用为了它去抓页面
+        // 先看单来源的缓存
         let payload = readCache(origin, source);
         if (!payload) {
           if (needsPageHtml(source) && page === undefined) page = await pageHtml(pageUrl);
@@ -476,9 +462,7 @@ export async function resolveFavicon(
         return payload;
       }
     } catch {
-      // 取图标是尽力而为：网络中断、读正文超时、跳转目标不合法，都退回首字母托底。
-      // 这一层的约定就是「拿不到返回 null」，不该把异常抛给路由变成 500 —— 页面上
-      // 只是少一个图标，控制台却会多一条红线，那是用户看到的那条报错。
+      // 拿不到一律返回 null，不把异常抛给路由
     }
 
     misses.set(origin, Date.now());

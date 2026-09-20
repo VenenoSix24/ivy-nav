@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     const body = payload && typeof payload === "object" ? (payload as Record<string, unknown>) : {};
     const name = typeof body.name === "string" ? body.name : "";
 
-    // 恢复会覆盖现有内容，前端必须在弹窗里确认过一次（设计文档 §22）
+    // 恢复会覆盖现有内容，必须带 confirm
     if (body.confirm !== true) {
       return jsonError("恢复需要再次确认：请在弹窗中确认后重试。", 400);
     }

@@ -5,10 +5,7 @@ import { normalizeTagNames } from "@/lib/portal/schemas";
 import { normalizeUrl } from "@/lib/utils/url";
 import { BACKUP_FORMAT, BACKUP_VERSION, type BackupDocument } from "./schema";
 
-/**
- * 导出的是内容而不是数据库文件：编号不进文件，条目按分类名与标签名关联，
- * 因此在另一套部署里导入也能对上。用户与会话不在导出范围内。
- */
+/** 导出的是内容而不是数据库文件，条目按分类名与标签名关联 */
 export function buildBackupDocument(db: Db): BackupDocument {
   const categoryRows = db.select().from(categories).orderBy(asc(categories.sortOrder)).all();
   const itemRows = db.select().from(items).orderBy(asc(items.sortOrder)).all();
@@ -72,12 +69,8 @@ export interface ImportSummary {
   items: number;
 }
 
-/**
- * 用备份内容替换现有内容，整段在一个事务里完成：中途失败等于没导入。
- * users 与 sessions 不动，所以导入后仍然保持登录。
- */
+/** 用备份内容替换现有内容，整段一个事务；users 与 sessions 不动 */
 export function applyBackupDocument(db: Db, document: BackupDocument): ImportSummary {
-  // better-sqlite3 上的事务是同步的，回调的返回值就是结果
   return db.transaction(() => {
     db.delete(itemTags).run();
     db.delete(items).run();
@@ -135,7 +128,7 @@ export function applyBackupDocument(db: Db, document: BackupDocument): ImportSum
           description: entry.description ?? null,
           iconType: entry.iconType ?? "favicon",
           iconValue: entry.iconValue ?? null,
-          // 旧备份里没有这两项：图标遮罩默认开、单色默认关，与新建条目一致
+          // 旧备份里没有这两项，取默认值
           iconPlate: entry.iconPlate ?? true,
           iconMono: entry.iconMono ?? false,
           iconFit: entry.iconFit ?? null,

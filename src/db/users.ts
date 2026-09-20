@@ -10,7 +10,7 @@ export function countAdminUsers(): number {
   return listAdminUsers().length;
 }
 
-/** 首次部署还没有管理员时，登录页据此给出提示（建号在服务器上做）。 */
+/** 是否还没有管理员（建号只在服务器上做）。 */
 export function needsSetup(): boolean {
   return countAdminUsers() === 0;
 }
@@ -19,10 +19,7 @@ export function findUserByName(username: string) {
   return getDb().select().from(users).where(eq(users.username, username)).get() ?? null;
 }
 
-/**
- * 只在还没有任何用户时插入，判断与写入是同一条语句，SQLite 串行化写入保证
- * 并发请求里只有一个能成功。分成「先查再写」的话，同时提交就会建出多个管理员。
- */
+/** 只在还没有任何用户时插入；判断与写入是同一条语句。 */
 export function createFirstAdminUser(
   username: string,
   passwordHash: string,
@@ -47,7 +44,7 @@ export function updatePassword(userId: number, passwordHash: string): void {
     .run();
 }
 
-/** 重置密码时把现有管理员一起改掉：单管理员项目里通常只有一行。 */
+/** 重置所有管理员的密码，返回条数。 */
 export function resetAllPasswords(passwordHash: string): number {
   const rows = listAdminUsers();
   for (const row of rows) updatePassword(row.id, passwordHash);

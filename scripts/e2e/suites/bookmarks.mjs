@@ -29,9 +29,7 @@ async function call(path, { method = "GET", body, auth = true } = {}) {
   let json = null;
   try {
     json = JSON.parse(text);
-  } catch {
-    /* html */
-  }
+  } catch {}
   return { status: response.status, json, text };
 }
 
@@ -40,10 +38,7 @@ const itemTitles = async () => (await portal())?.items?.map((row) => row.title) 
 const importBookmarks = (html, extra = {}) =>
   call("/api/bookmarks/import", { method: "POST", body: { html, ...extra } });
 
-/**
- * Chrome（简体中文）导出的结构：一层「书签栏」包住用户自己的目录。
- * 网址刻意避开种子数据里的那几个域名 —— 否则会被当成「库里已有」而跳过。
- */
+/** Chrome（简体中文）导出的书签结构；网址避开种子数据里的域名。 */
 const BOOKMARKS = `<!DOCTYPE NETSCAPE-Bookmark-file-1>
 <TITLE>Bookmarks</TITLE>
 <H1>Bookmarks</H1>
@@ -73,7 +68,6 @@ const login = await fetch(`${BASE}/api/auth/login`, {
 cookie = (login.headers.get("set-cookie") ?? "").split(";")[0];
 assert("登录成功", login.status === 200, `HTTP ${login.status}`);
 
-// ---- 匿名一律被拦
 const settingsAnon = await call("/settings", { auth: false });
 assert(
   "匿名进不了设置页",
@@ -102,7 +96,6 @@ const anonImport = await call("/api/bookmarks/import", {
 });
 assert("匿名导入被拒", anonImport.status === 401, `HTTP ${anonImport.status}`);
 
-// ---- 参数与文件内容
 const empty = await call("/api/bookmarks/preview", { method: "POST", body: { html: "   " } });
 assert("空内容被拒", empty.status === 400, `HTTP ${empty.status}`);
 
@@ -128,7 +121,6 @@ const badGroups = await call("/api/bookmarks/import", {
 });
 assert("目录清单不是数组时被拒", badGroups.status === 400, `HTTP ${badGroups.status}`);
 
-// ---- 预览
 const preview = await call("/api/bookmarks/preview", { method: "POST", body: { html: BOOKMARKS } });
 const plan = preview.json?.preview;
 assert("预览成功", preview.status === 200, `HTTP ${preview.status}`);
@@ -190,7 +182,6 @@ assert(
   `${(await itemTitles()).length} 条`,
 );
 
-// ---- 导入
 const imported = await importBookmarks(BOOKMARKS);
 assert("导入成功", imported.status === 200, `HTTP ${imported.status}`);
 assert(
@@ -243,7 +234,6 @@ assert(
   JSON.stringify(designItems.map((row) => row.title)),
 );
 
-// ---- 再导一次：默认跳过
 const again = await importBookmarks(BOOKMARKS);
 assert(
   "重复网址默认跳过",
@@ -259,7 +249,6 @@ assert(
 );
 assert("库里的条目数没变", (await itemTitles()).length === 19);
 
-// ---- 只挑其中一个目录导入（分批导入的用法）
 const onlyInbox = await importBookmarks(BOOKMARKS, { groups: [] });
 assert(
   "一个目录都不勾时不写任何东西",
@@ -306,7 +295,6 @@ assert(
 );
 assert("两条都在了", (await itemTitles()).includes("甲组的东西"));
 
-// ---- 同一个网址在两个分类里：各建一条
 const SHARED = `<DL><p>
   <DT><H3>常用</H3><DL><p><DT><A HREF="https://both.example.org">两处都有</A></DL><p>
   <DT><H3>工具</H3><DL><p><DT><A HREF="https://both.example.org">两处都有</A></DL><p>
@@ -343,8 +331,6 @@ assert(
   `条数=${both.length} 分类数=${bothCategories.size}`,
 );
 
-// ---- 再导一次：覆盖标题与描述
-// 先给这条打一个用户自己的标签，用来验证「覆盖」是合并而不是替换
 const shotsNow = (await portal())?.items?.find((row) => row.title === "Shots");
 await call(`/api/items/${shotsNow?.id}`, { method: "PATCH", body: { tagNames: ["自己打的"] } });
 
@@ -370,7 +356,6 @@ assert(
   JSON.stringify(shotsAfter?.tags),
 );
 
-// ---- 二级以上目录：每一级都进标签
 const deep = `<DL><p><DT><H3>资料</H3><DL><p><DT><H3>前端</H3><DL><p><DT><H3>构建</H3><DL><p>
   <DT><A HREF="https://vitejs.example.org">Vite</A>
 </DL><p></DL><p></DL><p></DL><p>`;
@@ -387,7 +372,6 @@ assert(
   JSON.stringify(vite?.tags),
 );
 
-// ---- 同名分类与标签被复用，不再建一份
 const reuse = `<DL><p><DT><H3>设计</H3><DL><p><DT><H3>灵感</H3><DL><p>
   <DT><A HREF="https://unsplash.example.org">Unsplash</A>
 </DL><p></DL><p></DL><p>`;

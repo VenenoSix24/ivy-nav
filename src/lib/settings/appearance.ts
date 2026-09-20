@@ -1,13 +1,6 @@
 import { z } from "zod";
 
-/**
- * 配色主题：与浅色/深色正交的另一维偏好。每套配色只覆盖带色相的 token
- * （primary / accent / ring / ambient），中性色与材质共用一套 —— 否则六套配色
- * 会把 globals.css 撑成六份完整主题，改一处中性色要改六遍。
- *
- * swatch 是设置页那枚色点用的颜色，浅深各一：浅色下用浅色主题的 primary，
- * 深色下用深色主题的，否则色点在深色背景上会糊掉。
- */
+/** 配色主题：每套只覆盖带色相的 token，swatch 是设置页色点用的颜色（浅深各一） */
 export const PALETTES = [
   { id: "leaf", label: "一叶青", swatch: { light: "#0f6b5f", dark: "#4fd1b5" } },
   { id: "blue", label: "天青", swatch: { light: "#0066cc", dark: "#4fa3ff" } },
@@ -19,10 +12,7 @@ export const PALETTES = [
 
 export type PaletteId = (typeof PALETTES)[number]["id"];
 
-/**
- * 默认给一叶青：与品牌标记同一色相，开箱即用的观感是自洽的。
- * 它由 globals.css 里 :root / .dark 的基础 token 承担，不另开 [data-palette] 块。
- */
+/** 默认配色，由 globals.css 里 :root / .dark 的基础 token 承担 */
 export const DEFAULT_PALETTE: PaletteId = "leaf";
 
 export const PALETTE_SETTING_KEY = "appearance.palette";

@@ -17,7 +17,7 @@ const categorySchema = z.object({
 
 const itemSchema = z.object({
   title: z.string().trim().min(1).max(80),
-  // 导入同样要过协议校验：备份文件不能成为绕过 javascript: 检查的后门
+  // 导入同样要过协议校验
   url: z
     .string()
     .trim()
@@ -34,14 +34,14 @@ const itemSchema = z.object({
   visibility: z.enum(visibilityValues).optional(),
   sortOrder: z.number().int().min(0).optional(),
   featured: z.boolean().optional(),
-  /** 用分类名而不是分类编号，换一套数据库也能对上 */
+  /** 用分类名而不是分类编号 */
   categoryName: z.string().max(40).nullish(),
   tags: z.array(z.string().max(30)).max(12).optional(),
 });
 
 export const backupDocumentSchema = z.object({
   format: z.literal(BACKUP_FORMAT),
-  // 版本必须严格相等：宽松地接受一个未来版本，等于按旧规则误读新文件
+  // 版本必须严格相等
   version: z.literal(BACKUP_VERSION),
   exportedAt: z.string().optional(),
   categories: z.array(categorySchema).max(500),
@@ -75,7 +75,7 @@ export interface ParseResult {
   error?: string;
 }
 
-/** 逐条给出「哪里不对」，导入失败时用户能直接定位到自己那份文件的问题。 */
+/** 逐条给出「哪里不对」，供导入失败时定位 */
 export function parseBackupDocument(input: unknown): ParseResult {
   const parsed = backupDocumentSchema.safeParse(input);
   if (parsed.success) return { ok: true, document: parsed.data };

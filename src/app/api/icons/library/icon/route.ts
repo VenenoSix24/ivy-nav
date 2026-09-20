@@ -5,7 +5,7 @@ import { PLACEHOLDER_CACHE_SECONDS, TRANSPARENT_PNG } from "@/lib/icons/placehol
 
 export const dynamic = "force-dynamic";
 
-/** 搜索结果显示用的缩略图；也是「换颜色预览一下」的接口。 */
+/** 搜索结果显示用的缩略图，也用于换颜色预览。 */
 export async function GET(request: Request) {
   return withAdmin(async () => {
     const params = new URL(request.url).searchParams;

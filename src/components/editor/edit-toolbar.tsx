@@ -6,21 +6,15 @@ import { Button } from "@/components/ui/button";
 
 interface EditToolbarProps {
   onAddItem: () => void;
-  /** 打开「整理分类」：改名字、描述、布局、顺序、隐藏都在首页做，不必回设置页 */
+  /** 打开「整理分类」 */
   onOrganize: () => void;
   onExit: () => void;
-  /** 搜索时拖动会写回残缺的顺序，用提示把这件事说清楚 */
+  /** 是否正在搜索 */
   searchActive: boolean;
   className?: string;
 }
 
-/**
- * 悬浮工具条：跟着页面走，与顶栏留出 20px 的距离（顶栏高 56px，所以停在 76px）。
- *
- * 它必须是 main 的直接子元素。sticky 的行程被限制在**父元素的高度**里：
- * 之前它裹在一层只包住自己的 `<div className="mt-4">` 里（实测那层只有 46px 高），
- * 于是可粘住的行程是 0，看起来就是跟着内容一起滚走了。
- */
+/** 悬浮工具条：必须是 main 的直接子元素，sticky 行程受父元素高度限制 */
 export function EditToolbar({
   onAddItem,
   onOrganize,

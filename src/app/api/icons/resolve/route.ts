@@ -7,17 +7,13 @@ import { parseHttpUrl } from "@/lib/utils/url";
 
 export const dynamic = "force-dynamic";
 
-/**
- * 图标选择器里预览还没保存的网址，只有管理员能用。
- * 带 `source` 就是只看某一个方案给的那张（候选缩略图），不带就是自动链。
- */
+/** 图标选择器里预览还没保存的网址；带 `source` 只看某一个方案，不带则走自动链。 */
 export async function GET(request: Request) {
   return withAdmin(async () => {
     const params = new URL(request.url).searchParams;
     const raw = params.get("url") ?? "";
     const target = parseHttpUrl(raw);
-    // 网址还空着不算「输入非法」，只是暂时没得预览：回占位图。
-    // 之前一律回 400，选择器一打开控制台就多一条红线。填了但不合法才该报错。
+    // 网址还空着不算「输入非法」，只是暂时没得预览：回占位图而不是 400
     if (!target) {
       if (!raw.trim()) return placeholderResponse();
       return jsonError("网址只支持 http 与 https：请检查后重试。", 400);

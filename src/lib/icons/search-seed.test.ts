@@ -9,7 +9,7 @@ describe("seedQuery", () => {
   });
 
   it("falls back to the domain when the title carries no latin word", () => {
-    // 中文标题在图标库里搜不到，域名才是可靠的那条线索
+    // 中文标题搜不到，用域名
     expect(seedQuery("哔哩哔哩 (゜-゜)つロ 干杯~", "https://www.bilibili.com/")).toBe("bilibili");
     expect(seedQuery("", "https://zhihu.com")).toBe("zhihu");
   });
@@ -57,7 +57,7 @@ describe("libraryFromPrelude", () => {
   });
 
   it("maps a custom set back to its set id", () => {
-    // 前缀一律小写（readableName 会 lower 一遍）
+    // 前缀一律小写
     expect(libraryFromPrelude("set-3-chatgpt_0123456789abcdef.png", known)).toBe("set:3");
   });
 

@@ -8,28 +8,16 @@ import type { PortalItem } from "@/lib/portal/types";
 interface ItemRowProps {
   item: PortalItem;
   index?: number;
-  /** 公开视图整行就是链接；编辑模式换成普通容器，避免与拖动抢手势 */
+  /** 公开视图整行就是链接 */
   interactive?: boolean;
   showState?: boolean;
-  /** 编辑模式：拖动把手浮在行首，行首内边距要让出位置 */
+  /** 编辑模式：拖动把手浮在行首 */
   draggable?: boolean;
   cornerAction?: React.ReactNode;
   onEdit?: () => void;
 }
 
-/**
- * 列表：一行一条，三行文字铺满整行宽度。
- *
- *   图标  标题  域名                        [角标] [菜单] 打开
- *         描述
- *         #标签 #标签 #标签
- *
- * 域名跟在标题后面、描述单独一行、标签排在描述下方 —— 都从左边排起。靠右会让中间
- * 空出一大片，而且它们会被误读成「跟打开按钮有关」。窄屏去掉域名，描述因此能独占
- * 一行读完整。
- *
- * 行高定死，因此有没有描述、有几个标签都排得整齐。
- */
+/** 列表：一行一条，行高定死 */
 export function ItemRow({
   item,
   index = 0,
@@ -63,8 +51,6 @@ export function ItemRow({
       />
 
       <div className="min-w-0 flex-1 space-y-1">
-        {/* 域名紧跟标题，不推到右边 —— 靠右会让中间空出一大片。
-            按基线对齐：域名小一号，居中对齐会让它看起来浮在标题上方 */}
         <div className="flex min-w-0 items-baseline gap-3">
           <span className="truncate text-[14px] leading-snug font-medium tracking-[-0.01em]">
             {item.title}
@@ -78,7 +64,6 @@ export function ItemRow({
           <p className="text-muted-foreground truncate text-[12px]">{item.description}</p>
         ) : null}
 
-        {/* 标签排在描述下方，自己占一行：一行放不下就折成 +N */}
         <TagList tags={item.tags} lines={1} />
       </div>
 

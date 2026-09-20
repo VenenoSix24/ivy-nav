@@ -1,13 +1,4 @@
-/**
- * 浏览器导出的书签文件（Netscape 格式）解析。
- *
- * 这个格式长得像 HTML 但不是 HTML：`<DT><H3>` 是目录、`<DT><A HREF>` 是书签、
- * `<DD>` 是紧跟其后那条的说明、`<DL>` 包住一层目录，`<p>` 是历史遗留的换行标记。
- * 标签常常不闭合（`<DL><p>` 就没有 `</p>`），所以不能用 HTML 解析器 —— 用一个小状态机
- * 按序列扫一遍最稳，遇到不认识的标签就跳过。
- *
- * 只做解析，不做映射：目录与标签怎么落到我们的分类上由 plan.ts 决定。
- */
+/** 浏览器导出的书签文件（Netscape 格式）解析 */
 
 export interface BookmarkLink {
   title: string;
@@ -21,7 +12,7 @@ export interface BookmarkFolder {
   links: BookmarkLink[];
 }
 
-/** 扫描出来的一个标签：`</A>` 与 `<A HREF="...">` 用 closing 区分 */
+/** 扫描出来的一个标签 */
 interface TagToken {
   kind: "tag";
   closing: boolean;
@@ -38,10 +29,7 @@ type Token = TagToken | TextToken;
 
 const STRUCTURAL = new Set(["a", "h3", "dl", "dt", "dd", "p"]);
 
-/**
- * 文本里可能带 `<b>`、`<img>` 之类的内联标签（Firefox 的标题里就有），
- * 遇到它们要接着收集文字而不是当作标题结束。
- */
+/** 解析书签 HTML，返回目录树 */
 export function parseBookmarksHtml(html: string): BookmarkFolder {
   const root: BookmarkFolder = { name: "", folders: [], links: [] };
   const stack: BookmarkFolder[] = [root];
@@ -64,7 +52,7 @@ export function parseBookmarksHtml(html: string): BookmarkFolder {
 
     const { closing, name, attrs } = token;
 
-    // 说明文字到下一条书签（或下一个目录）为止，中途遇到任何结构标签就收尾
+    // 说明文字到下一条书签或目录为止
     if (STRUCTURAL.has(name)) {
       if (describing !== null) {
         const text = decodeEntities(described).replace(/\s+/g, " ").trim();
@@ -88,7 +76,7 @@ export function parseBookmarksHtml(html: string): BookmarkFolder {
         captured = "";
         href = "";
       } else if (name === "dl") {
-        // 最外层那个 </DL> 不弹，弹掉就没有落脚处了
+        // 最外层那个 </DL> 不弹
         if (stack.length > 1) stack.pop();
       }
       continue;
@@ -112,14 +100,13 @@ export function parseBookmarksHtml(html: string): BookmarkFolder {
           current().folders.push(folder);
           stack.push(folder);
         } else {
-          // 没有前置 <H3> 的 <DL> 只是一层括号（文件开头那个），原地再压一层，
-          // 这样它的 </DL> 有东西可弹，内容仍落在当前目录下
+          // 没有前置 <H3> 的 <DL> 原地再压一层
           stack.push(current());
         }
         break;
       }
       case "dd":
-        // <DD> 挂在前面那条书签上；目录的说明文字（Firefox 会导）没有归属，直接丢
+        // <DD> 挂在前面那条书签上
         if (describing === null) {
           const last = current().links[current().links.length - 1];
           if (last) {
@@ -140,7 +127,7 @@ export function parseBookmarksHtml(html: string): BookmarkFolder {
   return root;
 }
 
-/** 按序吐出文本与标签；属性值里的 `>` 由引号护住，不会被当成标签结束。 */
+/** 按序吐出文本与标签 */
 function* scan(html: string): Generator<Token> {
   let index = 0;
 
@@ -230,7 +217,7 @@ export function decodeEntities(value: string): string {
   });
 }
 
-/** 文件里的书签总数（含无标题、网址非法的），用来判断「这文件里到底有没有书签」。 */
+/** 文件里的书签总数（含无标题、网址非法的） */
 export function countLinks(folder: BookmarkFolder): number {
   return folder.links.length + folder.folders.reduce((sum, child) => sum + countLinks(child), 0);
 }

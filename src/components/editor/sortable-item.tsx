@@ -13,7 +13,7 @@ interface SortableItemProps {
   item: PortalItem;
   layout: LayoutId;
   categories: PortalCategory[];
-  /** 搜索中顺序只是一部分结果，这时把手留着但不接手势 */
+  /** 搜索中把手留着但不接手势 */
   sortable: boolean;
   onEdit: () => void;
   onDuplicate: () => void;
@@ -23,7 +23,7 @@ interface SortableItemProps {
   onDelete: () => void;
 }
 
-/** 把手的位置随形状变：一行与一块方块都很矮，左边距得自己去贴。 */
+/** 拖动把手在各布局下的位置 */
 const HANDLE_POSITION: Record<LayoutId, string> = {
   card: "top-3.5 left-2",
   list: "top-1/2 left-1 -translate-y-1/2",
@@ -44,7 +44,6 @@ export function SortableItem({
 }: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
-    // 不能拖动时也不要把传感器数组换掉：dnd-kit 拿它当 deps，长度一变 React 就报错
     disabled: !sortable,
   });
 
@@ -54,11 +53,6 @@ export function SortableItem({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={isDragging ? "relative z-20 opacity-70" : "relative"}
     >
-      {/*
-        把手是唯一的拖拽入口：手势与卡片里的链接、菜单不抢事件，
-        attributes 与 listeners 都放在这里，键盘也能拖（设计文档 §30）。
-        不能说拖时它就只是个位置标记，淡下去、也不给拖拽光标。
-      */}
       <button
         type="button"
         aria-label={`拖动调整「${item.title}」的顺序`}

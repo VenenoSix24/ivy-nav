@@ -34,13 +34,12 @@ describe("首页布局", () => {
   });
 
   it("数据库那一列的取值与这里的清单一致", () => {
-    // 布局现在挂在分类上，schema 里的 enum 是数据库侧的真相，两边必须一致
+    // schema 里的 enum 是数据库侧的真相，两边必须一致
     expect(categories.layout.enumValues).toEqual(LAYOUTS.map((entry) => entry.id));
     expect(layoutSchema.options).toEqual(LAYOUTS.map((entry) => entry.id));
   });
 
   it("网格参数与两个视图用的是同一份", () => {
-    // 这两处以前各抄了一份 grid class，正是这条测试要防的漂移
     for (const file of [
       "src/components/editor/editable-grid.tsx",
       "src/components/portal/category-section.tsx",

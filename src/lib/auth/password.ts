@@ -20,7 +20,7 @@ function derive(
   });
 }
 
-/** Format: scrypt$N$r$p$salt$key — parameters travel with the hash so they can be raised later. */
+/** Format: scrypt$N$r$p$salt$key */
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16);
   const key = await derive(password, salt, KEY_LENGTH, PARAMS);
@@ -57,7 +57,7 @@ export async function verifyPassword(password: string, stored: string): Promise<
   return key.length === expected.length && timingSafeEqual(key, expected);
 }
 
-/** Returns a message explaining both the reason and the fix, or null when acceptable. */
+/** Returns a problem message, or null when acceptable. */
 export function checkPasswordStrength(password: string): string | null {
   if (password.length < PASSWORD_MIN_LENGTH) {
     return `密码至少需要 ${PASSWORD_MIN_LENGTH} 个字符，当前 ${password.length} 个：请加长后再提交。`;

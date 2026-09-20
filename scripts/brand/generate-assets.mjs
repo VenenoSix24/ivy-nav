@@ -1,6 +1,4 @@
-// 由 scripts/brand/source/yiye.png 生成站点用到的全部图标与品牌标记。
-// 这台机器上没有 ImageMagick / potrace，所以这里只用 node 内置的 zlib 自己解码、合成、编码。
-// 换 logo 或调图标遮罩颜色后重跑：pnpm brand:assets
+// 由 scripts/brand/source/yiye.png 生成站点用到的全部图标与品牌标记；重跑：pnpm brand:assets
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -10,17 +8,11 @@ import { deflateSync, inflateSync } from "node:zlib";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SOURCE = join(ROOT, "scripts/brand/source/yiye.png");
 
-/** 图标图标遮罩：一道 135° 的深青渐变，白叶压在上面才有足够对比 */
+/** 图标遮罩：一道 135° 的深青渐变 */
 const PLATE_TOP = [0x3d, 0x9b, 0x86];
 const PLATE_BOTTOM = [0x16, 0x53, 0x4b];
 
-/**
- * 站点图标一律满幅不透明，不做圆角。
- *
- * 做过圆角的一版在浏览器标签页、书签和桌面上，圆角后面是一圈黑 —— 透明像素在
- * 那些位置没有被合成到页面底色上。留白交给浏览器与系统自己加圆角，
- * 这也是各家应用图标的通行做法（iOS 会自己套 mask）。
- */
+/** 站点图标满幅不透明，不做圆角：圆角外面在标签页与书签里是一圈黑 */
 const PLATE_RADIUS_RATIO = 0;
 
 /** 叶子在图标遮罩里占的边长比例，留出呼吸空间 */
@@ -54,7 +46,7 @@ function chunk(type, data) {
 
 function encodePng(width, height, rgba) {
   const stride = width * 4;
-  // 每行前面加一个 filter 字节；用 filter 0（不过滤），图片小，不值得为几 KB 增加解码复杂度
+  // 每行前面加一个 filter 字节；用 filter 0（不过滤）
   const raw = Buffer.alloc((stride + 1) * height);
   for (let y = 0; y < height; y += 1) {
     Buffer.from(rgba.buffer, rgba.byteOffset + y * stride, stride).copy(raw, y * (stride + 1) + 1);
@@ -141,7 +133,7 @@ function decodePng(buffer) {
 
 const clamp = (value) => Math.max(0, Math.min(255, Math.round(value)));
 
-/** 面积平均缩放。按预乘 alpha 平均，否则边缘会泛出黑边。 */
+/** 面积平均缩放，按预乘 alpha 平均。 */
 function resizeBox(src, width, height) {
   const out = new Uint8Array(width * height * 4);
   for (let y = 0; y < height; y += 1) {
@@ -233,10 +225,7 @@ function opaqueBounds(image) {
   return { minX, minY, maxX, maxY, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
 }
 
-/**
- * 图标遮罩图标：以 4 倍超采样绘制再缩下来，圆角与叶缘的锯齿就交给面积平均处理。
- * 叶子只取轮廓染白——16px 的标签页上，带内部渐变的叶子会糊成一团。
- */
+/** 图标遮罩图标：4 倍超采样绘制再缩下来，叶子只取轮廓染白。 */
 function tileIcon(size, { radiusRatio, leafRatio, opaque }) {
   const scale = 4;
   const big = size * scale;
@@ -343,7 +332,7 @@ write(
   ),
 );
 
-// 分享卡片有文字排版，纯 Node 画不了，交给无头 Chrome 截图。没装 Chrome 就跳过并提醒。
+// 分享卡片交给无头 Chrome 截图；没装 Chrome 就跳过
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 if (existsSync(CHROME)) {
   const output = join(ROOT, "src/app/opengraph-image.png");

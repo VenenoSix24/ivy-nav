@@ -15,12 +15,9 @@ interface IconSetRow {
   createdAt: string;
 }
 
-/**
- * 自建图标集：一份 JSON 一份集合。抓回来只存「名字 → 图片地址」这份清单，
- * 图标本体仍在原图床 —— 挑中哪张才下载哪张，我们的仓库里不放别人的图标。
- */
+/** 自建图标集：一份 JSON 一份集合，只存「名字 → 图片地址」的清单 */
 interface IconSetSettingsProps {
-  /** 服务端渲染时就取好，省掉一次挂载后再去问的往返 */
+  /** 服务端渲染时取好的列表 */
   initialSets: IconSetRow[];
 }
 
@@ -44,8 +41,6 @@ export function IconSetSettings({ initialSets }: IconSetSettingsProps) {
     if (options.refresh === undefined) setBusy(true);
     else setWorking(options.refresh.id);
 
-    // raw.githubusercontent 在很多网络里连不上，地址带它就默认勾上镜像；
-    // 「重新抓一份」按这份集合原来记下的设置走
     const mirrorFlag = options.refresh
       ? options.refresh.mirrored
       : mirror || trimmed.includes("raw.githubusercontent.com");

@@ -33,7 +33,7 @@ export function createItem(input: ItemInput) {
   const categoryId = input.categoryId ?? null;
   const sortOrder = nextSortOrder(currentItems(categoryId));
 
-  // 条目的可见性以自身为准；没给的时候沿用所属分类的默认值（设计文档 §35）
+  // 条目可见性以自身为准，没给就沿用所属分类的默认值
   const visibility =
     input.visibility ??
     (categoryId === null ? "public" : (findCategory(categoryId)?.visibility ?? "public"));
@@ -87,7 +87,7 @@ export function updateItem(id: number, input: Partial<ItemInput>) {
       iconFit: input.iconFit === undefined ? existing.iconFit : (input.iconFit ?? null),
       visibility: input.visibility ?? existing.visibility,
       featured: input.featured ?? existing.featured,
-      // 换分类后落到目标分类末尾，避免沿用原分类里的位置造成顺序错乱
+      // 换分类后落到目标分类末尾
       sortOrder: movingCategory
         ? nextSortOrder(currentItems(input.categoryId ?? null))
         : existing.sortOrder,
@@ -155,7 +155,7 @@ export function updateCategory(id: number, input: Partial<CategoryInput>) {
   return findCategory(id);
 }
 
-/** 分类删掉后，里面的条目落到 Inbox（categoryId 置空），不会被一起删掉。 */
+/** 分类删掉后，里面的条目落到 Inbox（categoryId 置空） */
 export function deleteCategory(id: number) {
   getDb().delete(categories).where(eq(categories.id, id)).run();
 }

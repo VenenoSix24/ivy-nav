@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     if (strength) return jsonError(strength, 400);
 
     updatePassword(user.id, await hashPassword(parsed.data.newPassword));
-    // 改密后其它设备一起下线，当前设备保留，避免自己也被踢出去
+    // 改密后其它设备一起下线，当前设备保留
     await destroyOtherSessions(user.id, session.sessionId);
 
     return jsonOk({ ok: true });
