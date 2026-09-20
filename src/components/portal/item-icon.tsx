@@ -31,12 +31,14 @@ export function ItemIcon({ spec, title, itemId, className, glyphClassName }: Ite
       aria-hidden
       style={iconBox(plate, spec.fit ?? DEFAULT_ICON_FIT)}
       className={cn(
-        // 圆角按 Apple 应用图标那个比例给（22%，随格子大小走）：固定 8px 在大格子上偏方、
-        // 在小格子上偏圆，比例才是三种布局看起来一致的原因。
-        // 影子也**不看底板**给 —— 它的用途是让「图标这一块」与卡面分开，
-        // 所以无论有没有底板，这个方框都要有影子（没有底板时方框没有面，影子就是那唯一的一层）
-        "plate-lift inline-grid size-11 shrink-0 place-items-center rounded-[22%] leading-none",
-        plate && "bg-glass-strong",
+        // 圆角按 Apple 应用图标那个比例给（26%，随格子大小走）：固定 8px 在大格子上偏方、
+        // 在小格子上偏圆，比例才是三种布局看起来一致的原因；纯 CSS 的圆角比 Apple 那种
+        // 连续圆角（squircle）看着更「方」，所以比例取到 26% 才是那个观感
+        "inline-grid size-11 shrink-0 place-items-center rounded-[26%] leading-none",
+        // 影子按两种情形分：有底板就加在底板上；没底板时方框没有面，加在这一层会变成
+        // 一块悬在图标背后的灰方块（emoji 那种看着就像又垫了一层板），所以那种情况
+        // 交给图形自己带（见 IconGlyph 的 icon-lift）
+        plate && "plate-lift bg-glass-strong",
         plate && !filled && "border-hairline border",
         className,
       )}

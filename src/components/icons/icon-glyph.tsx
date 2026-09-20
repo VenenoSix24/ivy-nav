@@ -123,6 +123,8 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
           // 字号比图片类再小一档：emoji 的墨迹本来就比字框大一圈，照足给会显得傻大
           "flex size-full items-center justify-center leading-none select-none",
           "text-[length:calc(var(--icon-glyph,1.25rem)*0.8)]",
+          // emoji 一律没有底板，所以影子总是跟着图案走
+          "icon-lift",
           className,
         )}
       >
@@ -157,11 +159,16 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
       ? `scale(${applied.scale}) translate(${applied.x * 100}%, ${applied.y * 100}%)`
       : undefined;
 
+    // 没有底板时这层方框没有面：影子加在它身上会变成一块悬在图标背后的灰方块，
+    // 所以改加在图形这一层，让它跟着图案的轮廓走（图片与首字母托底都在里面）
+    const lift = !usesPlate(spec);
+
     return (
       <span
         className={cn(
           "relative grid size-full place-items-center",
           clipped && "overflow-hidden rounded-[inherit]",
+          lift && "icon-lift",
           className,
         )}
       >
