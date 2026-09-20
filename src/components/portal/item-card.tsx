@@ -82,7 +82,8 @@ export function ItemCard({
           ) : null}
         </div>
 
-        <div className="flex shrink-0 items-center gap-3">
+        {/* 手机上这一行单独占一行，靠右放：整卡左对齐时「打开」会贴在左下角 */}
+        <div className="flex shrink-0 items-center gap-3 self-end sm:self-auto">
           {onEdit ? (
             <button
               type="button"

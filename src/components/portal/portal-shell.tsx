@@ -25,6 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { portalRequest, type PortalResult } from "@/lib/portal/client";
 import { clearEditModeCookie } from "@/lib/portal/edit-mode";
+import { reorderWithin } from "@/lib/portal/reorder";
 import { matchesQuery } from "@/lib/portal/search";
 import {
   ALL_CATEGORIES,
@@ -33,12 +34,11 @@ import {
   type PortalData,
   type PortalItem,
 } from "@/lib/portal/types";
-import type { LayoutId } from "@/lib/settings/homepage";
+import { DEFAULT_LAYOUT, type LayoutId } from "@/lib/settings/homepage";
 import { site } from "@/lib/site";
 
 interface PortalShellProps {
   data: PortalData;
-  layout: LayoutId;
   initialEditMode?: boolean;
 }
 
@@ -53,10 +53,12 @@ interface Section {
   title: string;
   description: string | null;
   categoryId: number | null;
+  /** 这个分区用哪种排布：分类自己设的，没设就是默认 */
+  layout: LayoutId;
   items: PortalItem[];
 }
 
-export function PortalShell({ data, layout, initialEditMode = false }: PortalShellProps) {
+export function PortalShell({ data, initialEditMode = false }: PortalShellProps) {
   const [portal, setPortal] = useState<PortalData>(data);
   const [editing, setEditing] = useState(initialEditMode);
   const [query, setQuery] = useState("");
@@ -116,6 +118,7 @@ export function PortalShell({ data, layout, initialEditMode = false }: PortalShe
         title: category.name,
         description: category.description,
         categoryId: category.id,
+        layout: category.layout ?? DEFAULT_LAYOUT,
         items,
       });
     }
@@ -129,6 +132,7 @@ export function PortalShell({ data, layout, initialEditMode = false }: PortalShe
           title: "Inbox",
           description: "还没归档的条目",
           categoryId: null,
+          layout: DEFAULT_LAYOUT,
           items,
         });
       }
@@ -177,16 +181,17 @@ export function PortalShell({ data, layout, initialEditMode = false }: PortalShe
 
       <main className="relative z-10 mx-auto w-full max-w-[1080px] px-4 pb-10 sm:px-6">
         {editing ? (
-          <div className="mt-4">
-            <EditToolbar
-              onAddItem={() => setEditor({ key: "new", item: null, categoryId: null })}
-              onExit={() => {
-                document.cookie = clearEditModeCookie();
-                setEditing(false);
-              }}
-              searchActive={searching}
-            />
-          </div>
+          <EditToolbar
+            className="mt-4"
+            onAddItem={() => setEditor({ key: "new", item: null, categoryId: null })}
+            onExit={() => {
+              document.cookie = clearEditModeCookie();
+              setEditing(false);
+              // 每次改动其实都已经落库，这里只是把「退出不等于没保存」说清楚
+              toast.success("改动已保存");
+            }}
+            searchActive={searching}
+          />
         ) : null}
 
         <section className="mt-14 text-center sm:mt-24">
@@ -213,7 +218,7 @@ export function PortalShell({ data, layout, initialEditMode = false }: PortalShe
               title={section.title}
               description={section.description}
               items={section.items}
-              layout={layout}
+              layout={section.layout}
               action={
                 editing ? (
                   <Button
@@ -236,10 +241,17 @@ export function PortalShell({ data, layout, initialEditMode = false }: PortalShe
               {editing ? (
                 <EditableGrid
                   items={section.items}
-                  layout={layout}
+                  layout={section.layout}
                   categories={portal.categories}
                   sortable={canDrag}
-                  onReorder={(orderedIds) => void mutate("/api/items/reorder", { orderedIds })}
+                  onReorder={(orderedIds) => {
+                    // 先改本地顺序：等回包再动，卡片会先弹回原位再跳一次
+                    setPortal((current) => ({
+                      ...current,
+                      items: reorderWithin(current.items, orderedIds),
+                    }));
+                    void mutate("/api/items/reorder", { orderedIds });
+                  }}
                   onEdit={(item) => setEditor({ key: `item-${item.id}`, item, categoryId: null })}
                   onDuplicate={(item) =>
                     void mutate(

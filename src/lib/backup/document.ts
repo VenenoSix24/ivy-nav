@@ -39,6 +39,7 @@ export function buildBackupDocument(db: Db): BackupDocument {
       sortOrder: row.sortOrder,
       visibleOnHomepage: row.visibleOnHomepage,
       visibility: row.visibility,
+      layout: row.layout,
     })),
     items: itemRows.map((row) => ({
       title: row.title,
@@ -93,6 +94,7 @@ export function applyBackupDocument(db: Db, document: BackupDocument): ImportSum
           sortOrder: entry.sortOrder ?? index,
           visibleOnHomepage: entry.visibleOnHomepage ?? true,
           visibility: entry.visibility ?? "public",
+          layout: entry.layout ?? null,
         })
         .returning({ id: categories.id })
         .all();

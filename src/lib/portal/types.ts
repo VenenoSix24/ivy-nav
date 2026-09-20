@@ -1,4 +1,5 @@
 import type { IconType, Visibility } from "@/db/schema";
+import type { LayoutId } from "@/lib/settings/homepage";
 
 export type { IconType, Visibility };
 
@@ -21,6 +22,8 @@ export interface PortalCategory {
   name: string;
   description: string | null;
   visibleOnHomepage: boolean;
+  /** 空值表示跟随默认布局（卡片） */
+  layout: LayoutId | null;
 }
 
 /** Exactly what a visitor's browser receives — nothing outside this shape leaves the server. */

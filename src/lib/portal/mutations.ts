@@ -140,6 +140,7 @@ export function updateCategory(id: number, input: Partial<CategoryInput>) {
             : null,
       visibleOnHomepage: input.visibleOnHomepage ?? existing.visibleOnHomepage,
       visibility: input.visibility ?? existing.visibility,
+      layout: input.layout === undefined ? existing.layout : input.layout,
       updatedAt: new Date(),
     })
     .where(eq(categories.id, id))

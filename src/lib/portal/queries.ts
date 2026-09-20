@@ -43,6 +43,7 @@ export function getPortalData(options: { includePrivate: boolean }): PortalData 
     name: category.name,
     description: category.description,
     visibleOnHomepage: category.visibleOnHomepage,
+    layout: category.layout,
   }));
 
   // 条目按最终要发出去的分类过滤。只过滤分类名而不过滤条目，

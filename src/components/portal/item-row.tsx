@@ -4,8 +4,8 @@ import { ItemIcon } from "@/components/portal/item-icon";
 import { ItemState } from "@/components/portal/item-state";
 import type { PortalItem } from "@/lib/portal/types";
 
-// 列表是扫视用的：标签在窄屏上会把域名挤掉，所以只在宽屏出现，最多三个
-const MAX_VISIBLE_TAGS = 3;
+// 标签与描述共用右侧那条位置，最多两个，再多就把描述挤没了
+const MAX_VISIBLE_TAGS = 2;
 
 interface ItemRowProps {
   item: PortalItem;
@@ -20,9 +20,16 @@ interface ItemRowProps {
 }
 
 /**
- * 列表：一行一条。两行文字 —— 上行标题（宽屏补描述），下行域名（宽屏补标签）。
- * 窄屏只留「标题 + 域名 + 打开」，这是列表在手机上比两列卡片更好用的原因：
- * 横向空间不够时，纵向排开能表达的信息反而更多。
+ * 列表：一行一条，两行文字铺满整行宽度。
+ *
+ *   图标  标题                                    域名        [角标] [菜单] 打开
+ *         描述                              #标签 #标签
+ *
+ * 域名与标题同一行、标签与描述同一行，并各自靠右 —— 之前把它们串在标题后面、
+ * 整行左边挤成一团、右边空着一大片，一行的高度也没被用上。
+ *
+ * 窄屏去掉域名（那里没有它的位置，标题与描述更重要），描述与标签保留。
+ * 行高定死，因此有没有描述、有几个标签都排得整齐。
  */
 export function ItemRow({
   item,
@@ -37,7 +44,7 @@ export function ItemRow({
   const hiddenTagCount = item.tags.length - visibleTags.length;
 
   const className = cn(
-    "surface surface-hover group flex h-full items-center gap-3 rounded-xl py-2.5 pr-3.5",
+    "surface surface-hover group flex min-h-[4.25rem] items-center gap-3 rounded-xl py-2.5 pr-3.5",
     draggable ? "pl-9" : "pl-3.5",
     interactive &&
       "focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
@@ -50,24 +57,28 @@ export function ItemRow({
         spec={{ type: item.iconType, value: item.iconValue }}
         title={item.title}
         itemId={item.id}
-        className="size-8 rounded-md text-[16px]"
+        className="size-9 rounded-lg text-[17px]"
       />
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-2">
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex items-center gap-3">
           <span className="truncate text-[14px] leading-snug font-medium tracking-[-0.01em]">
             {item.title}
           </span>
+          <span className="text-muted-foreground ml-auto hidden shrink-0 text-[12px] sm:block">
+            {item.domain}
+          </span>
+        </div>
+
+        {/* 窄屏上描述与标签各自占一行：390px 时两个标签就要吃掉一大半宽度，
+            并排的结果是描述被截成「本…」这种没用的残句 */}
+        <div className="flex min-h-[1.05rem] flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-3">
           {item.description ? (
-            <span className="text-muted-foreground hidden truncate text-[12px] md:inline">
+            <span className="text-muted-foreground w-full truncate text-[12px] sm:w-auto">
               {item.description}
             </span>
           ) : null}
-        </div>
-
-        <div className="text-muted-foreground mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] leading-none">
-          <span className="truncate">{item.domain}</span>
-          <span className="hidden shrink-0 items-center gap-1.5 lg:flex">
+          <span className="flex shrink-0 items-center gap-1.5 text-[11px] leading-none sm:ml-auto">
             {visibleTags.map((tag) => (
               <span
                 key={tag}
@@ -76,7 +87,9 @@ export function ItemRow({
                 {tag}
               </span>
             ))}
-            {hiddenTagCount > 0 ? <span>+{hiddenTagCount}</span> : null}
+            {hiddenTagCount > 0 ? (
+              <span className="text-muted-foreground">+{hiddenTagCount}</span>
+            ) : null}
           </span>
         </div>
       </div>
@@ -89,7 +102,7 @@ export function ItemRow({
           <button
             type="button"
             onClick={onEdit}
-            className="text-muted-foreground hover:text-foreground focus-visible:outline-ring rounded-md text-[12px] font-medium transition-colors focus-visible:outline-2"
+            className="text-muted-foreground hover:text-foreground focus-visible:outline-ring hidden rounded-md text-[12px] font-medium transition-colors focus-visible:outline-2 sm:inline-block"
           >
             编辑
           </button>

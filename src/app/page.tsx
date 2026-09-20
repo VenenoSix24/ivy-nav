@@ -4,7 +4,6 @@ import { PortalShell } from "@/components/portal/portal-shell";
 import { getSession } from "@/lib/auth/session";
 import { EDIT_MODE_COOKIE } from "@/lib/portal/edit-mode";
 import { getPortalData } from "@/lib/portal/queries";
-import { getPreferredLayout } from "@/lib/settings/homepage-server";
 
 // 内容随时可能被管理员改动，不做静态化，每次请求都重新取数
 export const dynamic = "force-dynamic";
@@ -25,11 +24,7 @@ export default async function HomePage({
   return (
     <>
       <AmbientBackground />
-      <PortalShell
-        data={data}
-        layout={getPreferredLayout()}
-        initialEditMode={isAdmin && editMode}
-      />
+      <PortalShell data={data} initialEditMode={isAdmin && editMode} />
     </>
   );
 }

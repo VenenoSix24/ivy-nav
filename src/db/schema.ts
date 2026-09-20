@@ -39,6 +39,11 @@ export const categories = sqliteTable("categories", {
   description: text("description"),
   sortOrder: integer("sort_order").notNull().default(0),
   visibleOnHomepage: integer("visible_on_homepage", { mode: "boolean" }).notNull().default(true),
+  /**
+   * 这个分类在首页用哪种排布。空值表示用默认（卡片）。
+   * 取值必须与 src/lib/settings/homepage.ts 的 LAYOUTS 一致，有测试盯着两边。
+   */
+  layout: text("layout", { enum: ["card", "list", "compact"] }),
   visibility: text("visibility", { enum: ["public", "private"] })
     .notNull()
     .default("public"),
