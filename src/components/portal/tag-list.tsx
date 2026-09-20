@@ -14,10 +14,8 @@ const PILL =
 const PILL_MUTED =
   "bg-secondary text-muted-foreground shrink-0 rounded-full px-2 py-[3px] text-[11px] leading-none tabular-nums";
 
-/**
- * 服务端没有布局可量，首屏只能把标签全渲染出来。要改就在**同一帧内**改完 ——
- * 用 layout effect，算好的分行在绘制前就位，看不到「先这样再那样」的中间态。
- */
+/** 首屏只能把标签全渲染出来，改就得在同一帧内改完：用 layout effect，
+ *  算好的分行在绘制前就位，看不到中间态。 */
 const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 interface TagListProps {
@@ -28,11 +26,9 @@ interface TagListProps {
 }
 
 /**
- * 标签：铺满至多 `lines` 行，行与行尽量平均（宁可 3 + 2 也不要 4 + 1），放不下的收成「+N」。
- *
- * 显示几个不能按固定个数切：卡片多宽、标签多长、窗口多大都会变。所以先量出每个胶囊的
- * 真实宽度（一层不可见的量尺里永远是全部标签），再交给 `planTagRows` 算分行 ——
- * 分行只依赖量出来的宽度，没有「渲染 → 收敛 → 再渲染」的来回。
+ * 标签铺满至多 `lines` 行，行与行尽量平均（宁可 3 + 2 也不要 4 + 1），放不下的收成行末「+N」。
+ * 显示几个不能按固定个数切：先在一层不可见的量尺里量出每个胶囊的真实宽度（量尺里永远是全部
+ * 标签），再交给 `planTagRows` 算分行，没有「渲染 → 收敛 → 再渲染」的来回。
  */
 export function TagList({ tags, lines, className }: TagListProps) {
   const containerRef = useRef<HTMLSpanElement>(null);

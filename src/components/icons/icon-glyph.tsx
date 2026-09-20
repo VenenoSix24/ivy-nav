@@ -1,7 +1,7 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element -- favicon 与上传图标尺寸固定、数量多，走本地代理即可，
-   用 next/image 反而要拉远端白名单并多一次优化往返，与「不为小图标加载大资源」相悖 */
+/* eslint-disable @next/next/no-img-element -- 图标尺寸固定、数量多，走本地代理即可，
+   用 next/image 要拉远端白名单并多一次优化往返 */
 import { createElement, useCallback, useState } from "react";
 import { cn } from "cn";
 import type { IconType } from "@/db/schema";
@@ -17,31 +17,23 @@ import {
 export interface IconSpec {
   type: IconType;
   value: string | null;
-  /** 图标底下要不要那层图标遮罩：应用类图标自带圆角外形，套上图标遮罩就成了大圆套小圆 */
+  /** 图标底下要不要那层图标遮罩 */
   plate?: boolean;
-  /**
-   * 深色模式下把这张图标转成单色。图片类图标只能烘死一个颜色，黑图在深色主题下会看不见 ——
-   * 开了这一档，浅色下照原样显示（品牌色/原色），深色下改成拿 SVG 的 alpha 当蒙版、
-   * 颜色交给 `currentColor`，于是深色里它是浅的。两个主题各显示一份，CSS 切换，不用 JS。
-   */
+  /** 深色下把 SVG 当蒙版、颜色交给 currentColor，黑图在深色主题里才不会消失 */
   mono?: boolean;
-  /**
-   * 图标在图标遮罩里怎么摆。取回来的图标有的顶格、有的四周留一圈透明边，同一个图标遮罩下
-   * 就显得大小不一 —— 这一档决定按原样放、还是裁掉透明边/铺满。空值即默认（原样）。
-   */
+  /** 图标在图标遮罩里怎么摆；空值即默认（原样） */
   fit?: IconFitId | null;
 }
 
 /**
- * 这个图标有没有图标遮罩。Emoji 一律没有：它自己就是一个彩色图案，再垫一块板只是多余的一圈，
- * 而各家 emoji 字体把图案摆在字框里的位置又不一致，垫了板反而更显歪。
- * 判断只写在这里一处 —— 卡片、选择器预览与那个开关都读它。
+ * 这个图标有没有图标遮罩。Emoji 一律没有：它自己就是一块彩色图案，垫板只是多余的一圈。
+ * 判断只写在这里一处，卡片、选择器预览与那个开关都读它。
  */
 export function usesPlate(spec: IconSpec): boolean {
   return spec.type !== "emoji" && spec.plate !== false;
 }
 
-/** 四种摆法对应的 object-fit；自动裁边先按原样放，量出透明边之后再补一个 transform */
+/** 四种摆法对应的 object-fit；自动裁边先按原样放，量出透明边之后补一个 transform */
 const FIT_CLASS: Record<IconFitId, string> = {
   contain: "object-contain",
   auto: "object-contain",
@@ -52,21 +44,15 @@ const FIT_CLASS: Record<IconFitId, string> = {
 interface IconGlyphProps {
   spec: IconSpec;
   title: string;
-  /** favicon 的来源地址；条目图标与「未保存网址的预览」用的是不同接口 */
+  /** favicon 来源地址；条目图标与「未保存网址的预览」用的是不同接口 */
   faviconSrc: string;
   className?: string;
 }
 
 /**
- * 图标盒子的尺寸参数。图形大小按盒子算（容器查询单位），而不是各处再手写一个像素值 ——
- * 盒子换尺寸时图形跟着走，关掉图标遮罩时也不必再去改那一串变量。
- *
- * 「原样」这一档留一圈呼吸位：图标遮罩开着时图形占七成出头，关掉图标遮罩（只剩图形自己）时
- * 涨到接近满格，不然看着忽然小一圈。
- *
- * 另外三档的诉求就是**填满**，所以图形直接顶到盒子边 —— 早先这一档也留七成，
- * 于是选了「铺满」还是够不着板边：图里自带白底的应用类图标（比如 Excalidraw）
- * 内容本来就占满整张画布，再没有可裁的透明边，怎么算都差那一圈。
+ * 图标盒子的尺寸参数：图形大小按容器单位算，盒子换尺寸时图形跟着走。
+ * 「原样」留一圈呼吸位（开遮罩 72%、关掉 88%），另外三档要的就是填满，直接 100% ——
+ * 早先填满那三档也留七成，自带白底的应用类图标够不着板边。
  */
 export function iconBox(plate: boolean, fit: IconFitId = DEFAULT_ICON_FIT): React.CSSProperties {
   const glyph = fit === "contain" ? (plate ? "72cqh" : "88cqh") : "100cqh";
@@ -74,32 +60,21 @@ export function iconBox(plate: boolean, fit: IconFitId = DEFAULT_ICON_FIT): Reac
 }
 
 /**
- * 渲染一种图标。
+ * 渲染一种图标。图片类图标一律把首字母垫在底下 —— `onError` 要等 React 挂载后才生效，
+ * 图片若在水合之前就失败，错误事件没人接，就会一直是个破图。
  *
- * 图片类图标一律把首字母标记垫在底下，图片叠在上面：`onError` 要等 React 挂载后
- * 才生效，图片若在水合之前就失败，错误事件没人接、就会一直是个破图。
- * 垫一层托底就不再依赖事件，任何时刻取不到图都能看到首字母（设计文档 §16）。
- *
- * 三条状态：
- * - `pending` 图片还没定论，首字母与图片都在（图片通常是透明的，首字母可见）
- * - `ready`   真的取到了图标（宽高大于 1），这时必须把首字母收起来 ——
- *             否则像 Cloudflare 那种自带透明区域的图标会与首字母叠在一起
- * - `none`    取不到（加载失败，或服务端回的是 1×1 占位图），只留首字母
+ * 三条状态：`pending` 图片还没定论（首字母与图片都在）、`ready` 真取到了图标（收起首字母，
+ * 否则自带透明区域的图标会与首字母叠在一起）、`none` 取不到（只留首字母）。
  */
 export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps) {
   const [phase, setPhase] = useState<"pending" | "ready" | "none">("pending");
-  /** 「自动裁边」量出来的缩放与平移；带上是哪张图，换图之后旧的那份就不作数了 */
+  /** 「自动裁边」量出来的缩放与平移；带上来源，换图之后旧的那份不作数 */
   const [trim, setTrim] = useState<{ src: string; transform: FitTransform | null } | null>(null);
 
   const fit = spec.fit ?? DEFAULT_ICON_FIT;
 
-  /**
-   * 只靠 onLoad / onError 会漏：图片若在水合之前就已经加载完（本地接口很快、浏览器又缓存了），
-   * 事件早已错过，回调永远不会跑，首字母就压不掉了。挂载时补看一次 `complete`。
-   *
-   * 「自动裁边」也在这里量：图片已经在手里了，画进一张 48×48 的画布数一遍不透明像素的
-   * 范围即可 —— 另起一个 Image 再解码一遍是白费一次解码。
-   */
+  /** 挂载时补看一次：图片若在水合之前就加载完（本地接口很快），事件早已错过。
+   *  「自动裁边」也在这里量 —— 图片已经在手里，另起一个 Image 是白费一次解码。 */
   const decide = useCallback((image: HTMLImageElement | null) => {
     if (!image || !image.complete) return;
     const ready = image.naturalWidth > 1 && image.naturalHeight > 1;
@@ -117,13 +92,11 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
     return (
       <span
         className={cn(
-          // 各家 emoji 字体把图案摆在字框里的位置并不一致（Apple 的键盘明显偏下、
-          // 有的又偏小），逐个去量不值当 —— 就按行内盒居中摆着，尺寸统一由字号给，
-          // 看上去整齐就够了
-          // 字号比图片类再小一档：emoji 的墨迹本来就比字框大一圈，照足给会显得傻大
+          // 各家 emoji 字体把图案摆在字框里的位置不一致，逐个去量不值当：按行内盒居中，
+          // 字号比图片类小一档（emoji 的墨迹本来就比字框大一圈）
           "flex size-full items-center justify-center leading-none select-none",
           "text-[length:calc(var(--icon-glyph,1.25rem)*0.8)]",
-          // emoji 一律没有图标遮罩，所以影子总是跟着图案走
+          // emoji 一律没有图标遮罩，影子总是跟着图案走
           "icon-lift",
           className,
         )}
@@ -143,24 +116,22 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
   }
 
   if (spec.type === "upload" || spec.type === "favicon") {
-    // 没有来源就一个请求都不发。选择器里网址还空着时把 faviconSrc 传空，
-    // 否则会打出 /api/icons/resolve?url= 这种必然 400 的请求，控制台多一条红线。
+    // 没有来源就不发请求：选择器里网址还空着时传空，否则会打出必然 400 的请求
     const src = spec.type === "upload" ? `/api/icons/file/${spec.value}` : faviconSrc;
     const hasSource = spec.type === "upload" ? Boolean(spec.value?.trim()) : Boolean(src.trim());
     if (!hasSource) return <LetterMark title={title} className={className} />;
 
-    // 蒙版只对 SVG 有意义：位图的 alpha 是整个方块，蒙出来就是一块实心色
+    // 蒙版只对 SVG 有意义：位图的 alpha 是整个方块，蒙出来是一块实心色
     const darkMono = spec.mono === true && /\.svg(\?|$)/i.test(src);
-    // 非「原样」的档位会顶到盒子边：放大溢出的部分要裁掉，圆角跟着盒子走，
-    // 否则满幅图片的方角会从图标遮罩的圆角外面透出来
     const applied = trim && trim.src === src ? trim.transform : null;
+    // 非「原样」的档位会顶到盒子边，放大溢出的部分要裁掉，圆角跟着盒子走
     const clipped = fit !== "contain";
     const transform = applied
       ? `scale(${applied.scale}) translate(${applied.x * 100}%, ${applied.y * 100}%)`
       : undefined;
 
-    // 没有图标遮罩时这层方框没有面：影子加在它身上会变成一块悬在图标背后的灰方块，
-    // 所以改加在图形这一层，让它跟着图案的轮廓走（图片与首字母托底都在里面）
+    // 没有图标遮罩时这层方框没有面，影子加在它身上会变成一块悬在背后的灰方块，
+    // 所以改加在图形这一层，让它跟着图案轮廓走
     const lift = !usesPlate(spec);
 
     return (
@@ -191,7 +162,7 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
             )}
             style={transform ? { transform } : undefined}
             ref={decide}
-            // 占位图是 1×1 的透明 PNG：它「加载成功」但没有内容，仍要露首字母
+            // 占位图是 1×1 的透明 PNG：加载成功但没有内容，仍要露首字母
             onLoad={(event) => decide(event.currentTarget)}
             onError={() => setPhase("none")}
           />
@@ -204,15 +175,12 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
     );
   }
 
-  // none，以及属于第二阶段（设计文档 §40）的 simple-icons / iconify：直接显示首字母，
-  // 不假装可用，也不为此把整库图标打进首页包里
+  // none，以及属于第二阶段（设计文档 §40）的 simple-icons / iconify：直接显示首字母
   return <LetterMark title={title} className={className} />;
 }
 
-/**
- * 深色里那份单色图标：拿 SVG 的 alpha 当蒙版，颜色用 `currentColor`（主题前景色）。
- * 图片只能走蒙版这一条路 —— `<img>` 里的 `currentColor` 不认页面的颜色。
- */
+/** 深色里那份单色图标：拿 SVG 的 alpha 当蒙版，颜色用 currentColor（主题前景色）。
+ *  图片只能走蒙版 —— `<img>` 里的 `currentColor` 不认页面颜色。 */
 function MaskGlyph({
   src,
   transform,
@@ -243,15 +211,11 @@ function MaskGlyph({
 }
 
 /**
- * 量出图片里不透明像素的范围（图片自身的 0..1 坐标）。画进一张 48×48 的小画布数一遍就够：
- * 这一步只用来判断「四周有多少透明边」，不需要原图分辨率。
- *
- * 图片走的都是本站的代理或上传接口，同源，所以画布不会被污染；万一将来换成远端地址，
- * `getImageData` 会抛，这里按「量不出来」处理，退回原样显示。
+ * 量出不透明像素的范围（图片自身的 0..1 坐标）。图片走本站代理，同源，画布读得出来；
+ * 换成远端地址 `getImageData` 会抛，按「量不出来」处理，退回原样。
  */
 function measureAlphaBox(image: HTMLImageElement): AlphaBox | null {
-  // 96 而不是 48：48 的时候一个像素就是整幅的 2%，量化误差正好会留下「一点点边距」，
-  // 而这一步只看形状、不保留像素，画大一点不花什么代价
+  // 96 而不是 48：48 时一个像素就是整幅的 2%，量化误差正好留下一圈「一点点边距」
   const side = 96;
   const canvas = document.createElement("canvas");
   canvas.width = side;
@@ -260,7 +224,7 @@ function measureAlphaBox(image: HTMLImageElement): AlphaBox | null {
   const context = canvas.getContext("2d", { willReadFrequently: true });
   if (!context) return null;
 
-  // 按 contain 摆进去，和元素里看到的位置一致，量出来的坐标才好跟 CSS 对上
+  // 按 contain 摆进去，与元素里看到的位置一致，量出来的坐标才好跟 CSS 对上
   const scale = side / Math.max(image.naturalWidth, image.naturalHeight);
   const width = image.naturalWidth * scale;
   const height = image.naturalHeight * scale;
@@ -283,7 +247,7 @@ function measureAlphaBox(image: HTMLImageElement): AlphaBox | null {
 
   for (let y = 0; y < side; y += 1) {
     for (let x = 0; x < side; x += 1) {
-      // 阈值给得低一点：半透明的投影也算「图的一部分」，不然会把带阴影的图标裁掉一块
+      // 阈值给得低：半透明的投影也算图的一部分，不然会把带阴影的图标裁掉一块
       if (pixels[(y * side + x) * 4 + 3]! > 12) {
         if (x < minX) minX = x;
         if (x > maxX) maxX = x;
@@ -307,8 +271,7 @@ function LetterMark({ title, className }: { title: string; className?: string })
   return (
     <span
       className={cn(
-        // 首字母的「墨」只有大写字高（约 0.72em），字号得比 --icon-glyph 小一档才不显得
-        // 压过图片类图标：0.8 倍落到盒子的四成上下，比按 1 倍时的 45% 收敛一些
+        // 首字母的墨只有大写字高（约 0.72em），字号要比 --icon-glyph 小一档
         "text-accent-foreground grid place-items-center text-[length:calc(var(--icon-glyph,1.25rem)*0.8)] font-semibold",
         className,
       )}
