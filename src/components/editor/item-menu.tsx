@@ -80,7 +80,9 @@ export function ItemMenu({
             移动分类
           </DropdownMenuSubTrigger>
           {/* Label 属于分组的一部分：直接放在菜单里会抛 Base UI error #31 并把整页打崩 */}
-          <DropdownMenuSubContent className="max-h-72 w-44 overflow-y-auto">
+          {/* 上限给足一屏的六成：分类不多时根本不出现滚动条；真长了也照样能滚，
+              滚动条本身藏起来，免得在一列菜单里特别扎眼 */}
+          <DropdownMenuSubContent className="no-scrollbar max-h-[60vh] w-44 overflow-y-auto">
             <DropdownMenuGroup>
               <DropdownMenuLabel>移动到</DropdownMenuLabel>
               <DropdownMenuItem disabled={item.categoryId === null} onClick={() => onMove(null)}>

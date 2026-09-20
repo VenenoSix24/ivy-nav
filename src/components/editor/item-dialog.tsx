@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { IconPicker } from "@/components/icons/icon-picker";
 import { TagInput } from "@/components/editor/tag-input";
 import { portalRequest } from "@/lib/portal/client";
+import { parseHttpUrl } from "@/lib/utils/url";
 import type {
   IconType,
   PortalCategory,
@@ -70,6 +71,41 @@ export function ItemDialog({
   const [iconValue, setIconValue] = useState<string | null>(item?.iconValue ?? null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  /** 标题是不是用户自己写过的：写过就不再让网址覆盖它 */
+  const [titleTouched, setTitleTouched] = useState(item !== null);
+  const [titleHint, setTitleHint] = useState<string | null>(null);
+
+  /**
+   * 只填了网址就来保存，会被「标题必填」挡住 —— 那就照网页自己把标题填上：
+   * 停手 900ms 后取一次 og:site_name / <title>，取不到就提示手动填。
+   */
+  useEffect(() => {
+    const target = url.trim();
+    if (!target || titleTouched || !parseHttpUrl(target)) return;
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/site-meta?url=${encodeURIComponent(target)}`);
+        const payload: unknown = await response.json().catch(() => null);
+        const found = (payload as { title?: unknown } | null)?.title;
+        if (cancelled) return;
+        if (typeof found === "string" && found.trim()) {
+          setTitle(found.trim());
+          setTitleHint("标题取自网页，可自行修改");
+        } else {
+          setTitleHint("没读到网页标题，自己填一个吧");
+        }
+      } catch {
+        if (!cancelled) setTitleHint("没读到网页标题，自己填一个吧");
+      }
+    }, 900);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [url, titleTouched]);
 
   const categoryItems = [
     { label: "未分类（Inbox）", value: INBOX_VALUE },
@@ -78,11 +114,20 @@ export function ItemDialog({
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    // 标题空着不算错：用域名兜底，总比拦着不让保存好（网址本身仍然必填、必须合法）
+    const fallback = parseHttpUrl(url)?.hostname.replace(/^www\./, "") ?? "";
+    const finalTitle = title.trim() || fallback;
+    if (!finalTitle) {
+      setError("请填标题，或先填一个网址（标题会从网址推断）。");
+      return;
+    }
+
     setError(null);
     setPending(true);
 
     const payload = {
-      title,
+      title: finalTitle,
       url,
       description: description.trim() ? description : null,
       categoryId: categoryValue === INBOX_VALUE ? null : Number(categoryValue),
@@ -125,11 +170,20 @@ export function ItemDialog({
               <Input
                 id="item-title"
                 value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                required
+                onChange={(event) => {
+                  setTitle(event.target.value);
+                  setTitleTouched(true);
+                  setTitleHint(null);
+                }}
                 maxLength={80}
+                placeholder="填网址后会自动填上"
                 className="h-10 rounded-xl text-[16px] sm:text-[14px]"
               />
+              {titleHint ? (
+                <p className="text-muted-foreground text-[12px]" role="status">
+                  {titleHint}
+                </p>
+              ) : null}
             </div>
 
             <div className="space-y-2">
@@ -186,6 +240,7 @@ export function ItemDialog({
               }}
               url={url}
               title={title}
+              initialFetched={item !== null && item.iconType === "favicon"}
             />
 
             <div className="space-y-2">

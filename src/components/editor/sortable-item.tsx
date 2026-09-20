@@ -13,6 +13,8 @@ interface SortableItemProps {
   item: PortalItem;
   layout: LayoutId;
   categories: PortalCategory[];
+  /** 搜索中顺序只是一部分结果，这时把手留着但不接手势 */
+  sortable: boolean;
   onEdit: () => void;
   onDuplicate: () => void;
   onMove: (categoryId: number | null) => void;
@@ -32,6 +34,7 @@ export function SortableItem({
   item,
   layout,
   categories,
+  sortable,
   onEdit,
   onDuplicate,
   onMove,
@@ -41,6 +44,8 @@ export function SortableItem({
 }: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
+    // 不能拖动时也不要把传感器数组换掉：dnd-kit 拿它当 deps，长度一变 React 就报错
+    disabled: !sortable,
   });
 
   return (
@@ -52,12 +57,14 @@ export function SortableItem({
       {/*
         把手是唯一的拖拽入口：手势与卡片里的链接、菜单不抢事件，
         attributes 与 listeners 都放在这里，键盘也能拖（设计文档 §30）。
+        不能说拖时它就只是个位置标记，淡下去、也不给拖拽光标。
       */}
       <button
         type="button"
         aria-label={`拖动调整「${item.title}」的顺序`}
         className={cn(
-          "text-muted-foreground/70 hover:text-foreground focus-visible:outline-ring absolute z-10 cursor-grab touch-none rounded-md p-1.5 transition-colors focus-visible:outline-2 active:cursor-grabbing",
+          "text-muted-foreground/70 hover:text-foreground focus-visible:outline-ring absolute z-10 touch-none rounded-md p-1.5 transition-colors focus-visible:outline-2",
+          sortable ? "cursor-grab active:cursor-grabbing" : "cursor-default opacity-40",
           HANDLE_POSITION[layout],
         )}
         {...attributes}

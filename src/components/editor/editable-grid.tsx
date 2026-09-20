@@ -70,7 +70,14 @@ export function EditableGrid({
 
   return (
     <DndContext
-      sensors={sortable ? sensors : []}
+      // 显式给 id：不给的话 dnd-kit 用递增计数器生成 `DndDescribedBy-N`，而 StrictMode
+      // 在开发模式下把渲染跑两遍 —— 服务端 1、2、3，客户端成了 2、4、6，拖动把手的
+      // aria-describedby 因此每次都在控制台报水合不一致
+      id={`section-${items[0]?.categoryId ?? "inbox"}`}
+      // 传感器数组的长度必须恒定：dnd-kit 内部拿它当 deps 用，搜索时换成空数组会让
+      // React 报「useEffect 的依赖数组长度在两次渲染之间变了」。不可拖动改用
+      // useSortable 的 disabled，见 SortableItem
+      sensors={sensors}
       collisionDetection={closestCenter}
       modifiers={[restrictToParentElement]}
       onDragEnd={handleDragEnd}
@@ -86,6 +93,7 @@ export function EditableGrid({
               key={item.id}
               item={item}
               layout={layout}
+              sortable={sortable}
               categories={categories}
               onEdit={() => onEdit(item)}
               onDuplicate={() => onDuplicate(item)}
