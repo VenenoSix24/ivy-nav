@@ -29,7 +29,11 @@ export function EditToolbar({ onAddItem, onExit, searchActive, className }: Edit
           编辑模式
         </span>
 
-        <Button onClick={onAddItem} className="h-8 rounded-full px-3 text-[12px]">
+        <Button
+          variant="glass"
+          onClick={onAddItem}
+          className="text-primary h-8 rounded-full px-3 text-[12px]"
+        >
           <Plus className="size-3.5" />
           新建项目
         </Button>

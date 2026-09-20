@@ -8,8 +8,12 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        // 编辑模式里的动作按钮走玻璃：它们就浮在首页内容之上，
+        // 不透明的底色会像贴上去的一块，与身后的卡面材质对不上
+        glass:
+          "border-hairline bg-glass-strong text-foreground backdrop-blur-md hover:bg-glass aria-expanded:bg-glass",
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-hairline bg-glass-strong backdrop-blur-md hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
