@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { emojiCatalog, emojiGroups, searchEmoji } from "./emoji";
-import { pickIconHref } from "./favicon";
+import { pickIconHref, pickSiteTitle } from "./favicon";
 
 const BASE = new URL("https://example.com/blog/post");
 
@@ -75,5 +75,41 @@ describe("searchEmoji", () => {
     const chars = emojiCatalog.map((entry) => entry.char);
     expect(new Set(chars).size).toBe(chars.length);
     for (const entry of emojiCatalog) expect(emojiGroups()).toContain(entry.group);
+  });
+});
+
+describe("pickSiteTitle", () => {
+  it("prefers og:site_name, which is usually the site itself", () => {
+    const html = [
+      '<meta property="og:site_name" content="GitHub">',
+      "<title>GitHub · Build and ship software</title>",
+    ].join("");
+    expect(pickSiteTitle(html)).toBe("GitHub");
+  });
+
+  it("falls back to og:title, then to the title tag", () => {
+    expect(pickSiteTitle('<meta property="og:title" content="Excalidraw">')).toBe("Excalidraw");
+    expect(pickSiteTitle("<title>  Hacker News  </title>")).toBe("Hacker News");
+  });
+
+  it("reads name= as well as property=", () => {
+    expect(pickSiteTitle('<meta name="og:site_name" content="MDN">')).toBe("MDN");
+  });
+
+  it("decodes the entities that actually show up in titles", () => {
+    expect(pickSiteTitle("<title>Tom &amp; Jerry &#39;Show&#39;</title>")).toBe(
+      "Tom & Jerry 'Show'",
+    );
+    expect(pickSiteTitle("<title>a&nbsp;&nbsp;b</title>")).toBe("a b");
+  });
+
+  it("collapses whitespace and caps the length", () => {
+    expect(pickSiteTitle("<title>a\n   b\t c</title>")).toBe("a b c");
+    expect(pickSiteTitle(`<title>${"x".repeat(120)}</title>`)).toHaveLength(80);
+  });
+
+  it("returns null when there is no title at all", () => {
+    expect(pickSiteTitle("<html><head></head><body>hi</body></html>")).toBeNull();
+    expect(pickSiteTitle("<title>   </title>")).toBeNull();
   });
 });
