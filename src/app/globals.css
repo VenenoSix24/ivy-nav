@@ -285,12 +285,14 @@
   }
 }
 
-/* 轻玻璃卡面：卡片是本项目唯一的材质语言，其他表面保持素色（设计文档 §46） */
+/* 轻玻璃卡面：卡片是本项目唯一的材质语言，其他表面保持素色（设计文档 §46）。
+   这里只能写不带前缀的 backdrop-filter —— 手写 -webkit- 会被 Next 的 CSS 优化
+   当成作者自备前缀，把无前缀那条合并掉，Chrome 上就完全没有磨砂了。
+   前缀交给构建管线按目标浏览器补。 */
 @utility surface {
   background: var(--surface-glass);
   border: 1px solid var(--surface-border);
   backdrop-filter: blur(26px) saturate(145%);
-  -webkit-backdrop-filter: blur(26px) saturate(145%);
   box-shadow: var(--surface-shadow);
 }
 
