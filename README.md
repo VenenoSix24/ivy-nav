@@ -2,472 +2,260 @@
 
 > One page. Many places.
 
-个人专属的网站、项目与常用工具导航 Portal。自托管，内容全部在页面上维护，不需要修改代码。
+[![CI](https://github.com/VenenoSix24/ivy-nav/actions/workflows/ci.yml/badge.svg)](https://github.com/VenenoSix24/ivy-nav/actions/workflows/ci.yml)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000?style=flat-square&logo=nextdotjs&logoColor=white)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19-087ea4?style=flat-square&logo=react&logoColor=white)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06b6d4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![SQLite](https://img.shields.io/badge/SQLite-Drizzle-003b57?style=flat-square&logo=sqlite&logoColor=white)](https://orm.drizzle.team)
+[![License](https://img.shields.io/badge/License-MIT-3da639?style=flat-square)](./LICENSE)
 
-## 是什么
+个人专属的网站、项目与常用工具导航。
+自托管，支持导入书签，所有内容都可以直接在页面中管理，无需修改代码。
 
-一个单人使用的个人导航页：把个人网站、开源项目、常用工具和收藏的站点收在一页里，按分类分区展示，支持 Light / Dark / System 主题、即时搜索，以及 Public / Private 两级可见性。
+![Ivy · 一叶](docs/images/cover.png)
 
-不是网址大全。视觉方向采用 Apple 风格的克制与留白，不做彩色 Logo 墙、重渐变或大面积毛玻璃。
+## 特性
 
-## 技术栈
+- 🗂️ **分类管理** — 按分类组织网站、项目与工具
+- ✏️ **前台编辑** — 直接在首页编辑、排序和管理内容
+- 🔍 **即时搜索** — 搜索标题、描述、网址、域名、标签与分类
+- 🎨 **多种布局** — 每个分类可独立选择卡片、列表或紧凑布局
+- 🌓 **主题切换** — Light / Dark / System
+- 🎯 **多种图标来源** — 自动获取、图标库、Emoji、自定义上传
+- 🔒 **Public / Private** — 支持公开与私有内容
+- 📥 **书签导入** — 支持 Chrome、Edge、Firefox、Safari
+- 💾 **备份与恢复** — JSON 数据导入导出与数据库快照
+- 📱 **响应式设计** — 适配桌面、平板与移动设备
 
-| 层   | 选型                                       |
-| ---- | ------------------------------------------ |
-| 框架 | Next.js（App Router）                      |
-| 前端 | React、TypeScript、Tailwind CSS、shadcn/ui |
-| 数据 | SQLite + Drizzle ORM                       |
-| 认证 | Session + HttpOnly Cookie                  |
-| 主题 | Light / Dark / System（next-themes）       |
-| 动画 | CSS Transition + Motion                    |
-| 拖拽 | dnd-kit                                    |
+## 界面
+
+![首页与卡片布局](docs/images/p1.png)
+
+**卡片布局**的首页：搜索、分类与每个分类下的条目。
+
+每个分类都可以选择自己的展示方式：
+
+- **卡片** — 适合项目、常用网站等信息较完整的内容
+- **列表** — 适合普通网站与工具
+- **紧凑** — 适合大量常用入口
+
+![列表与紧凑布局](docs/images/p2.png)
+
+同一个页面里，**列表**（上）与**紧凑**（下）可以并存 —— 布局是按分类选的，不是全局的。
+
+## 图标
+
+支持多种图标来源：
+
+| 来源   | 说明                            |
+| ------ | ------------------------------- |
+| 自动   | 根据网站信息自动获取图标        |
+| 图标库 | Simple Icons、Iconify、自定义库 |
+| Emoji  | 内置常用 Emoji 搜索             |
+| 上传   | PNG / JPG / WEBP / SVG          |
+| 无     | 使用标题首字母                  |
+
+图标库中的图标会在选择后保存到本地，不依赖第三方服务长期加载。
+
+也支持添加自定义图标集。
 
 ## 快速开始
 
-需要 Node.js 22 或更高版本，以及 pnpm。
+需要 Node.js 22+ 与 pnpm。
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-打开 `http://localhost:3000`。
+然后打开：
 
-数据库为空时先创建管理员账号。建号只在服务器上进行，网页端只提供登录：
-
-```bash
-pnpm admin:create ivy            # 交互式输入密码
-ADMIN_PASSWORD=... pnpm admin:create ivy   # 不走交互，便于脚本化
-pnpm admin:create --reset        # 忘记密码时重置
+```text
+http://localhost:3000
 ```
 
-这样做而不是做一个网页建号页：门户本身是公网可访问的，「谁都能打开的建号页面」本身就是缺口。
+首次使用时创建管理员账号：
 
-如果想先看到完整的页面排版，可以导入一份演示内容：
+```bash
+pnpm admin:create ivy
+```
+
+也可以通过环境变量指定密码：
+
+```bash
+ADMIN_PASSWORD=... pnpm admin:create ivy
+```
+
+忘记密码时：
+
+```bash
+pnpm admin:create --reset
+```
+
+如果只想快速查看页面，可以导入演示数据：
 
 ```bash
 pnpm db:seed
 ```
 
-数据库中已有分类时，该命令会直接跳过，不会重复写入。
-
-用手机或局域网 IP 打开开发服务器时，Next 16 默认会拦掉开发资源，
-页面会呈现「样式正常但点什么都没反应」。`next.config.ts` 已默认放开
-`192.168.*.*`、`10.*.*.*`、`172.16.*.*` 三个私有网段；其他域名或网段用
-`ALLOWED_DEV_ORIGINS` 追加。只想稳定验收的话，用 `pnpm build && pnpm start`
-跑生产模式，它没有这套限制。
-
-## 环境变量
-
-全部可选，默认值适用于本机开发。复制 `.env.example` 为 `.env.local` 后按需修改。
-
-| 变量                          | 默认值                  | 说明                                               |
-| ----------------------------- | ----------------------- | -------------------------------------------------- |
-| `DATABASE_PATH`               | `./data/portal.db`      | SQLite 数据库文件路径                              |
-| `MIGRATIONS_PATH`             | `./src/db/migrations`   | 迁移文件目录                                       |
-| `SESSION_COOKIE_NAME`         | `ivy_session`           | 会话 Cookie 名称                                   |
-| `SESSION_COOKIE_SECURE`       | 生产环境 `true`         | 是否只在 HTTPS 下回传会话 Cookie                   |
-| `TRUST_PROXY_HEADERS`         | `false`                 | 是否读取 `X-Forwarded-For`（仅在可信反代之后开启） |
-| `FAVICON_ALLOW_PRIVATE_HOSTS` | `false`                 | 是否允许抓取内网地址的站点图标                     |
-| `LOGIN_ATTEMPT_LIMIT`         | `10`                    | 单个用户名 15 分钟内的登录尝试上限                 |
-| `LOGIN_GLOBAL_ATTEMPT_LIMIT`  | `30`                    | 全局登录尝试上限                                   |
-| `NEXT_PUBLIC_SITE_URL`        | `http://localhost:3000` | 站点对外地址，用于 OpenGraph 绝对链接              |
-
 ## 常用命令
 
 ```bash
 pnpm dev            # 开发服务器
-pnpm build          # 生产构建（standalone）
+pnpm build          # 生产构建
 pnpm start          # 运行生产构建
 pnpm test           # 单元测试
 pnpm lint           # ESLint
 pnpm typecheck      # TypeScript 类型检查
-pnpm format         # Prettier 格式化
-pnpm format:check   # 校验格式（CI 使用）
-pnpm db:generate    # 修改 schema 后生成迁移
-pnpm db:seed        # 导入演示内容（已有数据时跳过）
-pnpm brand:assets   # 从 scripts/brand/source 重新生成图标与分享图
+pnpm format         # 格式化
+pnpm format:check   # 检查格式
+pnpm db:generate    # 生成数据库迁移
+pnpm db:seed        # 导入演示数据
+pnpm brand:assets   # 生成品牌资源
+pnpm e2e            # 接口回归测试
 ```
 
-`pnpm dev` 与 `pnpm build` 使用不同的产物目录（`.next-dev` 与 `.next`）。
-两者共用同一个目录时，一次构建就可能让开发服务器引用的脚本失效，
-页面上表现为样式还在、点击全无反应。
+## 数据与权限
 
-## 接口回归
+Ivy · 一叶使用 SQLite 保存数据，不需要额外的数据库服务。
 
-`pnpm e2e` 会为每个套件建一份独立的临时数据库、起一个独立端口的服务，然后跑一组接口断言：
+内容支持两种可见性：
 
-```bash
-pnpm build && pnpm e2e           # 全跑
-pnpm e2e palette                 # 只跑某个套件
-```
+- `Public` — 所有人可见，未登陆时的页面。
+- `Private` — 仅管理员可见，登陆后显示。
 
-套件在 `scripts/e2e/suites/`：`edit`（条目与分类的增删改、排序、可见性）、`backup`（导出、导入、快照、恢复）、
-`security`（未登录越权、Private 泄漏、限流、SSRF 兜底、缓存头）、`restore`（危险网址的恢复与导入）、
-`palette` 与 `layout`（两类界面偏好的写入、校验与首屏渲染）、`bookmarks`（书签文件的预览与导入、
-重复网址的两种处理、同名分类与标签的复用）。需要先 `pnpm build`，脚本会自己检查。
-临时库与日志落在 `scripts/e2e/.tmp/`（已忽略）。
+Private 内容由服务端过滤，未登录用户不会收到对应数据。
 
-浏览器的交互与观感验证不在里面 —— 那部分是一次性的探查，写得再全也不如真机点一遍。
+管理员通过 Session + HttpOnly Cookie 登录，所有管理操作都需要有效的管理员会话。
 
-## 界面与交互
+## 书签导入
 
-- **顶栏**只放品牌、外观切换与设置入口：停在页面顶部时完全透明，向下滚动后才浮起毛玻璃与细分隔线。
-- **分类导航**在搜索框下方，是一排跟随内容的胶囊（不吸顶、无底衬）；只显示管理员标记为「首页显示」的分类。分类多了整排横向滚动 —— 桌面端除了滚轮，还可以**按住整排左右拖**，鼠标扫到这一排时被挡住的那一端会浮出箭头，滚到中间时两头都渐隐。
-- **首页主体**依次是欢迎语、站点口号、搜索框、分类导航，以及按分类分区的卡片流，末尾是页脚；每个分区的标题旁是条数与分类描述（窄屏描述另起一行，宽屏跟在标题右边）。
-- **编辑模式**在设置页的「前台编辑」里打开，用 Cookie 记住，回到首页即可编辑；顶栏不出现管理按钮。卡片可以通过拖动把手排序，右上角菜单支持编辑、复制、移动分类、切换可见性、置顶与删除；点顶部的「完成」退出。
-- **搜索**在标题、描述、网址、域名、标签和分类中即时匹配，不刷新页面。
-- **分类本身也在首页改**：每个分区标题右边有「⋯」——名称与描述、这一组用哪套布局、上移 / 下移 / 移到最前、从首页隐藏、整类隐藏、删除，改完立刻在眼前生效，不必再回设置页。
-- **整理分类**（编辑工具条上）是新的排序入口：分类**一屏摊成两列的紧凑格子**，拖到哪儿都只是一小段距离，不必在一条竖排长名单里一路往下拖；被隐藏的分类也在里面，还能顺手新建。
-- 搜索状态下不开放拖动，避免把一部分结果当成完整顺序写回。
-- **登录页**（`/login`）顶部是品牌标记与站名，下面是用户名、密码与登录按钮。
-- **设置页**（`/settings`）包含外观、配色、前台编辑、图标库、条目图标、浏览器书签、数据、账号；分类的名字、描述、布局与顺序都搬到了首页的编辑模式里（见上）。
-- **配色主题**与浅色/深色各管一维：六套配色（一叶青、天青、紫罗兰、陶土、玫红、石墨）只换强调色与背景光晕，中性色与卡面材质不变；在设置页选，存进 `settings` 表，服务端渲染时直接写进 `<html data-palette>`，所以首屏不会闪。
-- **首页布局**按分类各选一套（在首页该分区的「⋯ → 布局」里选），只换条目的排布，搜索与编辑模式不受影响：
-  - **卡片**（默认）：图标在上、描述两行；手机两列、桌面三列，窄屏下「打开」另起一行、与内容同一条左基线。
-  - **列表**：一行一条三行文字 —— 域名紧随标题（按基线对齐，小一号的网址不会浮在半空）、描述独占一行、标签排在描述下方，都从左排起；一行不低于 88px。窄屏不显示域名，描述因此能读完整。
-  - **紧凑**：只放图标与标题的小方块，手机三列、桌面六列，适合当成常用入口的主屏。
-    三种形状共用一份网格参数（`src/lib/settings/homepage.ts` 的 `GRID_CLASS`），公开视图与编辑视图不会各写一套；
-    布局存在分类上，空值即默认的卡片；它跟着内容一起进备份，换设备也跟着走。
-    标签显示几个不按固定个数切：先把放得下的标签**均分**到各行（宁可 3 + 2 也不要 4 + 1 —— 后者第一行挤满、第二行只剩一个），放不下的才在行末收成 `+N`。分行由纯函数算（`lib/portal/tags.ts` 的 `planTagRows`），宽度取自一层不可见的量尺。
-- **材质**只有一套：卡面是轻玻璃（26px 磨砂），弹窗、下滑菜单这类浮层用更实一点的浮层玻璃（34px 磨砂），超出的部分留给背景透出来；按钮在编辑模式里也走同一套材质，免得像贴上去的一块。
-- **顺带**：页面开了 `viewport-fit=cover`，iOS 上悬浮工具栏与 Home 指示条那一圈也归页面管 —— 背景铺满整屏，内容则留出安全区。
-- **背景**是两团模糊光斑加一层极细噪点（噪点负责打散大面积渐变常见的色带）。两团光斑各自以 46s / 58s 的周期慢慢漂移并微微胀缩 —— 不滚动时背景也是活的；滚动时外面还套一层视差。整套只用 `transform`，五秒内的 `LayoutCount` 增量为 0；系统开启「降低动态效果」时全部静止。
-- **新建条目**先填网址也行：标题会照网页的 `og:site_name` / `<title>` 自动填上（`/api/site-meta`），
-  读不到就提示手填；标题空着保存时用域名兜底，不会因为一个必填项白填一遍。
-- **输入网址后会自动取一次图标**，条件是这个网址是**打开面板之后才输入的**：编辑已有条目时
-  重开面板不会又抓一轮（想看别的候选点「获取图标」）。图标选择器「自动」页里点「获取图标」，会把每个方案各取一张摆出来
-  —— 网页里声明的 `<link rel="icon">`、PWA manifest 里声明的图标、`/favicon.ico`，以及直连
-  都失败时的第三方服务（favicon.im、icon.horse，可用 `FAVICON_FALLBACK_SOURCES=false` 关掉）。
-  取不到的与只回占位图的照样占一格并写明原因，点哪张就用哪张；不点就按这个顺序自动挑。
-  服务自己那张「查不到」占位图会被认出来丢掉，不会拿它冒充站点图标。
-- **图标库**是单独一档：先选哪一套（Simple Icons / Iconify / Lucide，见「图标」一节），
-  再按关键词搜具体那一个 —— **没有关键词就不发请求**，三套加起来二十多万个图标，
-  默认摊开一批没必要也很重。Emoji 与上传各占一档，几档并排不挤。
-- **分类可以整类隐藏**：首页分区的「⋯」里有这两个开关 —— 「从首页隐藏」决定它作为分区出现与否，
-  「整类隐藏」则把这个分类连同里面的条目一起对匿名访客收起（登录后仍然可见）。过滤在服务端完成，
-  匿名拿到的响应里根本没有这些行。
-- **条目图标**取不到时回一张 1×1 的透明占位图（不是 404，控制台就不会多一条红线），
-  图标位始终垫着标题首字母；真的取到了图标才把首字母收起来。抓取全程按「取不到」处理：
-  超时、对端中途断流、跳转目标不合法都只回占位图，不会把异常抛成 500。
-- **品牌标记**是一片叶子，顶栏与页脚共用；标签页图标、Apple 图标与分享卡片由 `pnpm brand:assets` 从源图生成，顶栏与页脚用不带底板的叶子，标签页用带底板的方块版本；方块是满幅不透明的，圆角交给浏览器与系统自己加。
+支持导入浏览器导出的 `bookmarks.html`：
 
-## 权限模型
+- Chrome
+- Edge
+- Firefox
+- Safari
 
-每个条目都有自己的 `visibility`：
+导入前会先进行预览，可以查看分类、标签、重复网址等信息，确认后再写入数据库。
 
-- `public`
-- `private`
+现有内容不会被删除。
 
-条目的可见性以自身设置为准，分类的 `visibility` 只作为新建条目时的默认值。
+## 备份
 
-**Private 内容由服务器端决定是否下发。**
+支持两种方式：
 
-匿名访问者的响应中不会包含：
+- **JSON 导出 / 导入** — 适合迁移内容
+- **数据库快照** — 完整备份 SQLite 数据库
 
-- Private 条目
-- 未在首页显示的分类及其条目
+管理员账号和登录状态不会包含在 JSON 导出中。
 
-前端隐藏不构成权限控制，直接调用接口同样会被拒绝。
+> 数据库备份包含管理员密码哈希，请妥善保存。
 
-所有写接口都要求管理员会话，未登录一律返回 `401`。
+## 技术栈
 
-## 图标
-
-条目图标有五种来源：
-
-| 来源   | 说明                                                               |
-| ------ | ------------------------------------------------------------------ |
-| 自动   | 点「获取图标」列出各方案的候选图，点哪张用哪张；不选就按顺序自动挑 |
-| 图标库 | 先选哪一套，再按关键词搜，搜到哪张挑哪张                           |
-| Emoji  | 精选 115 个，支持中英关键词搜索                                    |
-| 上传   | PNG / JPG / WEBP / SVG，单张上限 512 KB                            |
-| 无     | 显示标题首字母                                                     |
-
-自动抓取通过本地代理 `/api/icons/favicon?item=<id>`：接受条目编号而不是任意网址，匿名访问者无法利用它作为扫描内网的跳板。
-候选列表走 `/api/icons/candidates?url=<url>`，逐张预览走 `/api/icons/resolve?url=<url>&source=<来源>`，两个都只对管理员开放。
-
-挑选记在条目的 `iconValue` 上（就是来源名），取图时先问它；那个来源失效了自动退回链子，不会让图标位空着。
-图标地址上还带一个 `v` 变更标记：那张图的缓存有 7 天，换了来源而地址不变的话，浏览器会一直拿旧图。
-
-结果按「站点 + 来源」落盘缓存 7 天，失败请求也会短期缓存，不会每次打开首页都重新抓取。
-
-### 图标库
-
-默认挂三套，顺序就是挑选的优先级：
-
-| 图标库       | 数据从哪来                     | 颜色                                          |
-| ------------ | ------------------------------ | --------------------------------------------- |
-| Simple Icons | npm 包（CC0），装在本地        | 每个图标自带品牌色 `hex`，也可选黑白          |
-| Iconify      | 官方 `search` / `svg` 接口     | 单色套件可改色，彩色套件（`palette`）保持原样 |
-| Lucide       | 本地登记表，前端直接渲染成组件 | 跟着主题走，不用下载                          |
-
-搜索框在那排图标库胶囊上面：关键词只输一遍，换库接着搜同一个词；打开面板时会按标题或域名
-先填一个最像名字的词（中文标题就取域名）。一页 60 个，底部可以「显示更多」接着往下要。
-**没有关键词就不发请求** —— 三套加起来二十多万个图标，默认摊开一批既没必要也很重。
-挑中的那张**下载到本地上传目录**（`/api/icons/file/<名字>`），之后就是一张普通的本地图片：
-离线能显示，也不再看那个图标库的脸色。文件名前缀写着来路（`simple-icons-github-181717_<hash>.svg`），
-同一个库、同一个名字、同一个颜色算出来的名字总一样，重复挑不会堆文件。
-
-各自的规范照各家文档来：Simple Icons 是单色图标、颜色用它的 `hex`、品牌标志的商标权属于各品牌
-（挑选时悬停能看到品牌自己的规范链接）；Iconify 的接口免费但要求缓存、不要当批量下载口用，
-且各套图标集许可不同（MIT / Apache / CC0…），搜索结果里标了出来。我们的仓库里不放别人的图标本体。
-
-### 自建图标集
-
-填一份 JSON 的地址（形如 `{name, description, icons: [{name, url}]}`，也接受数组或 `{名字: 地址}`），
-抓回来只把清单存进 `icon_sets`（跟着备份走），图标本体仍在原图床，挑中哪张才下载哪张。
-地址在 `raw.githubusercontent.com` 上时可以勾「镜像加速」改走 jsDelivr —— 那个域名在不少网络里更稳。
-设置页「图标库」里增删与重抓，编辑条目的选择器里也能用「+ 图标集」直接加。
-
-### 图标底板与跟随主题
-
-条目上还有两个开关（存在 `items.icon_plate` / `items.icon_mono`，跟着备份走）：
-
-- **底板**：图标底下那层玻璃底与描边（圆角按 Apple 应用图标的比例给，26%，随格子大小走）。
-  应用类图标（比如羊毛图标库那种自带圆角外形的）套上底板仍是大圆套小圆，那就按条目关掉它：
-  格子尺寸不变，只是不再画那层底。
-  浅色下带一层分层柔和阴影（模糊 2/4/8、透明度 7%/5%/3%，深色下不加），按两种情形分：
-  有底板就加在底板上；**没有底板**时方框没有面，加在方框上会变成一块悬在图标背后的灰方块，
-  所以那时改加在图形自己身上（`drop-shadow`，跟着图案轮廓走）。
-- **Emoji** 不套底板（选择器里那个开关对它不出现），按行内盒居中摆着，字号取图片类的八成 ——
-  emoji 自己就是一块彩色图案，各家字体把图案摆在字框里的位置又各不相同，垫一层只会更显歪；
-  它的墨迹又比字框大一圈，照足给会显得傻大。图形大小按盒子算
-  （容器查询单位 `cqh`），开着底板占七成出头、关掉后涨到接近满格，两种情况都不会显得忽然小一圈。
-- **跟随主题**：只管深色那一套。浅色下照原样显示（品牌色/原色），深色下把那张 SVG 当作 CSS
-  蒙版、颜色交给 `currentColor`，于是黑图在深色主题里不会消失。两个主题各渲染一份，用 CSS 的
-  `dark:` 切换，不闪也不用 JS。只对 SVG 生效 —— 位图的 alpha 是整个方块，蒙出来是实心色。
-
-### 图标大小
-
-取回来的图标大小不由我们定：有的把画布填满，有的四周留一大圈透明边，摆在同一个底板里就显得
-一大一小。**设置 → 条目图标**里选默认怎么摆，单个条目可以在图标选择器里覆盖：
-
-| 选法         | 做法                                                                                  |
-| ------------ | ------------------------------------------------------------------------------------- |
-| 原样（默认） | 整张图按比例放进去，四周留白照旧、保留那圈描边                                        |
-| 自动裁边     | 在浏览器里把图标画进一张 96×96 的画布，数出不透明像素的范围，裁掉透明边让图案顶到板边 |
-| 裁剪铺满     | 放大到铺满底板，超出的部分裁掉（这三档都不画描边）                                    |
-| 拉伸铺满     | 拉到和底板一样大，不是正方形会被压扁                                                  |
-
-后三档都是「填满」：图形顶到板边，整块板也不再画那圈描边（描边画在盒子内侧，留着就永远差一圈）。
-「原样」那一档留一圈呼吸位、保留描边，也就是改之前的样子。
-
-自动裁边的换算是一个纯函数（`lib/icons/fit.ts` 的 `trimTransform`，有单测盯着），只在
-「图案占画布 34%–98%」这一档才动手：图案已经顶格就不必裁，小得可疑（多半是量错了）就放过，
-放大倍数额外封顶 2 倍 —— 再大位图就开始糊了。量的时候把图缩到 96×96 的画布上数像素，
-裁完还多铺 3%（过扫，超出的部分裁掉）：量出来的范围总有两三个像素的误差，
-「正好填满」在屏幕上看还是差一条细边。图片都走本站代理，同源，所以画布读得出来；
-换成远端地址会抛，按「量不出来」处理，退回原样。
-
-条目自己那一份存在 `items.icon_fit`，空值表示跟随设置页里的默认，两处都跟着备份走。
-
-上传的文件存放在数据库同级的 `uploads/` 目录，SVG 会被清洗，并只作为图片渲染。
-
-## 备份与恢复
-
-### JSON 导出 / 导入
-
-内容包括分类、条目、标签、设置与图标集。
-
-编号不会写入导出文件，条目通过分类名与标签名建立关联，换一套部署也能对应。
-
-管理员账号与登录状态不包含在其中，导入后仍保持当前登录状态。
-
-### 数据库备份
-
-数据库备份使用 `VACUUM INTO` 生成一致快照，放在数据库同级的 `backups/` 目录。
-
-文件名格式：
-
-```text
-portal-20260919-225913.db
-```
-
-备份可以列出、下载与恢复。
-
-恢复需要二次确认，且只覆盖内容表，不会因为恢复一份旧备份而修改当前管理员账号或使当前会话失效。
-
-> 数据库备份是数据库的完整副本，其中包含管理员密码哈希，请存放在安全的位置。
-
-## 导入浏览器书签
-
-Chrome、Edge、Firefox、Safari 导出的 `bookmarks.html` 都能读，入口在**设置 → 浏览器书签**。
-
-映射规则：
-
-| 书签里的位置                                               | 落到                                                      |
-| ---------------------------------------------------------- | --------------------------------------------------------- |
-| 一级目录                                                   | 分类                                                      |
-| 二级及更深的目录                                           | 标签（每一级各成一个标签，`A/B/C` → 分类 A、标签 B 与 C） |
-| 顶层散着的书签                                             | 未分类（Inbox）                                           |
-| 浏览器自带的顶层目录（书签栏 / 其他书签 / Bookmarks bar…） | 忽略，直接下钻到里面的内容                                |
-
-文件名、`.html` 后缀、笔记式的 `<DD>` 说明、`ICON="data:..."` 里的内嵌图标都会读；只有
-`http`/`https` 之外的网址（`javascript:` 等）会被挡下并单独列出来。标题超过 80 字、描述超过
-300 字、标签超过 12 个时按上限截断，预览里会写明截了多少条。
-
-**先预览、后写入**：选好文件先出一道预览 —— 有哪些顶层目录（各自多少条）、会新建哪些分类、
-哪些标签重名复用、哪些行读不了、哪些网址落在多个分类里 —— 确认之后才落库。
-导入只新增与更新，不删除任何现有内容。
-
-**可以只导其中几个目录**：预览里每个顶层目录一行、带勾选框，默认全选。想分几批导入就取消掉
-这次不要的目录，下次再打开文件挑剩下的那几个；已经导过的那批因为按「分类 + 网址」判重，
-不会被重复导入。
-
-重复网址按 **「分类 + 网址」** 判重：
-
-- 同一个网址出现在**两个分类**里：各建一条，两个分类里都看得到（合并成一条会让另一个分类少一条），
-  预览里单独提示有多少个这样的网址；
-- 同一个网址在**同一个分类里**出现两次：只留第一次，预览里写明跳过了几条；
-- 同一个网址**库里已经有了且就在那个分类里**：默认跳过；打开「覆盖已有条目」则用书签里的标题与
-  描述更新它，标签是并进去而不是换掉 —— 用户自己在这条上打的标签不会丢。
-
-图标不会在导入时抓取：几百条会把外网拉爆，交给首页按需缓存。
+| 层     | 技术                      |
+| ------ | ------------------------- |
+| 框架   | Next.js · App Router      |
+| 前端   | React · TypeScript        |
+| UI     | Tailwind CSS · shadcn/ui  |
+| 数据库 | SQLite · Drizzle ORM      |
+| 认证   | Session · HttpOnly Cookie |
+| 主题   | next-themes               |
+| 动画   | CSS · Motion              |
+| 拖拽   | dnd-kit                   |
 
 ## 部署
 
 推荐部署在自有服务器上：Next.js + Node.js + SQLite，不需要额外的数据库服务。
 
-### 方式一：部署整个项目（推荐）
+### 完整项目（推荐）
 
-服务器上保留完整项目，用 `pnpm start` 运行。建号、迁移、备份都能直接在服务器上执行，不需要回到开发机。
+服务器上保留完整项目，建号、迁移与备份都能直接在服务器上做。
 
 ```bash
-# 服务器上
-git clone <你的仓库地址> /srv/ivy-nav
+git clone <仓库地址> /srv/ivy-nav
 cd /srv/ivy-nav
 pnpm install --frozen-lockfile
 pnpm build
 
-# 创建管理员（首次部署时执行一次）
-DATABASE_PATH=/srv/ivy-nav/data/portal.db ADMIN_PASSWORD='你的密码' pnpm admin:create ivy
+# 首次部署时建管理员（数据库不存在会自动建表）
+DATABASE_PATH=/srv/ivy-nav/data/portal.db ADMIN_PASSWORD=... pnpm admin:create ivy
 
 # 启动
 DATABASE_PATH=/srv/ivy-nav/data/portal.db PORT=3000 HOSTNAME=127.0.0.1 pnpm start
 ```
 
-数据库文件不存在时会自动建表，所以建号与启动的 `DATABASE_PATH` 要指向同一个位置。
+### standalone 产物
 
-### 方式二：standalone 产物（体积小，但服务器上没有建号工具）
-
-standalone 产物自带运行依赖，不含 tsx 与 drizzle-kit，所以**建号要在有工具链的机器上做**。
+体积更小，但产物里没有 tsx 与 drizzle-kit，**建号要在开发机上完成**，再把数据目录一起带过去。
 
 ```bash
-# 开发机上
-pnpm install --frozen-lockfile
-pnpm build
+pnpm install --frozen-lockfile && pnpm build
 
 mkdir -p /tmp/ivy-deploy/.next
 cp -r .next/standalone/. /tmp/ivy-deploy/
 cp -r .next/static /tmp/ivy-deploy/.next/static
-
-# 在开发机上先建号，再把数据目录一起带过去
-DATABASE_PATH=/tmp/ivy-deploy/data/portal.db ADMIN_PASSWORD='你的密码' pnpm admin:create ivy
+DATABASE_PATH=/tmp/ivy-deploy/data/portal.db ADMIN_PASSWORD=... pnpm admin:create ivy
 
 rsync -a /tmp/ivy-deploy/ server:/srv/ivy-nav/
-# 之后在服务器上启动
-cd /srv/ivy-nav && DATABASE_PATH=/srv/ivy-nav/data/portal.db PORT=3000 HOSTNAME=127.0.0.1 node server.js
+
+# 服务器上
+cd /srv/ivy-nav && DATABASE_PATH=/srv/ivy-nav/data/portal.db node server.js
 ```
 
-> `public/brand/` 与 `src/app/` 下的图标是 `pnpm brand:assets` 的产物，部署时要一起带过去：
-> `cp -r public /srv/ivy-nav/public`。
+`public/` 与 `src/app/` 下的图标是 `pnpm brand:assets` 的产物，要一起带过去。
 
-### systemd
+### 运行与反代
 
-```ini
-[Unit]
-Description=Ivy Portal
-After=network.target
+- 数据库、上传的图标与备份都在应用目录下的 `data/`、`uploads/`、`backups/`，记得一并持久化并定期快照。
+- 用 HTTPS，`SESSION_COOKIE_SECURE` 保持默认的 `true`；只有反代可信时才设 `TRUST_PROXY_HEADERS=true`。
+- 部署到公网时设 `NEXT_PUBLIC_SITE_URL`，分享卡片的链接才是对的。
+- 常驻可以交给 systemd：`ExecStart` 用 `pnpm start`（完整项目）或 `node server.js`（standalone），配上 `Restart=on-failure`。
+- 其余环境变量见 `.env.example`。
 
-[Service]
-Type=simple
-WorkingDirectory=/srv/ivy-nav
-Environment=NODE_ENV=production
-Environment=DATABASE_PATH=/srv/ivy-nav/data/portal.db
-Environment=PORT=3000
-Environment=HOSTNAME=127.0.0.1
-# 方式一用 ExecStart=/usr/bin/pnpm start
-ExecStart=/usr/bin/node server.js
-Restart=on-failure
+Vercel 这类 Serverless 平台不能把 SQLite 放在本地临时文件里做长期存储 —— 需要换 SQLite 兼容的托管服务，或者保持自有服务器部署。
 
-[Install]
-WantedBy=multi-user.target
-```
-
-部署到反向代理之后：
-
-- 使用 HTTPS，保持 `SESSION_COOKIE_SECURE` 为默认的 `true`。
-- 只有在代理可信时再设置 `TRUST_PROXY_HEADERS=true`。
-- 备份与数据库目录（`data/`、`backups/`、`uploads/`）需要在应用目录之外单独做快照。
-
-部署到 Vercel 这类 Serverless 环境时，SQLite 不能依赖本地临时文件做长期存储。需要持久化数据库时，请换用 SQLite-compatible 的托管服务，或保持自有服务器部署。
-
-## 安全
-
-- 密码使用 `node:crypto` 的 scrypt 加盐哈希，参数随哈希存储，校验使用定时安全比较。
-- 会话只把令牌的 SHA-256 摘要写入数据库，拿到数据库文件也无法直接重放会话；Cookie 使用 HttpOnly + SameSite=Lax，生产环境默认 Secure。
-- 登录失败按用户名限流，并附加全局限流，不按 IP 计数（`X-Forwarded-For` 由客户端自己写）。
-- 网址只接受 `http:` 与 `https:`，写入、导入与恢复三条路径都会进行校验，`javascript:` 与 `data:` 一律拒绝。
-- 上传校验文件头与声明类型是否一致；SVG 会清洗脚本、事件属性、远程引用与实体声明，响应另加 CSP `sandbox` 与 `nosniff`。
-- 取站点图标或网页标题时拒绝回环、link-local 与保留地址，并逐跳校验跳转目标。
-- 接口响应统一使用 `private, no-store`；`/api/` 与管理页面不出现在 `robots.txt` 中。
-
-## 目录结构
+## 项目结构
 
 ```text
 scripts/
-├── brand/                 图标与分享图生成（源图、版式、生成脚本）
-└── e2e/                   接口回归套件与运行脚本
+├── brand/
+└── e2e/
+
 src/
-├── app/                   路由、页面与 API
-│   ├── api/               服务器端接口
-│   ├── login/             管理员登录
-│   └── settings/          系统设置
+├── app/
 ├── components/
-│   ├── ui/                shadcn/ui 基础组件
-│   ├── portal/            公开门户界面
-│   ├── editor/            前台编辑模式
-│   ├── icons/             图标渲染与选择
-│   ├── auth/              登录表单
-│   └── settings/          设置页各分区
-├── db/                    schema、连接、迁移、种子数据
+│   ├── ui/
+│   ├── portal/
+│   ├── editor/
+│   ├── icons/
+│   └── settings/
+├── db/
 ├── hooks/
 └── lib/
-    ├── api/               接口响应的统一形状
-    ├── auth/              密码、会话、限流、服务端鉴权
-    ├── backup/            导出、导入与数据库快照
-    ├── bookmarks/         浏览器书签解析、映射与落库
-    ├── icons/             图标抓取、上传与清洗、图标库与摆法
-    ├── net/               出站抓取的超时与重试
-    ├── portal/            门户数据查询与写操作
-    ├── settings/          外观、布局与图标偏好的读写
-    └── utils/             通用工具
+    ├── auth/
+    ├── backup/
+    ├── bookmarks/
+    ├── icons/
+    ├── portal/
+    ├── settings/
+    └── utils/
 ```
 
-## 已知边界
+## Roadmap
 
-这些功能暂时留在后续阶段：
+目前暂不计划加入与导航核心无关的功能。
 
-- 定时自动备份
+后续可能加入：
+
+- 自动备份
 - 网站状态检查
 - 最近访问
 - 访问统计
 - PWA
 
-**没有条目的分类在首页不占分区**，所以那一行的「⋯」也点不到它 —— 名字、描述与布局要去
-「整理分类」里改（那里列全部分类，包括空的与被隐藏的）。
+## License
 
-**书签导入的目录勾选只到顶层目录这一层**：二级目录是标签，勾上父目录就跟着一起进来。
-再往下挑（只导入「设计 / 灵感」而不要「设计 / 配色」）需要把清单做成可展开的树，
-目前没做。
-
-导入浏览器书签时不会带上 Chrome 内嵌在文件里的 `ICON="data:..."` 图标，图标统一由首页按需获取。
-
-移动端的拖动由把手发起（长按 200ms 起拖），而不是长按整张卡片。
-
-恢复与导入会重建条目行，编号会发生变化；操作完成后页面会重新加载。
-
-## 许可
-
-MIT，见 [LICENSE](./LICENSE)。
+MIT License，详见 [LICENSE](./LICENSE)。
