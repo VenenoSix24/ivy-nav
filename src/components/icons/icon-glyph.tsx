@@ -32,13 +32,14 @@ interface IconGlyphProps {
  * 图标盒子的尺寸参数。图形大小按盒子算（容器查询单位），而不是各处再手写一个像素值 ——
  * 盒子换尺寸时图形跟着走，关掉底板时也不必再去改那一串变量。
  *
- * 底板开着时图形占六成出头：底板本身就是一块视觉上的「形」，图形再大半圈就顶格了。
- * 关掉底板后只剩图形自己，还按六成给就会显得很小 —— 所以让它涨到接近满格。
+ * 底板开着时图形占七成出头：底板本身是一块视觉上的「形」，图形再大半圈就顶格了；
+ * 但也不能太小 —— 取回来的图标常自带透明边距，本来就不填格，再留一大圈就成了
+ * 「大圆套小圆」，看着还像偏心。关掉底板后只剩图形自己，让它涨到接近满格。
  */
 export function iconBox(plate: boolean): React.CSSProperties {
   return {
     containerType: "size",
-    "--icon-glyph": plate ? "62cqh" : "88cqh",
+    "--icon-glyph": plate ? "72cqh" : "88cqh",
   } as React.CSSProperties;
 }
 

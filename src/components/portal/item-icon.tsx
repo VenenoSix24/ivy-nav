@@ -28,7 +28,7 @@ export function ItemIcon({ spec, title, itemId, className, glyphClassName }: Ite
       style={iconBox(plate)}
       className={cn(
         "inline-grid size-11 shrink-0 place-items-center leading-none",
-        plate && "border-hairline bg-glass-strong rounded-lg border",
+        plate && "icon-plate rounded-lg",
         className,
       )}
     >

@@ -443,7 +443,7 @@ export function IconPicker({
           style={iconBox(plate)}
           className={cn(
             "inline-grid size-12 shrink-0 place-items-center leading-none",
-            plate && "border-hairline bg-glass-strong rounded-lg border",
+            plate && "icon-plate rounded-lg",
           )}
         >
           <IconGlyph

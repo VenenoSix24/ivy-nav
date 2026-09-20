@@ -90,6 +90,10 @@
   --surface-glass: rgba(255, 255, 255, 0.62);
   --surface-glass-strong: rgba(255, 255, 255, 0.76);
   --surface-border: rgba(255, 255, 255, 0.7);
+  /* 图标底板：它压在白卡面上，用玻璃色（同样是白）就与卡面分不开了 ——
+     浅色下改用一层很淡的中性灰，深色下改用一层很淡的白 */
+  --plate-fill: rgba(120, 120, 128, 0.09);
+  --plate-border: rgba(120, 120, 128, 0.2);
   --surface-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
   --surface-shadow-hover: 0 28px 70px rgba(0, 0, 0, 0.12);
 
@@ -145,6 +149,8 @@
   --surface-glass: rgba(28, 28, 30, 0.58);
   --surface-glass-strong: rgba(38, 38, 40, 0.72);
   --surface-border: rgba(255, 255, 255, 0.11);
+  --plate-fill: rgba(255, 255, 255, 0.07);
+  --plate-border: rgba(255, 255, 255, 0.14);
   --surface-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
   --surface-shadow-hover: 0 32px 80px rgba(0, 0, 0, 0.55);
 
@@ -313,6 +319,13 @@
   backdrop-filter: blur(34px) saturate(160%);
 }
 
+/* 图标底板：单独一套颜色，不跟着卡面玻璃走。它是图标的地，不是一层玻璃 ——
+   要能在卡面上看出来，浅色下就不能也用白色。 */
+@utility icon-plate {
+  background: var(--plate-fill);
+  border: 1px solid var(--plate-border);
+}
+
 @utility surface-hover {
   transition:
     transform 0.35s var(--ease-out-soft),
@@ -355,6 +368,17 @@
 /* 顶栏分类条：右缘渐隐，提示右侧还有可滚动的内容 */
 @utility fade-right {
   mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 1.75rem), transparent 100%);
+}
+
+/* 已经滚到中间了：两头都还有内容，两侧都渐隐 */
+@utility fade-both {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 1.75rem,
+    #000 calc(100% - 1.75rem),
+    transparent 100%
+  );
 }
 
 /*
