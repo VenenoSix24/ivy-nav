@@ -17,7 +17,11 @@ export const metadata: Metadata = {
     description: site.description,
     siteName: site.fullName,
     type: "website",
+    locale: "zh_CN",
   },
+  // 图标与分享卡片都由 app/ 目录下的文件约定接管：
+  // icon.png / apple-icon.png / favicon.ico / opengraph-image.png
+  twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },
 };
 
