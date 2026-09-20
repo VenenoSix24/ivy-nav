@@ -352,6 +352,18 @@
   }
 }
 
+/* 图标自己的一层极轻投影（只在浅色下）。浅色卡面是白的，透明底的图标压在它上面容易糊成
+   一片 —— 上一版试过加深描边，观感偏复古；改成跟着图案走的 drop-shadow：它按 alpha 描影，
+   透明区域不带影子，所以图案看起来是「浮」在卡面上，而不是被框起来。
+   深色下卡面本来就暗，再加影子只会脏，直接关掉。 */
+@utility icon-lift {
+  filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.14)) drop-shadow(0 0.5px 0.5px rgb(0 0 0 / 0.07));
+
+  &:is(.dark *) {
+    filter: none;
+  }
+}
+
 /* 顶栏分类条：右缘渐隐，提示右侧还有可滚动的内容 */
 @utility fade-right {
   mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 1.75rem), transparent 100%);

@@ -166,7 +166,7 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
             loading="lazy"
             decoding="async"
             className={cn(
-              "relative size-[var(--icon-glyph,1.25rem)]",
+              "icon-lift relative size-[var(--icon-glyph,1.25rem)]",
               FIT_CLASS[fit],
               darkMono && "dark:hidden",
             )}
