@@ -166,8 +166,10 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
             loading="lazy"
             decoding="async"
             className={cn(
-              "icon-lift relative size-[var(--icon-glyph,1.25rem)]",
+              "relative size-[var(--icon-glyph,1.25rem)]",
               FIT_CLASS[fit],
+              // 底板开着时影子在方框上，图标自己不再套一层（盒子里套盒子）
+              spec.plate === false && "icon-lift",
               darkMono && "dark:hidden",
             )}
             style={transform ? { transform } : undefined}

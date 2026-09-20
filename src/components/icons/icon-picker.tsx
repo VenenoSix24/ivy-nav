@@ -455,7 +455,7 @@ export function IconPicker({
           style={iconBox(plate, spec.fit ?? DEFAULT_ICON_FIT)}
           className={cn(
             "inline-grid size-12 shrink-0 place-items-center leading-none",
-            plate && "border-hairline bg-glass-strong rounded-lg border",
+            plate && "plate-lift border-hairline bg-glass-strong rounded-lg border",
           )}
         >
           <IconGlyph
