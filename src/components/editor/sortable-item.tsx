@@ -3,12 +3,15 @@
 import { GripVertical } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ItemCard } from "@/components/portal/item-card";
 import { ItemMenu } from "@/components/editor/item-menu";
+import { ItemView } from "@/components/portal/item-view";
+import { cn } from "cn";
 import type { PortalCategory, PortalItem } from "@/lib/portal/types";
+import type { LayoutId } from "@/lib/settings/homepage";
 
 interface SortableItemProps {
   item: PortalItem;
+  layout: LayoutId;
   categories: PortalCategory[];
   onEdit: () => void;
   onDuplicate: () => void;
@@ -18,8 +21,16 @@ interface SortableItemProps {
   onDelete: () => void;
 }
 
+/** 把手的位置随形状变：一行与一块方块都很矮，左边距得自己去贴。 */
+const HANDLE_POSITION: Record<LayoutId, string> = {
+  card: "top-3.5 left-2",
+  list: "top-1/2 left-1 -translate-y-1/2",
+  compact: "top-0.5 left-0.5",
+};
+
 export function SortableItem({
   item,
+  layout,
   categories,
   onEdit,
   onDuplicate,
@@ -45,17 +56,22 @@ export function SortableItem({
       <button
         type="button"
         aria-label={`拖动调整「${item.title}」的顺序`}
-        className="text-muted-foreground/70 hover:text-foreground focus-visible:outline-ring absolute top-3.5 left-2 z-10 cursor-grab touch-none rounded-md p-1.5 transition-colors focus-visible:outline-2 active:cursor-grabbing"
+        className={cn(
+          "text-muted-foreground/70 hover:text-foreground focus-visible:outline-ring absolute z-10 cursor-grab touch-none rounded-md p-1.5 transition-colors focus-visible:outline-2 active:cursor-grabbing",
+          HANDLE_POSITION[layout],
+        )}
         {...attributes}
         {...listeners}
       >
         <GripVertical className="size-4" />
       </button>
 
-      <ItemCard
+      <ItemView
         item={item}
+        layout={layout}
         interactive={false}
         showState
+        draggable
         onEdit={onEdit}
         cornerAction={
           <ItemMenu

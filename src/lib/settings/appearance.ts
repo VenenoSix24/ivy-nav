@@ -31,10 +31,6 @@ const paletteIds = PALETTES.map((entry) => entry.id) as [PaletteId, ...PaletteId
 
 export const paletteSchema = z.enum(paletteIds);
 
-export const appearanceInputSchema = z.object({
-  palette: paletteSchema,
-});
-
 export function isPaletteId(value: unknown): value is PaletteId {
   return typeof value === "string" && paletteIds.includes(value as PaletteId);
 }

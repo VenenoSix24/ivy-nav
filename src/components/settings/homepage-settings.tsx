@@ -105,7 +105,7 @@ export function HomepageSettings({ initialPortal }: HomepageSettingsProps) {
               <div className="min-w-0 flex-1">
                 <span className="block truncate text-[14px] font-medium">{category.name}</span>
                 <span className="text-muted-foreground text-[12px] tabular-nums">
-                  {itemCounts.get(category.id) ?? 0} items
+                  {itemCounts.get(category.id) ?? 0} 个
                   {category.description ? `｜${category.description}` : ""}
                 </span>
               </div>
