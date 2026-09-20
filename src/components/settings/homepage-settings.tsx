@@ -32,11 +32,12 @@ import type { PortalCategory, PortalData } from "@/lib/portal/types";
 import { moveEntry } from "@/lib/utils/sort";
 
 interface HomepageSettingsProps {
-  initialPortal: PortalData;
+  /** 与「首页布局」共用同一份数据：这里新建分类，那边的清单立刻多一行 */
+  portal: PortalData;
+  onPortal: (portal: PortalData) => void;
 }
 
-export function HomepageSettings({ initialPortal }: HomepageSettingsProps) {
-  const [portal, setPortal] = useState(initialPortal);
+export function HomepageSettings({ portal, onPortal }: HomepageSettingsProps) {
   const [newName, setNewName] = useState("");
   const [pendingDelete, setPendingDelete] = useState<PortalCategory | null>(null);
   const [editingCategory, setEditingCategory] = useState<PortalCategory | null>(null);
@@ -70,7 +71,7 @@ export function HomepageSettings({ initialPortal }: HomepageSettingsProps) {
       return false;
     }
 
-    setPortal(result.portal);
+    onPortal(result.portal);
     if (successMessage) toast.success(successMessage);
     return true;
   }
@@ -97,17 +98,56 @@ export function HomepageSettings({ initialPortal }: HomepageSettingsProps) {
     <>
       <SettingsSection
         title="首页分类"
-        description="只有打开开关的分类会出现在首页；顺序决定首页分区的先后，也决定顶部标签的顺序。"
+        description="顺序决定首页分区的先后，也决定顶部标签的顺序。「整类隐藏」的分类连同里面的条目只对登录后的你可见。"
       >
         <ul className="divide-border divide-y">
           {portal.categories.map((category, index) => (
-            <li key={category.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+            <li key={category.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
               <div className="min-w-0 flex-1">
                 <span className="block truncate text-[14px] font-medium">{category.name}</span>
                 <span className="text-muted-foreground text-[12px] tabular-nums">
                   {itemCounts.get(category.id) ?? 0} 个
                   {category.description ? `｜${category.description}` : ""}
                 </span>
+
+                {/* 两个开关都写清名字：光溜溜一个开关，谁也猜不出是「首页显示」还是「公开」 */}
+                <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1.5">
+                  <span className="text-muted-foreground flex items-center gap-1.5 text-[12px]">
+                    <Switch
+                      size="sm"
+                      aria-labelledby={`category-homepage-${category.id}`}
+                      checked={category.visibleOnHomepage}
+                      disabled={busy}
+                      onCheckedChange={(checked) =>
+                        void run(
+                          `/api/categories/${category.id}`,
+                          { visibleOnHomepage: checked },
+                          "PATCH",
+                          checked ? "已显示在首页" : "已从首页隐藏",
+                        )
+                      }
+                    />
+                    <span id={`category-homepage-${category.id}`}>显示在首页</span>
+                  </span>
+
+                  <span className="text-muted-foreground flex items-center gap-1.5 text-[12px]">
+                    <Switch
+                      size="sm"
+                      aria-labelledby={`category-visible-${category.id}`}
+                      checked={category.visibility === "private"}
+                      disabled={busy}
+                      onCheckedChange={(checked) =>
+                        void run(
+                          `/api/categories/${category.id}`,
+                          { visibility: checked ? "private" : "public" },
+                          "PATCH",
+                          checked ? `「${category.name}」已整类隐藏` : `「${category.name}」已公开`,
+                        )
+                      }
+                    />
+                    <span id={`category-visible-${category.id}`}>整类隐藏</span>
+                  </span>
+                </div>
               </div>
 
               <div className="flex shrink-0 items-center gap-1">
@@ -146,20 +186,6 @@ export function HomepageSettings({ initialPortal }: HomepageSettingsProps) {
                 >
                   <Pencil className="size-3.5" />
                 </Button>
-
-                <Switch
-                  aria-label={`「${category.name}」是否显示在首页`}
-                  checked={category.visibleOnHomepage}
-                  disabled={busy}
-                  onCheckedChange={(checked) =>
-                    void run(
-                      `/api/categories/${category.id}`,
-                      { visibleOnHomepage: checked },
-                      "PATCH",
-                      checked ? "已显示在首页" : "已从首页隐藏",
-                    )
-                  }
-                />
 
                 <Button
                   variant="ghost"

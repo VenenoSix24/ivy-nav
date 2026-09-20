@@ -1,11 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { visibleCategories, visibleItems } from "./visibility";
+import { privateCategoryIds, visibleCategories, visibleItems } from "./visibility";
 
 const items = [
   { id: 1, categoryId: 10, visibility: "private" as const },
   { id: 2, categoryId: 10, visibility: "public" as const },
   { id: 3, categoryId: 20, visibility: "private" as const },
 ];
+
+const categories = [
+  { id: 10, visibility: "public" as const },
+  { id: 20, visibility: "public" as const },
+  { id: 30, visibility: "private" as const },
+];
+
+describe("privateCategoryIds", () => {
+  it("collects the categories marked private, for guests only", () => {
+    expect([...privateCategoryIds(categories, false)]).toEqual([30]);
+    expect([...privateCategoryIds(categories, true)]).toEqual([]);
+  });
+});
 
 describe("visibleItems", () => {
   it("gives guests only public items", () => {
@@ -16,19 +29,36 @@ describe("visibleItems", () => {
     expect(visibleItems(items, true).map((item) => item.id)).toEqual([1, 2, 3]);
   });
 
-  it("keeps a public item inside a private category visible to guests", () => {
-    // 设计文档 §35: Item.visibility 优先于 Category.visibility
-    const inPrivateCategory = [{ id: 7, categoryId: 30, visibility: "public" as const }];
-    expect(visibleItems(inPrivateCategory, false)).toHaveLength(1);
+  it("hides every item of a category that is hidden as a whole", () => {
+    // 整类隐藏：分类设成 Private 之后，里面的公开条目对匿名也不可见
+    const hidden = new Set([30]);
+    const rows = [
+      { id: 7, categoryId: 30, visibility: "public" as const },
+      { id: 8, categoryId: 10, visibility: "public" as const },
+      { id: 9, categoryId: null, visibility: "public" as const },
+    ];
+    expect(visibleItems(rows, false, hidden).map((item) => item.id)).toEqual([8, 9]);
+  });
+
+  it("still gives the admin the items of a hidden category", () => {
+    const rows = [{ id: 7, categoryId: 30, visibility: "public" as const }];
+    expect(visibleItems(rows, true, new Set([30])).map((item) => item.id)).toEqual([7]);
+  });
+
+  it("keeps item visibility meaningful inside a public category", () => {
+    expect(visibleItems(items, false, new Set([30])).map((item) => item.id)).toEqual([2]);
   });
 });
 
 describe("visibleCategories", () => {
-  const categories = [{ id: 10 }, { id: 20 }, { id: 30 }];
-
   it("hides categories that have nothing a guest may see", () => {
     const guestItems = visibleItems(items, false);
     expect(visibleCategories(categories, guestItems, false).map((c) => c.id)).toEqual([10]);
+  });
+
+  it("hides a category that is private even when it still has items", () => {
+    const rows = [{ id: 7, categoryId: 30 }];
+    expect(visibleCategories(categories, rows, false).map((c) => c.id)).toEqual([]);
   });
 
   it("shows every category to an admin", () => {

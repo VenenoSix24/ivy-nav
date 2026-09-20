@@ -9,8 +9,7 @@ import { AccountSettings } from "@/components/settings/account-settings";
 import { AppearanceSettings } from "@/components/settings/appearance-settings";
 import { EditModeSettings } from "@/components/settings/edit-mode-settings";
 import { DataSettings } from "@/components/settings/data-settings";
-import { HomepageSettings } from "@/components/settings/homepage-settings";
-import { LayoutSettings } from "@/components/settings/layout-settings";
+import { PortalSettings } from "@/components/settings/portal-settings";
 import { getAdminPortalData } from "@/lib/portal/admin";
 import { EDIT_MODE_COOKIE } from "@/lib/portal/edit-mode";
 import { getPreferredPalette } from "@/lib/settings/appearance-server";
@@ -53,8 +52,7 @@ export default async function SettingsPage() {
         <div className="mt-8 space-y-4">
           <AppearanceSettings initialPalette={getPreferredPalette()} />
           <EditModeSettings initialEnabled={editMode} />
-          <LayoutSettings initialPortal={portal} />
-          <HomepageSettings initialPortal={portal} />
+          <PortalSettings initialPortal={portal} />
           <DataSettings />
           <AccountSettings
             username={session.username}
