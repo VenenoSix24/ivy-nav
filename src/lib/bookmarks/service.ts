@@ -11,15 +11,17 @@ export type PreparedImport = { ok: true; plan: BookmarkPlan } | { ok: false; err
 /**
  * 预览与导入共用的前半段：解析 → 数一遍 → 对着库里的现状排计划。
  * 两个接口各调一次，因此预览里说的与实际写下去的必然是同一份计划。
+ *
+ * `selection` 是用户勾中的顶层目录（缺省表示全要）。
  */
-export function prepareBookmarkImport(html: string): PreparedImport {
+export function prepareBookmarkImport(html: string, selection?: string[] | null): PreparedImport {
   const tree = parseBookmarksHtml(html);
 
   if (countLinks(tree) === 0) {
     return { ok: false, error: "这份文件里没读到书签：请选择浏览器「导出书签」生成的 HTML 文件。" };
   }
 
-  const plan = planBookmarkImport(tree, readBookmarkIndex(getDb()));
+  const plan = planBookmarkImport(tree, readBookmarkIndex(getDb()), selection);
   if (plan.items.length > BOOKMARK_ITEM_MAX) {
     return {
       ok: false,

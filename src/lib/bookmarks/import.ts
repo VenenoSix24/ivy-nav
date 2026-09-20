@@ -6,18 +6,30 @@ import type { BookmarkIndex, BookmarkPlan, DuplicatePolicy } from "./plan";
 
 /** 预览时要知道「这个分类/标签/网址库里有没有」，一次取齐，别在循环里反复查。 */
 export function readBookmarkIndex(db: Db): BookmarkIndex {
+  const categoryRows = db
+    .select({ id: categories.id, name: categories.name })
+    .from(categories)
+    .all();
+  const categoryNameById = new Map(categoryRows.map((row) => [row.id, row.name]));
+
   return {
-    categories: db
-      .select({ name: categories.name })
-      .from(categories)
-      .all()
-      .map((row) => row.name),
+    categories: categoryRows.map((row) => row.name),
     tags: db
       .select({ name: tags.name })
       .from(tags)
       .all()
       .map((row) => row.name),
-    items: db.select({ id: items.id, url: items.url }).from(items).all(),
+    // 条目带上分类名：去重是按「分类 + 网址」比的，同一个网址在别的分类里不算重复
+    items: db
+      .select({ id: items.id, url: items.url, categoryId: items.categoryId })
+      .from(items)
+      .all()
+      .map((row) => ({
+        id: row.id,
+        url: row.url,
+        categoryName:
+          row.categoryId === null ? null : (categoryNameById.get(row.categoryId) ?? null),
+      })),
   };
 }
 
@@ -34,6 +46,9 @@ export interface BookmarkImportSummary {
  *
  * 只新增与更新，**不删除**任何东西 —— 与备份导入（整体替换）不同，书签导入是往现有
  * 内容里加东西，所以不需要那句「现有内容会被覆盖」的警告。
+ *
+ * 同一个网址在多个分类里会各建一条：用户把同一条书签放进两个分类是常事，
+ * 合并成一条会让另一个分类少一条（去重键见 plan.ts 的 itemKey）。
  */
 export function applyBookmarkImport(
   db: Db,
@@ -61,7 +76,7 @@ export function applyBookmarkImport(
     let nextCategoryOrder = nextSortOrder(categoryRows);
     let createdCategories = 0;
 
-    for (const entry of plan.categories) {
+    for (const entry of plan.preview.categories) {
       const key = entry.name.toLowerCase();
       if (categoryIdByKey.has(key)) continue;
 
@@ -94,7 +109,7 @@ export function applyBookmarkImport(
 
     let createdTags = 0;
 
-    for (const entry of plan.tags) {
+    for (const entry of plan.preview.tags) {
       const key = entry.name.toLowerCase();
       if (tagIdByKey.has(key)) continue;
 
@@ -134,17 +149,17 @@ export function applyBookmarkImport(
           continue;
         }
 
+        // 命中的那条本来就在同一个分类里（去重键含分类），所以只改标题与描述；
+        // 标签是并进去而不是换掉 —— 用户自己在这条上打的标签不该被导入抹掉
         db.update(items)
           .set({
             title: entry.title,
             description: entry.description,
-            categoryId,
             updatedAt: new Date(),
           })
           .where(eq(items.id, entry.existingItemId))
           .run();
         updated += 1;
-        // 标签是并进去而不是换掉：用户自己在这条上打的标签不该被导入抹掉
         linkTags(entry.existingItemId, entry.tags);
         continue;
       }
