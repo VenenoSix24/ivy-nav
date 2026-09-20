@@ -1,4 +1,5 @@
 import type { IconType, Visibility } from "@/db/schema";
+import type { IconFitId } from "@/lib/icons/fit";
 import type { LayoutId } from "@/lib/settings/homepage";
 
 export type { IconType, Visibility };
@@ -16,6 +17,10 @@ export interface PortalItem {
   iconPlate: boolean;
   /** 单色图标是否跟随主题前景色 */
   iconMono: boolean;
+  /** 图标在底板里怎么摆 —— 算好之后的结果（条目没设过就是设置页里那个默认） */
+  iconFit: IconFitId;
+  /** 条目自己设的那一份；空值表示跟随 defaultIconFit */
+  iconFitOwn: IconFitId | null;
   tags: string[];
   visibility: Visibility;
   featured: boolean;
@@ -36,6 +41,8 @@ export interface PortalCategory {
 export interface PortalData {
   categories: PortalCategory[];
   items: PortalItem[];
+  /** 条目没自己设过 iconFit 时用的默认值（设置页里选） */
+  defaultIconFit: IconFitId;
 }
 
 export const ALL_CATEGORIES = "all" as const;

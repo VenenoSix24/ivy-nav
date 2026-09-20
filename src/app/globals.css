@@ -352,9 +352,50 @@
   }
 }
 
+/* 显示图标那个方框的投影（只在浅色下）：它是压在白卡面上的一块小面板，
+   给一点离地感，图标就不像印在卡面上。影子给得很浅 —— 它是卡片上的第二层，
+   不能抢卡面自己的那层大投影。深色下卡面本来就暗，再加影子只会脏，直接关掉。 */
+@utility plate-lift {
+  /* 三层递进（模糊 2 → 4 → 8，透明度 7% → 5% → 3%）：这是各家设计系统里最常见的
+     「柔和阴影」写法，近处锐、远处散，比单层硬影子更接近真东西投下来的样子。
+     数值按小方块（40–56px）给的 —— 卡片自己那层大投影（0 20px 60px）是另一回事 */
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.07),
+    0 2px 4px rgb(0 0 0 / 0.05),
+    0 4px 8px rgb(0 0 0 / 0.03);
+
+  &:is(.dark *) {
+    box-shadow: none;
+  }
+}
+
+/* 没有底板时，方框里只有图形自己 —— 影子就跟着图形走（按 alpha 描影，透明区域不带影子），
+   补上同一份「离地感」。这时候不能把影子加在方框上：方框没有面，
+   影子会变成一块悬在图标背后的灰方块，看着像又垫了一层板。 */
+@utility icon-lift {
+  /* 与方框那套同一份意思，换成跟着图案走的 drop-shadow，参数略轻：
+     图案的边比整块方板碎，影子重了会糊 */
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.1)) drop-shadow(0 3px 6px rgb(0 0 0 / 0.05));
+
+  &:is(.dark *) {
+    filter: none;
+  }
+}
+
 /* 顶栏分类条：右缘渐隐，提示右侧还有可滚动的内容 */
 @utility fade-right {
   mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 1.75rem), transparent 100%);
+}
+
+/* 已经滚到中间了：两头都还有内容，两侧都渐隐 */
+@utility fade-both {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 1.75rem,
+    #000 calc(100% - 1.75rem),
+    transparent 100%
+  );
 }
 
 /*

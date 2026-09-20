@@ -1,12 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { Check, Pencil, Plus } from "lucide-react";
+import { Check, ListOrdered, Pencil, Plus } from "lucide-react";
 import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 
 interface EditToolbarProps {
   onAddItem: () => void;
+  /** 打开「整理分类」：改名字、描述、布局、顺序、隐藏都在首页做，不必回设置页 */
+  onOrganize: () => void;
   onExit: () => void;
   /** 搜索时拖动会写回残缺的顺序，用提示把这件事说清楚 */
   searchActive: boolean;
@@ -20,7 +21,13 @@ interface EditToolbarProps {
  * 之前它裹在一层只包住自己的 `<div className="mt-4">` 里（实测那层只有 46px 高），
  * 于是可粘住的行程是 0，看起来就是跟着内容一起滚走了。
  */
-export function EditToolbar({ onAddItem, onExit, searchActive, className }: EditToolbarProps) {
+export function EditToolbar({
+  onAddItem,
+  onOrganize,
+  onExit,
+  searchActive,
+  className,
+}: EditToolbarProps) {
   return (
     <div className={cn("sticky top-[4.75rem] z-30 flex justify-center", className)}>
       <div className="surface flex flex-wrap items-center justify-center gap-1.5 rounded-2xl px-2 py-1.5 sm:rounded-full">
@@ -38,12 +45,14 @@ export function EditToolbar({ onAddItem, onExit, searchActive, className }: Edit
           新建项目
         </Button>
 
-        <Link
-          href="/settings"
-          className="text-muted-foreground hover:text-foreground hover:bg-secondary focus-visible:outline-ring inline-flex h-8 items-center rounded-full px-3 text-[12px] transition-colors focus-visible:outline-2"
+        <Button
+          variant="ghost"
+          onClick={onOrganize}
+          className="text-muted-foreground h-8 rounded-full px-3 text-[12px]"
         >
-          分类设置
-        </Link>
+          <ListOrdered className="size-3.5" />
+          整理分类
+        </Button>
 
         {searchActive ? (
           <span className="text-muted-foreground px-2 text-[12px]">搜索中不可拖动排序</span>

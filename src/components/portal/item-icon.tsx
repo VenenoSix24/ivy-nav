@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "cn";
-import { IconGlyph, iconBox, type IconSpec } from "@/components/icons/icon-glyph";
+import { IconGlyph, iconBox, usesPlate, type IconSpec } from "@/components/icons/icon-glyph";
+import { DEFAULT_ICON_FIT } from "@/lib/icons/fit";
 import { itemFaviconSrc } from "@/lib/icons/urls";
 
 interface ItemIconProps {
@@ -20,15 +21,25 @@ interface ItemIconProps {
  */
 export function ItemIcon({ spec, title, itemId, className, glyphClassName }: ItemIconProps) {
   // 底板关掉时尺寸照旧：格子还在原来的位置，只是不再画描边与玻璃底
-  const plate = spec.plate !== false;
+  const plate = usesPlate(spec);
+  // 「填满」的档位里图形要顶到板边：这时不画那圈描边 —— 描边是画在盒子内侧的，
+  // 留着它，图形就永远差那么一圈（1px 的边 + 圆角处的缺口）
+  const filled = (spec.fit ?? DEFAULT_ICON_FIT) !== "contain";
 
   return (
     <span
       aria-hidden
-      style={iconBox(plate)}
+      style={iconBox(plate, spec.fit ?? DEFAULT_ICON_FIT)}
       className={cn(
-        "inline-grid size-11 shrink-0 place-items-center leading-none",
-        plate && "border-hairline bg-glass-strong rounded-lg border",
+        // 圆角按 Apple 应用图标那个比例给（26%，随格子大小走）：固定 8px 在大格子上偏方、
+        // 在小格子上偏圆，比例才是三种布局看起来一致的原因；纯 CSS 的圆角比 Apple 那种
+        // 连续圆角（squircle）看着更「方」，所以比例取到 26% 才是那个观感
+        "inline-grid size-11 shrink-0 place-items-center rounded-[26%] leading-none",
+        // 影子按两种情形分：有底板就加在底板上；没底板时方框没有面，加在这一层会变成
+        // 一块悬在图标背后的灰方块（emoji 那种看着就像又垫了一层板），所以那种情况
+        // 交给图形自己带（见 IconGlyph 的 icon-lift）
+        plate && "plate-lift bg-glass-strong",
+        plate && !filled && "border-hairline border",
         className,
       )}
     >

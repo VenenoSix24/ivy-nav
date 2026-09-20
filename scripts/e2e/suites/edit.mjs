@@ -236,6 +236,23 @@ const anonymous = await fetch(`${BASE}/`).then((r) => r.text());
 assert("匿名首页仍不含 Private 条目", !anonymous.includes("个人服务器"));
 assert("匿名首页含首页分类的条目", anonymous.includes("GitHub"));
 
+// 9b. 编辑态的首页：分类的入口都在这里（名字、描述、布局、顺序）
+const editingHtml = await fetch(`${BASE}/`, {
+  headers: { Cookie: `${cookie}; ivy_edit=1` },
+}).then((r) => r.text());
+assert("编辑态首页有「整理分类」入口", editingHtml.includes("整理分类"));
+assert(
+  "编辑态首页每个分区都有分类菜单",
+  editingHtml.includes("分类的操作"),
+  `${(editingHtml.match(/分类的操作/g) ?? []).length} 个`,
+);
+
+const settingsHtml = await call("/settings");
+assert(
+  "分类设置已从设置页移走",
+  !settingsHtml.text.includes("首页分类") && settingsHtml.text.includes("整理分类"),
+);
+
 // 10. 退出
 const loggedOut = await call("/api/auth/logout", { method: "POST" });
 assert("退出登录", loggedOut.status === 200);

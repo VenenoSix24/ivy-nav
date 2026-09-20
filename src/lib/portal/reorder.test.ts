@@ -13,6 +13,8 @@ const item = (id: number): PortalItem => ({
   iconValue: null,
   iconPlate: true,
   iconMono: false,
+  iconFit: "contain",
+  iconFitOwn: null,
   tags: [],
   visibility: "public",
   featured: false,

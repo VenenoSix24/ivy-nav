@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { iconFitSchema } from "@/lib/icons/fit";
 import { iconTypeValues, visibilityValues } from "@/lib/portal/schemas";
 import { parseHttpUrl } from "@/lib/utils/url";
 
@@ -29,6 +30,7 @@ const itemSchema = z.object({
   iconValue: z.string().max(500).nullish(),
   iconPlate: z.boolean().optional(),
   iconMono: z.boolean().optional(),
+  iconFit: iconFitSchema.nullish(),
   visibility: z.enum(visibilityValues).optional(),
   sortOrder: z.number().int().min(0).optional(),
   featured: z.boolean().optional(),

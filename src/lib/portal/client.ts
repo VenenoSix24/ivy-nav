@@ -1,3 +1,4 @@
+import { DEFAULT_ICON_FIT } from "@/lib/icons/fit";
 import type { PortalData } from "./types";
 
 export type PortalResult = { ok: true; portal: PortalData } | { ok: false; error: string };
@@ -50,5 +51,10 @@ function readPortal(payload: unknown): PortalData | null {
   if (!portal || typeof portal !== "object") return null;
   const candidate = portal as Partial<PortalData>;
   if (!Array.isArray(candidate.categories) || !Array.isArray(candidate.items)) return null;
-  return { categories: candidate.categories, items: candidate.items };
+  return {
+    categories: candidate.categories,
+    items: candidate.items,
+    // 老响应里可能没有这一项：缺了就按默认摆法，不值得因此判整个响应无效
+    defaultIconFit: candidate.defaultIconFit ?? DEFAULT_ICON_FIT,
+  };
 }

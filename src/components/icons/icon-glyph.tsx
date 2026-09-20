@@ -6,6 +6,13 @@ import { createElement, useCallback, useState } from "react";
 import { cn } from "cn";
 import type { IconType } from "@/db/schema";
 import { getLucideIcon } from "@/components/icons/lucide-registry";
+import {
+  DEFAULT_ICON_FIT,
+  trimTransform,
+  type AlphaBox,
+  type FitTransform,
+  type IconFitId,
+} from "@/lib/icons/fit";
 
 export interface IconSpec {
   type: IconType;
@@ -18,7 +25,29 @@ export interface IconSpec {
    * 颜色交给 `currentColor`，于是深色里它是浅的。两个主题各显示一份，CSS 切换，不用 JS。
    */
   mono?: boolean;
+  /**
+   * 图标在底板里怎么摆。取回来的图标有的顶格、有的四周留一圈透明边，同一个底板下
+   * 就显得大小不一 —— 这一档决定按原样放、还是裁掉透明边/铺满。空值即默认（原样）。
+   */
+  fit?: IconFitId | null;
 }
+
+/**
+ * 这个图标有没有底板。Emoji 一律没有：它自己就是一个彩色图案，再垫一块板只是多余的一圈，
+ * 而各家 emoji 字体把图案摆在字框里的位置又不一致，垫了板反而更显歪。
+ * 判断只写在这里一处 —— 卡片、选择器预览与那个开关都读它。
+ */
+export function usesPlate(spec: IconSpec): boolean {
+  return spec.type !== "emoji" && spec.plate !== false;
+}
+
+/** 四种摆法对应的 object-fit；自动裁边先按原样放，量出透明边之后再补一个 transform */
+const FIT_CLASS: Record<IconFitId, string> = {
+  contain: "object-contain",
+  auto: "object-contain",
+  cover: "object-cover",
+  fill: "object-fill",
+};
 
 interface IconGlyphProps {
   spec: IconSpec;
@@ -32,14 +61,16 @@ interface IconGlyphProps {
  * 图标盒子的尺寸参数。图形大小按盒子算（容器查询单位），而不是各处再手写一个像素值 ——
  * 盒子换尺寸时图形跟着走，关掉底板时也不必再去改那一串变量。
  *
- * 底板开着时图形占六成出头：底板本身就是一块视觉上的「形」，图形再大半圈就顶格了。
- * 关掉底板后只剩图形自己，还按六成给就会显得很小 —— 所以让它涨到接近满格。
+ * 「原样」这一档留一圈呼吸位：底板开着时图形占七成出头，关掉底板（只剩图形自己）时
+ * 涨到接近满格，不然看着忽然小一圈。
+ *
+ * 另外三档的诉求就是**填满**，所以图形直接顶到盒子边 —— 早先这一档也留七成，
+ * 于是选了「铺满」还是够不着板边：图里自带白底的应用类图标（比如 Excalidraw）
+ * 内容本来就占满整张画布，再没有可裁的透明边，怎么算都差那一圈。
  */
-export function iconBox(plate: boolean): React.CSSProperties {
-  return {
-    containerType: "size",
-    "--icon-glyph": plate ? "62cqh" : "88cqh",
-  } as React.CSSProperties;
+export function iconBox(plate: boolean, fit: IconFitId = DEFAULT_ICON_FIT): React.CSSProperties {
+  const glyph = fit === "contain" ? (plate ? "72cqh" : "88cqh") : "100cqh";
+  return { containerType: "size", "--icon-glyph": glyph } as React.CSSProperties;
 }
 
 /**
@@ -57,24 +88,43 @@ export function iconBox(plate: boolean): React.CSSProperties {
  */
 export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps) {
   const [phase, setPhase] = useState<"pending" | "ready" | "none">("pending");
+  /** 「自动裁边」量出来的缩放与平移；带上是哪张图，换图之后旧的那份就不作数了 */
+  const [trim, setTrim] = useState<{ src: string; transform: FitTransform | null } | null>(null);
+
+  const fit = spec.fit ?? DEFAULT_ICON_FIT;
 
   /**
    * 只靠 onLoad / onError 会漏：图片若在水合之前就已经加载完（本地接口很快、浏览器又缓存了），
    * 事件早已错过，回调永远不会跑，首字母就压不掉了。挂载时补看一次 `complete`。
+   *
+   * 「自动裁边」也在这里量：图片已经在手里了，画进一张 48×48 的画布数一遍不透明像素的
+   * 范围即可 —— 另起一个 Image 再解码一遍是白费一次解码。
    */
   const decide = useCallback((image: HTMLImageElement | null) => {
     if (!image || !image.complete) return;
     const ready = image.naturalWidth > 1 && image.naturalHeight > 1;
     setPhase((current) => (current === "pending" ? (ready ? "ready" : "none") : current));
+    if (!ready) return;
+
+    const transform = trimTransform(
+      measureAlphaBox(image),
+      image.naturalWidth / image.naturalHeight,
+    );
+    setTrim({ src: image.src, transform });
   }, []);
 
   if (spec.type === "emoji") {
     return (
       <span
         className={cn(
-          // Emoji 的字形比 em 框还大一圈（实测约 1.1 倍），照字号给会盖过图片类图标；
-          // 退回九成，墨迹高度才和图片的一致
-          "translate-y-px text-[length:calc(var(--icon-glyph,1.25rem)*0.9)] select-none",
+          // 各家 emoji 字体把图案摆在字框里的位置并不一致（Apple 的键盘明显偏下、
+          // 有的又偏小），逐个去量不值当 —— 就按行内盒居中摆着，尺寸统一由字号给，
+          // 看上去整齐就够了
+          // 字号比图片类再小一档：emoji 的墨迹本来就比字框大一圈，照足给会显得傻大
+          "flex size-full items-center justify-center leading-none select-none",
+          "text-[length:calc(var(--icon-glyph,1.25rem)*0.8)]",
+          // emoji 一律没有底板，所以影子总是跟着图案走
+          "icon-lift",
           className,
         )}
       >
@@ -101,9 +151,27 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
 
     // 蒙版只对 SVG 有意义：位图的 alpha 是整个方块，蒙出来就是一块实心色
     const darkMono = spec.mono === true && /\.svg(\?|$)/i.test(src);
+    // 非「原样」的档位会顶到盒子边：放大溢出的部分要裁掉，圆角跟着盒子走，
+    // 否则满幅图片的方角会从底板的圆角外面透出来
+    const applied = trim && trim.src === src ? trim.transform : null;
+    const clipped = fit !== "contain";
+    const transform = applied
+      ? `scale(${applied.scale}) translate(${applied.x * 100}%, ${applied.y * 100}%)`
+      : undefined;
+
+    // 没有底板时这层方框没有面：影子加在它身上会变成一块悬在图标背后的灰方块，
+    // 所以改加在图形这一层，让它跟着图案的轮廓走（图片与首字母托底都在里面）
+    const lift = !usesPlate(spec);
 
     return (
-      <span className={cn("relative grid size-full place-items-center", className)}>
+      <span
+        className={cn(
+          "relative grid size-full place-items-center",
+          clipped && "overflow-hidden rounded-[inherit]",
+          lift && "icon-lift",
+          className,
+        )}
+      >
         {phase === "ready" ? null : (
           <LetterMark
             title={title}
@@ -117,9 +185,11 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
             loading="lazy"
             decoding="async"
             className={cn(
-              "relative size-[var(--icon-glyph,1.25rem)] object-contain",
+              "relative size-[var(--icon-glyph,1.25rem)]",
+              FIT_CLASS[fit],
               darkMono && "dark:hidden",
             )}
+            style={transform ? { transform } : undefined}
             ref={decide}
             // 占位图是 1×1 的透明 PNG：它「加载成功」但没有内容，仍要露首字母
             onLoad={(event) => decide(event.currentTarget)}
@@ -127,7 +197,9 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
           />
         )}
         {/* 深色那一份：同一张 SVG 当蒙版，形状照旧、颜色交给主题 */}
-        {darkMono ? <MaskGlyph src={src} className="hidden dark:block" /> : null}
+        {darkMono ? (
+          <MaskGlyph src={src} transform={transform} className="hidden dark:block" />
+        ) : null}
       </span>
     );
   }
@@ -141,7 +213,15 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
  * 深色里那份单色图标：拿 SVG 的 alpha 当蒙版，颜色用 `currentColor`（主题前景色）。
  * 图片只能走蒙版这一条路 —— `<img>` 里的 `currentColor` 不认页面的颜色。
  */
-function MaskGlyph({ src, className }: { src: string; className?: string }) {
+function MaskGlyph({
+  src,
+  transform,
+  className,
+}: {
+  src: string;
+  transform?: string;
+  className?: string;
+}) {
   const mask = {
     maskImage: `url("${src}")`,
     WebkitMaskImage: `url("${src}")`,
@@ -157,9 +237,70 @@ function MaskGlyph({ src, className }: { src: string; className?: string }) {
     <span
       aria-hidden
       className={cn("size-[var(--icon-glyph,1.25rem)] bg-current", className)}
-      style={mask}
+      style={transform ? { ...mask, transform } : mask}
     />
   );
+}
+
+/**
+ * 量出图片里不透明像素的范围（图片自身的 0..1 坐标）。画进一张 48×48 的小画布数一遍就够：
+ * 这一步只用来判断「四周有多少透明边」，不需要原图分辨率。
+ *
+ * 图片走的都是本站的代理或上传接口，同源，所以画布不会被污染；万一将来换成远端地址，
+ * `getImageData` 会抛，这里按「量不出来」处理，退回原样显示。
+ */
+function measureAlphaBox(image: HTMLImageElement): AlphaBox | null {
+  // 96 而不是 48：48 的时候一个像素就是整幅的 2%，量化误差正好会留下「一点点边距」，
+  // 而这一步只看形状、不保留像素，画大一点不花什么代价
+  const side = 96;
+  const canvas = document.createElement("canvas");
+  canvas.width = side;
+  canvas.height = side;
+
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) return null;
+
+  // 按 contain 摆进去，和元素里看到的位置一致，量出来的坐标才好跟 CSS 对上
+  const scale = side / Math.max(image.naturalWidth, image.naturalHeight);
+  const width = image.naturalWidth * scale;
+  const height = image.naturalHeight * scale;
+  const originX = (side - width) / 2;
+  const originY = (side - height) / 2;
+
+  let pixels: Uint8ClampedArray;
+  try {
+    context.clearRect(0, 0, side, side);
+    context.drawImage(image, originX, originY, width, height);
+    pixels = context.getImageData(0, 0, side, side).data;
+  } catch {
+    return null;
+  }
+
+  let minX = side;
+  let minY = side;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < side; y += 1) {
+    for (let x = 0; x < side; x += 1) {
+      // 阈值给得低一点：半透明的投影也算「图的一部分」，不然会把带阴影的图标裁掉一块
+      if (pixels[(y * side + x) * 4 + 3]! > 12) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+
+  if (maxX < 0) return null;
+
+  return {
+    x0: (minX - originX) / width,
+    y0: (minY - originY) / height,
+    x1: (maxX + 1 - originX) / width,
+    y1: (maxY + 1 - originY) / height,
+  };
 }
 
 function LetterMark({ title, className }: { title: string; className?: string }) {

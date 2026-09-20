@@ -22,6 +22,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { IconPicker } from "@/components/icons/icon-picker";
+import type { IconFitId } from "@/lib/icons/fit";
 import { TagInput } from "@/components/editor/tag-input";
 import { portalRequest } from "@/lib/portal/client";
 import { parseHttpUrl } from "@/lib/utils/url";
@@ -41,6 +42,8 @@ interface ItemDialogProps {
   item: PortalItem | null;
   defaultCategoryId: number | null;
   categories: PortalCategory[];
+  /** 条目没自己设过「图标大小」时用的默认值 */
+  defaultIconFit: IconFitId;
   onSaved: (portal: PortalData) => void;
 }
 
@@ -50,6 +53,7 @@ export function ItemDialog({
   item,
   defaultCategoryId,
   categories,
+  defaultIconFit,
   onSaved,
 }: ItemDialogProps) {
   const [title, setTitle] = useState(item?.title ?? "");
@@ -71,6 +75,12 @@ export function ItemDialog({
   const [iconValue, setIconValue] = useState<string | null>(item?.iconValue ?? null);
   const [iconPlate, setIconPlate] = useState(item?.iconPlate ?? true);
   const [iconMono, setIconMono] = useState(item?.iconMono ?? false);
+  const [iconFit, setIconFit] = useState<IconFitId>(item?.iconFitOwn ?? defaultIconFit);
+  /**
+   * 用户有没有在这一次里动过「图标大小」。没动过就原样带回去（可能是空值 = 跟随默认），
+   * 别因为一次保存就把当前默认值焊死在这条上。
+   */
+  const [iconFitTouched, setIconFitTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   /** 标题是不是用户自己写过的：写过就不再让网址覆盖它 */
@@ -140,6 +150,7 @@ export function ItemDialog({
       iconValue,
       iconPlate,
       iconMono,
+      iconFit: iconFitTouched ? iconFit : (item?.iconFitOwn ?? null),
     };
 
     const result = item
@@ -242,12 +253,17 @@ export function ItemDialog({
                 value: iconValue,
                 plate: iconPlate,
                 mono: iconMono,
+                fit: iconFit,
               }}
               onChange={(next) => {
                 setIconType(next.type);
                 setIconValue(next.value);
                 setIconPlate(next.plate ?? true);
                 setIconMono(next.mono ?? false);
+                if (next.fit && next.fit !== iconFit) {
+                  setIconFit(next.fit);
+                  setIconFitTouched(true);
+                }
               }}
               url={url}
               title={title}

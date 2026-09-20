@@ -49,6 +49,7 @@ export function buildBackupDocument(db: Db): BackupDocument {
       iconValue: row.iconValue,
       iconPlate: row.iconPlate,
       iconMono: row.iconMono,
+      iconFit: row.iconFit,
       visibility: row.visibility,
       sortOrder: row.sortOrder,
       featured: row.featured,
@@ -137,6 +138,7 @@ export function applyBackupDocument(db: Db, document: BackupDocument): ImportSum
           // 旧备份里没有这两项：底板默认开、单色默认关，与新建条目一致
           iconPlate: entry.iconPlate ?? true,
           iconMono: entry.iconMono ?? false,
+          iconFit: entry.iconFit ?? null,
           visibility: entry.visibility ?? "public",
           sortOrder: entry.sortOrder ?? fallbackOrder,
           featured: entry.featured ?? false,

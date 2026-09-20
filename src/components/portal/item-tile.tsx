@@ -44,10 +44,11 @@ export function ItemTile({
           value: item.iconValue,
           plate: item.iconPlate,
           mono: item.iconMono,
+          fit: item.iconFit,
         }}
         title={item.title}
         itemId={item.id}
-        className="size-10 rounded-xl"
+        className="size-10"
       />
       <span className="w-full truncate text-[12px] leading-tight font-medium tracking-[-0.01em]">
         {item.title}

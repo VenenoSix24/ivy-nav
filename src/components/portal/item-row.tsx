@@ -55,10 +55,11 @@ export function ItemRow({
           value: item.iconValue,
           plate: item.iconPlate,
           mono: item.iconMono,
+          fit: item.iconFit,
         }}
         title={item.title}
         itemId={item.id}
-        className="size-11 rounded-xl"
+        className="size-11"
       />
 
       <div className="min-w-0 flex-1 space-y-1">
