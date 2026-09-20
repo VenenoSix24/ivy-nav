@@ -2,6 +2,8 @@
 
 > One page. Many places.
 
+![Ivy · 一叶](docs/images/cover.png)
+
 [![CI](https://github.com/VenenoSix24/ivy-nav/actions/workflows/ci.yml/badge.svg)](https://github.com/VenenoSix24/ivy-nav/actions/workflows/ci.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000?style=flat-square&logo=nextdotjs&logoColor=white)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-19-087ea4?style=flat-square&logo=react&logoColor=white)](https://react.dev)
@@ -12,8 +14,6 @@
 
 个人专属的网站、项目与常用工具导航。
 自托管，支持导入书签，所有内容都可以直接在页面中管理，无需修改代码。
-
-![Ivy · 一叶](docs/images/cover.png)
 
 ## 特性
 
@@ -32,8 +32,6 @@
 
 ![首页与卡片布局](docs/images/p1.png)
 
-**卡片布局**的首页：搜索、分类与每个分类下的条目。
-
 每个分类都可以选择自己的展示方式：
 
 - **卡片** — 适合项目、常用网站等信息较完整的内容
@@ -42,7 +40,7 @@
 
 ![列表与紧凑布局](docs/images/p2.png)
 
-同一个页面里，**列表**（上）与**紧凑**（下）可以并存 —— 布局是按分类选的，不是全局的。
+同一个页面里，**列表**与**紧凑**可以并存。
 
 ## 图标
 
@@ -187,35 +185,17 @@ DATABASE_PATH=/srv/ivy-nav/data/portal.db ADMIN_PASSWORD=... pnpm admin:create i
 DATABASE_PATH=/srv/ivy-nav/data/portal.db PORT=3000 HOSTNAME=127.0.0.1 pnpm start
 ```
 
-### standalone 产物
-
-体积更小，但产物里没有 tsx 与 drizzle-kit，**建号要在开发机上完成**，再把数据目录一起带过去。
-
-```bash
-pnpm install --frozen-lockfile && pnpm build
-
-mkdir -p /tmp/ivy-deploy/.next
-cp -r .next/standalone/. /tmp/ivy-deploy/
-cp -r .next/static /tmp/ivy-deploy/.next/static
-DATABASE_PATH=/tmp/ivy-deploy/data/portal.db ADMIN_PASSWORD=... pnpm admin:create ivy
-
-rsync -a /tmp/ivy-deploy/ server:/srv/ivy-nav/
-
-# 服务器上
-cd /srv/ivy-nav && DATABASE_PATH=/srv/ivy-nav/data/portal.db node server.js
-```
-
-`public/` 与 `src/app/` 下的图标是 `pnpm brand:assets` 的产物，要一起带过去。
-
 ### 运行与反代
 
 - 数据库、上传的图标与备份都在应用目录下的 `data/`、`uploads/`、`backups/`，记得一并持久化并定期快照。
 - 用 HTTPS，`SESSION_COOKIE_SECURE` 保持默认的 `true`；只有反代可信时才设 `TRUST_PROXY_HEADERS=true`。
 - 部署到公网时设 `NEXT_PUBLIC_SITE_URL`，分享卡片的链接才是对的。
-- 常驻可以交给 systemd：`ExecStart` 用 `pnpm start`（完整项目）或 `node server.js`（standalone），配上 `Restart=on-failure`。
+- 常驻可以使用 systemd：`ExecStart` 用 `pnpm start`，配上 `Restart=on-failure`。
 - 其余环境变量见 `.env.example`。
 
-Vercel 这类 Serverless 平台不能把 SQLite 放在本地临时文件里做长期存储 —— 需要换 SQLite 兼容的托管服务，或者保持自有服务器部署。
+### Vercel 等托管平台
+
+Vercel 这类托管平台需自行解决 SQLite 兼容的托管服务，或者保持自有服务器部署。
 
 ## 项目结构
 
@@ -231,18 +211,23 @@ src/
 │   ├── portal/
 │   ├── editor/
 │   ├── icons/
-│   └── settings/
+│   ├── settings/
+│   └── auth/
 ├── db/
 ├── hooks/
 └── lib/
+    ├── api/
     ├── auth/
     ├── backup/
     ├── bookmarks/
     ├── icons/
+    ├── net/
     ├── portal/
     ├── settings/
     └── utils/
 ```
+
+各模块做什么、有哪些坑，见 [docs/](docs/)。
 
 ## Roadmap
 
