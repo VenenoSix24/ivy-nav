@@ -33,10 +33,12 @@ import {
   type PortalData,
   type PortalItem,
 } from "@/lib/portal/types";
+import type { LayoutId } from "@/lib/settings/homepage";
 import { site } from "@/lib/site";
 
 interface PortalShellProps {
   data: PortalData;
+  layout: LayoutId;
   initialEditMode?: boolean;
 }
 
@@ -54,7 +56,7 @@ interface Section {
   items: PortalItem[];
 }
 
-export function PortalShell({ data, initialEditMode = false }: PortalShellProps) {
+export function PortalShell({ data, layout, initialEditMode = false }: PortalShellProps) {
   const [portal, setPortal] = useState<PortalData>(data);
   const [editing, setEditing] = useState(initialEditMode);
   const [query, setQuery] = useState("");
@@ -211,6 +213,7 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
               title={section.title}
               description={section.description}
               items={section.items}
+              layout={layout}
               action={
                 editing ? (
                   <Button
@@ -233,6 +236,7 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
               {editing ? (
                 <EditableGrid
                   items={section.items}
+                  layout={layout}
                   categories={portal.categories}
                   sortable={canDrag}
                   onReorder={(orderedIds) => void mutate("/api/items/reorder", { orderedIds })}

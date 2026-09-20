@@ -15,13 +15,17 @@ import {
   SortableContext,
   rectSortingStrategy,
   sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { SortableItem } from "@/components/editor/sortable-item";
+import { ItemGrid } from "@/components/portal/item-grid";
 import { moveEntry } from "@/lib/utils/sort";
 import type { PortalCategory, PortalItem } from "@/lib/portal/types";
+import type { LayoutId } from "@/lib/settings/homepage";
 
 interface EditableGridProps {
   items: PortalItem[];
+  layout: LayoutId;
   categories: PortalCategory[];
   /** 搜索状态下顺序只是一部分结果，禁止拖动，避免写回残缺的排序 */
   sortable: boolean;
@@ -36,6 +40,7 @@ interface EditableGridProps {
 
 export function EditableGrid({
   items,
+  layout,
   categories,
   sortable,
   onReorder,
@@ -70,12 +75,17 @@ export function EditableGrid({
       modifiers={[restrictToParentElement]}
       onDragEnd={handleDragEnd}
     >
-      <SortableContext items={items.map((item) => item.id)} strategy={rectSortingStrategy}>
-        <div className="grid grid-cols-2 gap-3 sm:gap-3.5 lg:grid-cols-3">
+      <SortableContext
+        items={items.map((item) => item.id)}
+        // 一列排开的列表要按纵向而非矩形算落点，否则跨行判定会偏
+        strategy={layout === "list" ? verticalListSortingStrategy : rectSortingStrategy}
+      >
+        <ItemGrid layout={layout}>
           {items.map((item) => (
             <SortableItem
               key={item.id}
               item={item}
+              layout={layout}
               categories={categories}
               onEdit={() => onEdit(item)}
               onDuplicate={() => onDuplicate(item)}
@@ -85,7 +95,7 @@ export function EditableGrid({
               onDelete={() => onDelete(item)}
             />
           ))}
-        </div>
+        </ItemGrid>
       </SortableContext>
     </DndContext>
   );

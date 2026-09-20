@@ -1,6 +1,8 @@
 import { firstIssueMessage, jsonError, jsonOk, readJson } from "@/lib/api/http";
 import { withAdmin } from "@/lib/auth/guard";
-import { appearanceInputSchema, PALETTE_SETTING_KEY } from "@/lib/settings/appearance";
+import { PALETTE_SETTING_KEY } from "@/lib/settings/appearance";
+import { LAYOUT_SETTING_KEY } from "@/lib/settings/homepage";
+import { settingsPatchSchema } from "@/lib/settings/schemas";
 import { writeSetting } from "@/lib/settings/store";
 
 export const dynamic = "force-dynamic";
@@ -11,10 +13,13 @@ export const dynamic = "force-dynamic";
  */
 export async function PATCH(request: Request) {
   return withAdmin(async () => {
-    const parsed = appearanceInputSchema.safeParse(await readJson(request));
+    const parsed = settingsPatchSchema.safeParse(await readJson(request));
     if (!parsed.success) return jsonError(firstIssueMessage(parsed.error), 400);
 
-    writeSetting(PALETTE_SETTING_KEY, parsed.data.palette);
-    return jsonOk({ palette: parsed.data.palette });
+    const { palette, layout } = parsed.data;
+    if (palette !== undefined) writeSetting(PALETTE_SETTING_KEY, palette);
+    if (layout !== undefined) writeSetting(LAYOUT_SETTING_KEY, layout);
+
+    return jsonOk({ palette, layout });
   });
 }

@@ -1,14 +1,16 @@
-import { cn } from "cn";
-import { ItemCard } from "@/components/portal/item-card";
+import { ItemGrid } from "@/components/portal/item-grid";
+import { ItemView } from "@/components/portal/item-view";
 import type { PortalItem } from "@/lib/portal/types";
+import type { LayoutId } from "@/lib/settings/homepage";
 
 interface CategorySectionProps {
   id: string;
   title: string;
   description?: string | null;
   items: PortalItem[];
+  layout: LayoutId;
   action?: React.ReactNode;
-  gridClassName?: string;
+  /** 编辑模式传入已经包好拖动能力的网格，此时不再自己渲染条目 */
   children?: React.ReactNode;
 }
 
@@ -17,8 +19,8 @@ export function CategorySection({
   title,
   description,
   items,
+  layout,
   action,
-  gridClassName,
   children,
 }: CategorySectionProps) {
   return (
@@ -28,9 +30,7 @@ export function CategorySection({
           <h2 id={id} className="text-[15px] font-semibold tracking-[-0.015em]">
             {title}
           </h2>
-          <span className="text-muted-foreground text-[12px] tabular-nums">
-            {items.length} items
-          </span>
+          <span className="text-muted-foreground text-[12px] tabular-nums">{items.length} 个</span>
           {description ? (
             <span className="text-muted-foreground hidden text-[12px] sm:inline">
               {description}
@@ -41,11 +41,11 @@ export function CategorySection({
       </div>
 
       {children ?? (
-        <div className={cn("grid grid-cols-2 gap-3 sm:gap-3.5 lg:grid-cols-3", gridClassName)}>
+        <ItemGrid layout={layout}>
           {items.map((item, index) => (
-            <ItemCard key={item.id} item={item} index={index} />
+            <ItemView key={item.id} item={item} layout={layout} index={index} />
           ))}
-        </div>
+        </ItemGrid>
       )}
     </section>
   );
