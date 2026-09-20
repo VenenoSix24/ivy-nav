@@ -30,7 +30,7 @@ export function PortalHeader() {
           aria-label={`${site.fullName} 首页`}
           className="focus-visible:outline-ring flex items-center gap-2 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4"
         >
-          <BrandMark className="size-[22px] shrink-0" />
+          <BrandMark className="size-6" />
           <span className="flex items-baseline gap-1.5">
             <span className="text-[15px] font-semibold tracking-[-0.03em]">{site.name}</span>
             <span className="text-muted-foreground/50 text-[13px]">·</span>
