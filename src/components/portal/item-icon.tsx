@@ -22,14 +22,20 @@ interface ItemIconProps {
 export function ItemIcon({ spec, title, itemId, className, glyphClassName }: ItemIconProps) {
   // 底板关掉时尺寸照旧：格子还在原来的位置，只是不再画描边与玻璃底
   const plate = spec.plate !== false;
+  // 「填满」的档位里图形要顶到板边：这时不画那圈描边 —— 描边是画在盒子内侧的，
+  // 留着它，图形就永远差那么一圈（1px 的边 + 圆角处的缺口）
+  const filled = (spec.fit ?? DEFAULT_ICON_FIT) !== "contain";
 
   return (
     <span
       aria-hidden
       style={iconBox(plate, spec.fit ?? DEFAULT_ICON_FIT)}
       className={cn(
-        "inline-grid size-11 shrink-0 place-items-center leading-none",
-        plate && "plate-lift border-hairline bg-glass-strong rounded-lg border",
+        // 圆角三种布局统一（原来是卡片 8px、列表与紧凑 12px，后者在 40px 的格子上
+        // 已经圆得像个圆了）；底板关掉时也要圆：那时盒子里直接是一张图
+        "inline-grid size-11 shrink-0 place-items-center rounded-lg leading-none",
+        plate && "plate-lift bg-glass-strong",
+        plate && !filled && "border-hairline border",
         className,
       )}
     >

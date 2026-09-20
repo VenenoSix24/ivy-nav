@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- favicon 与上传图标尺寸固定、数量多，走本地代理即可，
    用 next/image 反而要拉远端白名单并多一次优化往返，与「不为小图标加载大资源」相悖 */
-import { createElement, useCallback, useState } from "react";
+import { createElement, useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "cn";
 import type { IconType } from "@/db/schema";
 import { getLucideIcon } from "@/components/icons/lucide-registry";
@@ -13,6 +13,7 @@ import {
   type FitTransform,
   type IconFitId,
 } from "@/lib/icons/fit";
+import { emojiInkBox, emojiTransform, measureEmoji } from "@/lib/icons/emoji-ink";
 
 export interface IconSpec {
   type: IconType;
@@ -105,18 +106,7 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
   }, []);
 
   if (spec.type === "emoji") {
-    return (
-      <span
-        className={cn(
-          // Emoji 的字形比 em 框还大一圈（实测约 1.1 倍），照字号给会盖过图片类图标；
-          // 退回九成，墨迹高度才和图片的一致
-          "translate-y-px text-[length:calc(var(--icon-glyph,1.25rem)*0.9)] select-none",
-          className,
-        )}
-      >
-        {spec.value}
-      </span>
-    );
+    return <EmojiGlyph value={spec.value ?? ""} className={className} />;
   }
 
   if (spec.type === "lucide") {
@@ -190,6 +180,65 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
   // none，以及属于第二阶段（设计文档 §40）的 simple-icons / iconify：直接显示首字母，
   // 不假装可用，也不为此把整库图标打进首页包里
   return <LetterMark title={title} className={className} />;
+}
+
+/**
+ * Emoji：量出这个字符的墨迹范围，再挪到正中间、缩到统一大小。
+ *
+ * 各家的 emoji 字体都把自己的图案摆在字框的某个位置 —— Apple 的键盘、显示器明显偏下，
+ * 有些又偏小，一排放几个就参差不齐。量法与图标裁边同源（都在 canvas 上数像素/量度量），
+ * 换算也用同一个 `trimTransform`。
+ */
+function EmojiGlyph({ value, className }: { value: string; className?: string }) {
+  const node = useRef<HTMLSpanElement>(null);
+  const [adjust, setAdjust] = useState<{ src: string; transform: string } | null>(null);
+
+  useEffect(() => {
+    const element = node.current;
+    if (!element || !value) return;
+
+    let cancelled = false;
+
+    const measure = () => {
+      const style = window.getComputedStyle(element);
+      // 只取字号与字体栈：canvas 的 font 简写不认 CSS 里那个 "16px/1.5 …" 写法
+      const font = `${style.fontSize} ${style.fontFamily}`;
+      const transform = emojiTransform(emojiInkBox(measureEmoji(value, font)));
+
+      if (cancelled) return;
+      setAdjust({
+        src: value,
+        transform: transform
+          ? `scale(${transform.scale}) translate(${transform.x * 100}%, ${transform.y * 100}%)`
+          : "",
+      });
+    };
+
+    // emoji 字体没就绪时量到的是后备字体的形状，等它加载完再量
+    if (document.fonts?.status === "loaded") measure();
+    else void document.fonts?.ready.then(measure, () => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [value]);
+
+  const transform = adjust?.src === value ? adjust.transform : "";
+
+  return (
+    <span
+      ref={node}
+      style={transform ? { transform } : undefined}
+      className={cn(
+        // 1em 见方、行高 1、居中：`emojiInkBox` 就是按这个盒子算的 0..1 坐标
+        "inline-block size-[1em] text-center leading-none select-none",
+        "text-[length:var(--icon-glyph,1.25rem)]",
+        className,
+      )}
+    >
+      {value}
+    </span>
+  );
 }
 
 /**

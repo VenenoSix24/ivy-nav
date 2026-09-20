@@ -454,8 +454,9 @@ export function IconPicker({
           aria-hidden
           style={iconBox(plate, spec.fit ?? DEFAULT_ICON_FIT)}
           className={cn(
-            "inline-grid size-12 shrink-0 place-items-center leading-none",
-            plate && "plate-lift border-hairline bg-glass-strong rounded-lg border",
+            "inline-grid size-12 shrink-0 place-items-center rounded-lg leading-none",
+            plate && "plate-lift bg-glass-strong",
+            plate && fit === "contain" && "border-hairline border",
           )}
         >
           <IconGlyph

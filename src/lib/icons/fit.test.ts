@@ -93,7 +93,14 @@ describe("trimTransform", () => {
   });
 
   it("leaves icons alone when they already fill the box", () => {
-    expect(trimTransform({ x0: 0.01, y0: 0.01, x1: 0.99, y1: 0.99 }, 1)).toBeNull();
+    expect(trimTransform({ x0: 0.005, y0: 0.005, x1: 0.995, y1: 0.995 }, 1)).toBeNull();
+    expect(trimTransform({ x0: 0, y0: 0, x1: 1, y1: 1 }, 1)).toBeNull();
+  });
+
+  it("still trims a thin transparent margin, so the artwork reaches the edge", () => {
+    // 九成七：留了一圈几个像素的透明边，正是「选了铺满却还差一圈」的那种
+    const transform = trimTransform({ x0: 0.015, y0: 0.015, x1: 0.985, y1: 0.985 }, 1);
+    expect(transform?.scale).toBeCloseTo(1.0309);
   });
 
   it("leaves icons alone when the measurement looks unreliable", () => {
