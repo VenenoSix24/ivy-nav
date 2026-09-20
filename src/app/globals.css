@@ -279,9 +279,12 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
     letter-spacing: -0.012em;
     overflow-x: hidden;
+    /* 底色不在这里画，交给画布（html）与环境光那一层（AmbientBackground）——
+       两者颜色都是 --background，而环境光那层正好铺满屏幕、压在底边上，
+       iOS 26 的 Safari 就是靠它读到底色的（见那个组件的注释）。 */
     /* 铺满屏幕（viewport-fit=cover）之后，屏幕底部那条安全区就归页面了：
        留出 Home 指示条的高度，最后一行内容才不会被压在它下面。
        body 是 border-box，这条内边距算在 min-h-lvh 里，不会多出一截滚动。 */
@@ -369,7 +372,7 @@
   }
 }
 
-/* 没有底板时，方框里只有图形自己 —— 影子就跟着图形走（按 alpha 描影，透明区域不带影子），
+/* 没有图标遮罩时，方框里只有图形自己 —— 影子就跟着图形走（按 alpha 描影，透明区域不带影子），
    补上同一份「离地感」。这时候不能把影子加在方框上：方框没有面，
    影子会变成一块悬在图标背后的灰方块，看着像又垫了一层板。 */
 @utility icon-lift {
@@ -451,6 +454,21 @@
 
   &::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* iOS 26 Safari 的底色取样条（来历见 layout.tsx 里那段注释）。默认不出现：第一组条件
+   只有触屏 Safari 认，再配一条窄屏把 iPad 排除 —— 那里没有悬浮工具栏，不需要它。 */
+.safari-band {
+  display: none;
+}
+
+@supports (-webkit-text-size-adjust: none) and (font: -apple-system-body) and
+  (-webkit-touch-callout: none) {
+  @media (width < 768px) {
+    .safari-band {
+      display: block;
+    }
   }
 }
 

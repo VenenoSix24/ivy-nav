@@ -57,6 +57,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           {children}
           <Toaster position="top-center" />
+          {/*
+            iOS 26 的 Safari 不再认 theme-color，浏览器底色改成自己「找」：它扫视口边缘的
+            fixed / sticky 元素、读它们的 background-color 当底色（离底边 3px 内、宽过八成、
+            高过 3px 才算数），找不到就自己兜一层白 —— 悬浮工具栏下面那条白灰带就是那层兜底。
+            这一条就是给它抄的答案：颜色与页面底色一致，位置贴在屏幕最下沿。
+            缩到全透明是为了它一个像素都不占（Safari 读的是样式，看不见也照样算数）。
+            只在触屏 Safari 的窄屏上出现，别的浏览器不渲染（见 globals.css 的 .safari-band）。
+          */}
+          <div
+            aria-hidden
+            className="safari-band bg-background pointer-events-none fixed bottom-0 left-0 h-3 w-full opacity-0"
+          />
         </ThemeProvider>
       </body>
     </html>
