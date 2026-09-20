@@ -39,7 +39,12 @@ export function ItemCard({
     <>
       <div className="flex items-start justify-between gap-2">
         <ItemIcon
-          spec={{ type: item.iconType, value: item.iconValue }}
+          spec={{
+            type: item.iconType,
+            value: item.iconValue,
+            plate: item.iconPlate,
+            mono: item.iconMono,
+          }}
           title={item.title}
           itemId={item.id}
           className="size-12 [--icon-glyph:1.875rem] sm:size-14 sm:[--icon-glyph:2.25rem]"

@@ -47,6 +47,8 @@ export function createItem(input: ItemInput) {
       categoryId,
       iconType: input.iconType ?? "favicon",
       iconValue: input.iconValue ?? null,
+      iconPlate: input.iconPlate ?? true,
+      iconMono: input.iconMono ?? false,
       visibility,
       featured: input.featured ?? false,
       sortOrder,
@@ -79,6 +81,8 @@ export function updateItem(id: number, input: Partial<ItemInput>) {
       categoryId: input.categoryId === undefined ? existing.categoryId : (input.categoryId ?? null),
       iconType: input.iconType ?? existing.iconType,
       iconValue: input.iconValue === undefined ? existing.iconValue : input.iconValue,
+      iconPlate: input.iconPlate ?? existing.iconPlate,
+      iconMono: input.iconMono ?? existing.iconMono,
       visibility: input.visibility ?? existing.visibility,
       featured: input.featured ?? existing.featured,
       // 换分类后落到目标分类末尾，避免沿用原分类里的位置造成顺序错乱

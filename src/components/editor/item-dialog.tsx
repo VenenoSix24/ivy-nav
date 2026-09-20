@@ -69,6 +69,8 @@ export function ItemDialog({
   const [featured, setFeatured] = useState(item?.featured ?? false);
   const [iconType, setIconType] = useState<IconType>(item?.iconType ?? "favicon");
   const [iconValue, setIconValue] = useState<string | null>(item?.iconValue ?? null);
+  const [iconPlate, setIconPlate] = useState(item?.iconPlate ?? true);
+  const [iconMono, setIconMono] = useState(item?.iconMono ?? false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   /** 标题是不是用户自己写过的：写过就不再让网址覆盖它 */
@@ -136,6 +138,8 @@ export function ItemDialog({
       featured,
       iconType,
       iconValue,
+      iconPlate,
+      iconMono,
     };
 
     const result = item
@@ -233,10 +237,17 @@ export function ItemDialog({
             </div>
 
             <IconPicker
-              spec={{ type: iconType, value: iconValue }}
+              spec={{
+                type: iconType,
+                value: iconValue,
+                plate: iconPlate,
+                mono: iconMono,
+              }}
               onChange={(next) => {
                 setIconType(next.type);
                 setIconValue(next.value);
+                setIconPlate(next.plate ?? true);
+                setIconMono(next.mono ?? false);
               }}
               url={url}
               title={title}

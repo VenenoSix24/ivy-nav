@@ -50,7 +50,12 @@ export function ItemRow({
   const body = (
     <>
       <ItemIcon
-        spec={{ type: item.iconType, value: item.iconValue }}
+        spec={{
+          type: item.iconType,
+          value: item.iconValue,
+          plate: item.iconPlate,
+          mono: item.iconMono,
+        }}
         title={item.title}
         itemId={item.id}
         className="size-11 rounded-xl [--icon-glyph:1.75rem]"

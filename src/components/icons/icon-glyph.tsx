@@ -10,6 +10,13 @@ import { getLucideIcon } from "@/components/icons/lucide-registry";
 export interface IconSpec {
   type: IconType;
   value: string | null;
+  /** 图标底下要不要那层底板：应用类图标自带圆角外形，套上底板就成了大圆套小圆 */
+  plate?: boolean;
+  /**
+   * 单色图标按主题前景色渲染。图片类图标只能烘死一个颜色，黑图在深色主题下会看不见 ——
+   * 这一档改成拿 SVG 的 alpha 当蒙版、颜色交给 `currentColor`，跟着主题走。
+   */
+  mono?: boolean;
 }
 
 interface IconGlyphProps {
@@ -77,6 +84,11 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
     const hasSource = spec.type === "upload" ? Boolean(spec.value?.trim()) : Boolean(src.trim());
     if (!hasSource) return <LetterMark title={title} className={className} />;
 
+    // 蒙版只对 SVG 有意义：位图的 alpha 是整个方块，蒙出来就是一块实心色
+    if (spec.mono === true && /\.svg(\?|$)/i.test(src)) {
+      return <MaskGlyph src={src} className={className} />;
+    }
+
     return (
       <span className={cn("relative grid size-full place-items-center", className)}>
         {phase === "ready" ? null : (
@@ -104,6 +116,32 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
   return <LetterMark title={title} className={className} />;
 }
 
+/**
+ * 单色图标：拿 SVG 的 alpha 当蒙版，颜色用 `currentColor`（也就是主题前景色），
+ * 所以同一张图在浅色下是黑的、深色下是白的，不必为两种主题各存一份。
+ * 图片只能走蒙版这一条路 —— `<img>` 里的 `currentColor` 不认页面的颜色。
+ */
+function MaskGlyph({ src, className }: { src: string; className?: string }) {
+  const mask = {
+    maskImage: `url("${src}")`,
+    WebkitMaskImage: `url("${src}")`,
+    maskRepeat: "no-repeat",
+    WebkitMaskRepeat: "no-repeat",
+    maskPosition: "center",
+    WebkitMaskPosition: "center",
+    maskSize: "contain",
+    WebkitMaskSize: "contain",
+  } as React.CSSProperties;
+
+  return (
+    <span
+      aria-hidden
+      className={cn("size-[var(--icon-glyph,1.25rem)] bg-current", className)}
+      style={mask}
+    />
+  );
+}
+
 function LetterMark({ title, className }: { title: string; className?: string }) {
   return (
     <span
@@ -122,12 +160,4 @@ function LetterMark({ title, className }: { title: string; className?: string })
 export function firstLetter(title: string): string {
   const trimmed = title.trim();
   return trimmed ? Array.from(trimmed)[0]!.toUpperCase() : "?";
-}
-
-export function itemFaviconSrc(itemId: number): string {
-  return `/api/icons/favicon?item=${itemId}`;
-}
-
-export function previewFaviconSrc(url: string): string {
-  return `/api/icons/resolve?url=${encodeURIComponent(url)}`;
 }

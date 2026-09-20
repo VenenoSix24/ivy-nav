@@ -271,8 +271,10 @@
   html {
     @apply font-sans;
     -webkit-tap-highlight-color: transparent;
-    /* 显式给画布上色：iOS 的回弹区与工具栏后面那片不归 body 管，
-       留白就成了系统默认的白。这里跟着主题走，才不会露出一条素色底。 */
+    /* 画布底色只在这里给：body 的底色只铺到 body 的盒子，而 iOS 底部安全区
+       （悬浮工具栏与 Home 指示条所在的那条）在布局视口之外 —— 那一片归画布管，
+       画布是白的，看上去就像内容被一条白底拦腰截断。背景铺满整屏、
+       真正怕被挡住的内容用 safe-bottom 让开，这也是 Apple 的分工。 */
     background-color: var(--background);
   }
 
@@ -282,7 +284,7 @@
     overflow-x: hidden;
     /* 铺满屏幕（viewport-fit=cover）之后，屏幕底部那条安全区就归页面了：
        留出 Home 指示条的高度，最后一行内容才不会被压在它下面。
-       body 是 border-box，这条内边距算在 min-h-dvh 里，不会多出一截滚动。 */
+       body 是 border-box，这条内边距算在 min-h-lvh 里，不会多出一截滚动。 */
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 

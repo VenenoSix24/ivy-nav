@@ -11,6 +11,8 @@ const item = (id: number): PortalItem => ({
   domain: "example.com",
   iconType: "favicon",
   iconValue: null,
+  iconPlate: true,
+  iconMono: false,
   tags: [],
   visibility: "public",
   featured: false,

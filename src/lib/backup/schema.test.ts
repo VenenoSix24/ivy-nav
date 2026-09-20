@@ -61,6 +61,20 @@ describe("parseBackupDocument", () => {
     expect(result.document).not.toHaveProperty("unexpected");
   });
 
+  it("takes the icon flags when it has them and defaults them when it does not", () => {
+    // 旧备份里没有这两项：底板默认开、单色默认关，导入后与新建条目一致
+    const withFlags = parseBackupDocument({
+      ...valid,
+      items: [{ ...valid.items[0], iconPlate: false, iconMono: true }],
+    });
+    expect(withFlags.document?.items[0]?.iconPlate).toBe(false);
+    expect(withFlags.document?.items[0]?.iconMono).toBe(true);
+
+    const withoutFlags = parseBackupDocument(valid);
+    expect(withoutFlags.ok).toBe(true);
+    expect(withoutFlags.document?.items[0]?.iconPlate).toBeUndefined();
+  });
+
   it("allows the optional collections to be absent", () => {
     const result = parseBackupDocument({ ...valid });
     expect(result.ok).toBe(true);

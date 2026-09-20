@@ -50,7 +50,11 @@ function sniffMatches(bytes: Buffer, contentType: string): boolean {
   return false;
 }
 
-export function saveUpload(bytes: Buffer, contentType: string): string {
+/**
+ * 存一份图标。`preferred` 可选：图标库挑来的那张要一个**确定的名字**（同一个库、同一个名字、
+ * 同一个颜色算出来总是同一个），同一张挑两次不会在目录里堆两份；不合规的名字一律换随机名。
+ */
+export function saveUpload(bytes: Buffer, contentType: string, preferred?: string): string {
   const extension = EXTENSIONS[contentType];
   if (!extension) {
     throw new UploadError("只支持 PNG、JPG、WEBP、SVG：请转换格式后重试。");
@@ -66,7 +70,10 @@ export function saveUpload(bytes: Buffer, contentType: string): string {
   }
 
   const payload = extension === "svg" ? Buffer.from(sanitizeSvg(bytes.toString("utf8"))) : bytes;
-  const filename = `${randomBytes(8).toString("hex")}.${extension}`;
+  const filename =
+    preferred && isServableName(preferred) && preferred.endsWith(`.${extension}`)
+      ? preferred
+      : `${randomBytes(8).toString("hex")}.${extension}`;
 
   fs.mkdirSync(uploadDir(), { recursive: true });
   fs.writeFileSync(path.join(uploadDir(), filename), payload);
@@ -74,9 +81,13 @@ export function saveUpload(bytes: Buffer, contentType: string): string {
   return filename;
 }
 
-/** 只接受本模块生成的文件名，杜绝 ../ 之类的路径穿越。 */
+/**
+ * 只接受本模块生成的文件名，杜绝 ../ 之类的路径穿越。
+ * 前缀只是给人看的（图标库里挑来的那张写成了 `simple-icons-github_<hash>.svg`），
+ * 字符集里没有 `.` 也没有 `/`，拼不出别的路径；结尾仍是那 16 位十六进制。
+ */
 export function isServableName(name: string): boolean {
-  const match = /^[a-f0-9]{16}\.([a-z0-9]+)$/.exec(name);
+  const match = /^(?:[a-z0-9-]{1,48}_)?[a-f0-9]{16}\.([a-z0-9]+)$/.exec(name);
   return match !== null && SERVABLE.has(match[1]!);
 }
 

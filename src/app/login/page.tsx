@@ -17,7 +17,9 @@ export default async function LoginPage() {
   if (session) redirect("/settings");
 
   return (
-    <main className="relative z-10 flex min-h-dvh items-center justify-center px-4 py-16">
+    // lvh 与布局视口一致（dvh 跟的是 iPhone 悬浮工具栏展开时的那一小块）：
+    // 页面铺满整屏，底部才不会露出画布底色
+    <main className="relative z-10 flex min-h-lvh items-center justify-center px-4 py-16">
       <AmbientBackground />
       <LoginForm needsSetup={needsSetup()} />
     </main>

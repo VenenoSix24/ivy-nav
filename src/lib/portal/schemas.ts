@@ -52,6 +52,8 @@ export const itemInputSchema = z.object({
     .optional(),
   iconType: z.enum(iconTypeValues).optional(),
   iconValue: z.string().trim().max(500, "图标值过长：上限 500 个字符。").nullish(),
+  iconPlate: z.boolean().optional(),
+  iconMono: z.boolean().optional(),
   visibility: z.enum(visibilityValues).optional(),
   featured: z.boolean().optional(),
 });

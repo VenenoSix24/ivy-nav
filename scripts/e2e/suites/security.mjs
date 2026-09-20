@@ -257,6 +257,161 @@ assert(
   `HTTP ${metaPrivate.status} ${JSON.stringify(metaPrivate.json)}`,
 );
 
+// ---- 图标候选（/api/icons/candidates）：一次列出所有取图方案，同样只有管理员能用
+const candidatesAnon = await call("/api/icons/candidates?url=example.com", { auth: false });
+assert("匿名列图标候选被拒", candidatesAnon.status === 401, `HTTP ${candidatesAnon.status}`);
+
+const candidatesEmpty = await call("/api/icons/candidates?url=");
+assert(
+  "网址还没填时列空候选而不是报错",
+  candidatesEmpty.status === 200 && Array.isArray(candidatesEmpty.json?.candidates)
+    ? candidatesEmpty.json.candidates.length === 0
+    : false,
+  `HTTP ${candidatesEmpty.status} ${JSON.stringify(candidatesEmpty.json)}`,
+);
+
+// 回环地址：出口检查拦下，每个方案都取不到，前端据此把格子画成灰的
+const candidatesPrivate = await call("/api/icons/candidates?url=http%3A%2F%2F127.0.0.1%3A3222%2F");
+assert(
+  "内网地址的候选全部是取不到",
+  candidatesPrivate.status === 200 &&
+    Array.isArray(candidatesPrivate.json?.candidates) &&
+    candidatesPrivate.json.candidates.length > 0 &&
+    candidatesPrivate.json.candidates.every((entry) => entry.status === "miss"),
+  `HTTP ${candidatesPrivate.status} ${JSON.stringify(candidatesPrivate.json)}`,
+);
+
+const resolveBadSource = await call("/api/icons/resolve?url=example.com&source=google");
+assert("认不出的图标来源被拒", resolveBadSource.status === 400, `HTTP ${resolveBadSource.status}`);
+
+// ---- 图标库（/api/icons/library）：搜、看、挑三段都是管理接口
+const libraryAnon = await call("/api/icons/library", { auth: false });
+assert("匿名列图标库被拒", libraryAnon.status === 401, `HTTP ${libraryAnon.status}`);
+
+const libraryList = await call("/api/icons/library");
+const libraryIds = (libraryList.json?.libraries ?? []).map((entry) => entry.id);
+assert(
+  "默认三套：Simple Icons、Iconify 在服务端，Lucide 在前端",
+  libraryIds[0] === "simple-icons" && libraryIds[1] === "iconify",
+  JSON.stringify(libraryIds),
+);
+
+const libraryBad = await call("/api/icons/library/search?lib=nope&q=home");
+assert("认不出的图标库被拒", libraryBad.status === 400, `HTTP ${libraryBad.status}`);
+
+// Simple Icons 的数据随包装在本地：这条断言同时盯着「搜索不依赖外网」
+const siSearch = await call("/api/icons/library/search?lib=simple-icons&q=github");
+assert(
+  "Simple Icons 搜得到 GitHub 并带上品牌色",
+  siSearch.status === 200 && siSearch.json?.hits?.[0]?.name === "github"
+    ? siSearch.json.hits[0].color === "#181717"
+    : false,
+  `HTTP ${siSearch.status} ${JSON.stringify(siSearch.json?.hits?.[0])}`,
+);
+
+const siIcon = await call("/api/icons/library/icon?lib=simple-icons&name=github");
+assert(
+  "图标缩略图回 SVG",
+  siIcon.status === 200 && (siIcon.headers.get("content-type") ?? "").includes("svg"),
+  `HTTP ${siIcon.status} ${siIcon.headers.get("content-type")}`,
+);
+
+const pickAnon = await call("/api/icons/library/pick", {
+  method: "POST",
+  auth: false,
+  body: { library: "simple-icons", name: "github" },
+});
+assert("匿名挑图标被拒", pickAnon.status === 401, `HTTP ${pickAnon.status}`);
+
+const picked = await call("/api/icons/library/pick", {
+  method: "POST",
+  body: { library: "simple-icons", name: "github", color: "#ffffff" },
+});
+const pickedName = picked.json?.filename;
+assert(
+  "挑中的图标落成本地文件（名字可读、带哈希）",
+  picked.status === 200 && /^simple-icons-github-ffffff_[a-f0-9]{16}\.svg$/.test(pickedName ?? ""),
+  `HTTP ${picked.status} ${JSON.stringify(picked.json)}`,
+);
+
+const pickedFile = await call(`/api/icons/file/${pickedName}`);
+assert(
+  "落下来的那张能当图片取回",
+  pickedFile.status === 200 && (pickedFile.headers.get("content-type") ?? "").includes("svg"),
+  `HTTP ${pickedFile.status}`,
+);
+
+const pickBadLibrary = await call("/api/icons/library/pick", {
+  method: "POST",
+  body: { library: "set:9999", name: "x" },
+});
+assert("往不存在的库挑被拒", pickBadLibrary.status === 400, `HTTP ${pickBadLibrary.status}`);
+
+// ---- 自建图标集（/api/icon-sets）：地址、抓取、删除
+const setsAnon = await call("/api/icon-sets", { auth: false });
+assert("匿名列图标集被拒", setsAnon.status === 401, `HTTP ${setsAnon.status}`);
+
+const setBadUrl = await call("/api/icon-sets", {
+  method: "POST",
+  body: { url: "javascript:alert(1)" },
+});
+assert("图标集地址只收 http(s)", setBadUrl.status === 400, `HTTP ${setBadUrl.status}`);
+
+const setLoopback = await call("/api/icon-sets", {
+  method: "POST",
+  body: { url: "http://127.0.0.1:3222/icons.json" },
+});
+assert(
+  "内网地址的图标集抓不到（出口检查拦下）",
+  setLoopback.status === 400,
+  `HTTP ${setLoopback.status} ${JSON.stringify(setLoopback.json)}`,
+);
+
+const setDeleteMissing = await call("/api/icon-sets?id=9999", { method: "DELETE" });
+assert(
+  "删不存在的图标集回 404",
+  setDeleteMissing.status === 404,
+  `HTTP ${setDeleteMissing.status}`,
+);
+
+// ---- 图标底板与单色跟随主题：两个新列要能存能取（迁移在既有库上加的列）
+const portalBefore = await call("/api/portal");
+const firstItem = (portalBefore.json?.portal?.items ?? [])[0];
+assert(
+  "新建条目默认带底板、不跟随主题",
+  firstItem?.iconPlate === true && firstItem?.iconMono === false,
+  JSON.stringify({ plate: firstItem?.iconPlate, mono: firstItem?.iconMono }),
+);
+
+const flagPatch = await call(`/api/items/${firstItem?.id}`, {
+  method: "PATCH",
+  body: {
+    title: firstItem?.title,
+    url: firstItem?.url,
+    iconPlate: false,
+    iconMono: true,
+  },
+});
+assert(
+  "底板与跟随主题存得进去",
+  flagPatch.status === 200 &&
+    flagPatch.json?.portal?.items?.find((entry) => entry.id === firstItem?.id)?.iconPlate ===
+      false &&
+    flagPatch.json.portal.items.find((entry) => entry.id === firstItem?.id)?.iconMono === true,
+  `HTTP ${flagPatch.status}`,
+);
+
+const flagsBack = await call(`/api/items/${firstItem?.id}`, {
+  method: "PATCH",
+  body: { title: firstItem?.title, url: firstItem?.url, iconPlate: true, iconMono: false },
+});
+assert(
+  "改回来也对（不是只认 true/false 里的一个）",
+  flagsBack.status === 200 &&
+    flagsBack.json?.portal?.items?.find((entry) => entry.id === firstItem?.id)?.iconPlate === true,
+  `HTTP ${flagsBack.status}`,
+);
+
 // ---- F8：管理数据响应禁止中间缓存
 const portalAgain = await call("/api/portal");
 assert(
