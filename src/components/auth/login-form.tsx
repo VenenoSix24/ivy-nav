@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { BrandMark } from "@/components/portal/brand-mark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,9 +52,12 @@ export function LoginForm({ needsSetup }: LoginFormProps) {
   return (
     <div className="w-full max-w-[380px]">
       <div className="mb-8 text-center">
-        <div className="mb-4 flex items-baseline justify-center gap-1.5">
-          <span className="text-[17px] font-semibold tracking-[-0.02em]">{site.name}</span>
-          <span className="text-muted-foreground text-[14px]">{site.nameZh}</span>
+        <div className="mb-4 flex flex-col items-center gap-3">
+          <BrandMark className="size-12" />
+          <div className="flex items-baseline justify-center gap-1.5">
+            <span className="text-[17px] font-semibold tracking-[-0.02em]">{site.name}</span>
+            <span className="text-muted-foreground text-[14px]">{site.nameZh}</span>
+          </div>
         </div>
         <h1 className="text-[22px] font-semibold tracking-[-0.02em]">登录</h1>
         <p className="text-muted-foreground mt-2 text-[13px] leading-relaxed">
