@@ -4,10 +4,7 @@ export interface EmojiEntry {
   keywords: string[];
 }
 
-/**
- * 精选常用图标，不是全量 emoji 表：首页要轻，选择器能搜到就够。
- * 关键词同时给中英文，方便直接搜「部署」或 deploy。
- */
+/** 精选常用 emoji，关键词同时给中英文 */
 export const emojiCatalog: EmojiEntry[] = [
   { char: "🚀", group: "开发", keywords: ["rocket", "launch", "deploy", "发布", "部署", "上线"] },
   { char: "⚡", group: "开发", keywords: ["zap", "fast", "speed", "性能", "快"] },
@@ -131,7 +128,7 @@ export const emojiCatalog: EmojiEntry[] = [
   { char: "⚪", group: "符号", keywords: ["white", "light", "白", "亮"] },
 ];
 
-/** 搜字符本身或关键词，空格分词后逐个命中（AND 收窄）。 */
+/** 搜字符本身或关键词，空格分词后逐个命中 */
 export function searchEmoji(query: string): EmojiEntry[] {
   const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (terms.length === 0) return emojiCatalog;

@@ -41,7 +41,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     const existing = findCategory(id);
     if (!existing) return jsonError("分类不存在：可能已被删除，请刷新页面。", 404);
 
-    // 条目不会被一起删除，只是退回 Inbox，之后可以再归档
+    // 条目不会被一起删除，只是退回 Inbox
     deleteCategory(id);
     return portalResponse();
   });

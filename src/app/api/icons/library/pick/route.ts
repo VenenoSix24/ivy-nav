@@ -4,7 +4,7 @@ import { PickError, pickLibraryIcon } from "@/lib/icons/library/pick";
 
 export const dynamic = "force-dynamic";
 
-/** 挑中一张：下载到本地上传目录，条目之后按上传图标渲染，不再依赖那个图标库。 */
+/** 挑中一张：下载到本地上传目录，条目之后按上传图标渲染。 */
 export async function POST(request: Request) {
   return withAdmin(async () => {
     const body = (await readJson(request)) as {

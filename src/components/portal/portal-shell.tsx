@@ -58,7 +58,7 @@ interface Section {
   title: string;
   description: string | null;
   categoryId: number | null;
-  /** 这个分区用哪种排布：分类自己设的，没设就是默认 */
+  /** 这个分区用哪种排布 */
   layout: LayoutId;
   items: PortalItem[];
 }
@@ -90,7 +90,7 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
     return portal.items.filter((item) => item.categoryId !== null && homeIds.has(item.categoryId));
   }, [portal.items, portal.categories, editing]);
 
-  /** 每个分类有几个条目：整理面板里摆在名字下面当参考 */
+  /** 每个分类有几个条目 */
   const itemCounts = useMemo(() => {
     const counts = new Map<number, number>();
     for (const item of portal.items) {
@@ -141,7 +141,7 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
       });
     }
 
-    // Inbox 只在管理视图里出现，公开页面看不到未归档条目
+    // Inbox 只在管理视图里出现
     if (editing && (active === ALL_CATEGORIES || active === INBOX)) {
       const items = matchedItems.filter((item) => item.categoryId === null);
       if (items.length > 0) {
@@ -177,13 +177,13 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
     applyResult(await portalRequest(path, body, method), successMessage);
   }
 
-  /** 首页上看得见的分区（不含 Inbox）的顺序：上移/下移按它算，跳过中间那些空分类 */
+  /** 首页上看得见的分区（不含 Inbox）的顺序 */
   const visibleOrder = useMemo(
     () => sections.map((section) => section.categoryId).filter((id): id is number => id !== null),
     [sections],
   );
 
-  /** 拖完立刻按新顺序重排本地数据，等回包再动会看到先弹回原位再跳一次 */
+  /** 乐观更新：拖完立刻按新顺序重排本地数据 */
   function submitCategoryOrder(orderedIds: number[]) {
     setPortal((current) => ({
       ...current,
@@ -268,7 +268,6 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
             onExit={() => {
               document.cookie = clearEditModeCookie();
               setEditing(false);
-              // 每次改动其实都已经落库，这里只是把「退出不等于没保存」说清楚
               toast.success("改动已保存");
             }}
             searchActive={searching}
@@ -290,7 +289,6 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
           className="mt-9 sm:mt-12"
         />
 
-        {/* 换分类时重挂载一次，让入场动画重放，而不是整页刷新（设计文档 §28） */}
         <div key={active} className="mt-10 space-y-12 sm:mt-14 sm:space-y-16">
           {sections.map((section) => {
             const sectionCategory =
@@ -379,7 +377,6 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
                     categories={portal.categories}
                     sortable={canDrag}
                     onReorder={(orderedIds) => {
-                      // 先改本地顺序：等回包再动，卡片会先弹回原位再跳一次
                       setPortal((current) => ({
                         ...current,
                         items: reorderWithin(current.items, orderedIds),
@@ -466,7 +463,6 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
       />
 
       <CategoryDialog
-        // 换一个分类就重挂载一次，草稿不会串到上一个
         key={editingCategory?.id ?? "none"}
         category={editingCategory}
         onOpenChange={(open) => {

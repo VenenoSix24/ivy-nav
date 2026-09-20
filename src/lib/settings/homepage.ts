@@ -10,14 +10,7 @@ export type LayoutId = (typeof LAYOUTS)[number]["id"];
 
 export const DEFAULT_LAYOUT: LayoutId = "card";
 
-/**
- * 三套形状的网格参数。公开视图与编辑视图共用同一份：那串 grid class 以前在两个组件里
- * 各抄了一遍，改一处忘一处就会漂。
- *
- * 没有走 auto-fill + --cell-min 去算列数：2 列在窄屏要吃掉约 340px 内容宽，手机只有
- * 358px，格子再小就只剩 1 列，而卡片布局现在是手机两列、≥1024px 三列。换算法会动到这套
- * 已经验收过的行为，所以按断点写死，直白且可预测。
- */
+/** 三套形状的网格参数，公开视图与编辑视图共用；按断点写死，别改成 auto-fill 算列数 */
 export const GRID_CLASS: Record<LayoutId, string> = {
   card: "grid grid-cols-2 gap-3 sm:gap-3.5 lg:grid-cols-3",
   list: "grid grid-cols-1 gap-2",

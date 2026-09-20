@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { countLinks, decodeEntities, parseBookmarksHtml } from "./parse";
 
-/** Chrome（简体中文）导出的一小段，结构与真实文件一致：一层「书签栏」包住用户目录 */
+/** Chrome（简体中文）导出的一小段 */
 const CHROME = `<!DOCTYPE NETSCAPE-Bookmark-file-1>
 <!-- This is an automatically generated file.
      It will be read and overwritten.
@@ -53,7 +53,7 @@ describe("parseBookmarksHtml", () => {
     const tree = parseBookmarksHtml(CHROME);
     const figma = tree.folders[0]?.folders[0]?.links[0];
     expect(figma?.description).toBe("在线设计工具");
-    // 没有 <DD> 的条目保持 null，而不是蹭上一条的说明
+    // 没有 <DD> 的条目保持 null
     expect(tree.folders[0]?.links[0]?.description).toBeNull();
   });
 

@@ -16,14 +16,14 @@ import { Textarea } from "@/components/ui/textarea";
 import type { PortalCategory } from "@/lib/portal/types";
 
 interface CategoryDialogProps {
-  /** 为 null 时对话框关闭；调用方给它加 key，换一个分类就重挂载一次，草稿不会串 */
+  /** 为 null 时对话框关闭 */
   category: PortalCategory | null;
   onOpenChange: (open: boolean) => void;
-  /** 返回 true 表示保存成功，成功就自己关上 */
+  /** 返回 true 表示保存成功 */
   onSave: (values: { name: string; description: string | null }) => Promise<boolean>;
 }
 
-/** 改分类的名字与描述。首页与「整理分类」面板共用同一个。 */
+/** 改分类的名字与描述 */
 export function CategoryDialog({ category, onOpenChange, onSave }: CategoryDialogProps) {
   const [name, setName] = useState(category?.name ?? "");
   const [description, setDescription] = useState(category?.description ?? "");

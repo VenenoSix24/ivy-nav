@@ -62,7 +62,7 @@ describe("parseBackupDocument", () => {
   });
 
   it("takes the icon flags when it has them and defaults them when it does not", () => {
-    // 旧备份里没有这两项：图标遮罩默认开、单色默认关，导入后与新建条目一致
+    // 旧备份里没有这两项
     const withFlags = parseBackupDocument({
       ...valid,
       items: [{ ...valid.items[0], iconPlate: false, iconMono: true }],

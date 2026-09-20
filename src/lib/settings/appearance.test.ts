@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DEFAULT_PALETTE, isPaletteId, PALETTES } from "./appearance";
 
-// 配色的取值写在 CSS 里（TS 里放不了），所以这里直接对着文件检查两边不会走散
+// 配色的取值写在 CSS 里，这里直接对着文件检查两边不会走散
 const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
 
 const LIGHT_BACKGROUND = "#f5f5f7";

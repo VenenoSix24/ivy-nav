@@ -1,11 +1,7 @@
 const ALLOWED_PROTOCOLS = new Set(["http:", "https:"]);
 const HAS_PROTOCOL = /^[a-z][a-z0-9+.-]*:/i;
 
-/**
- * Accepts bare hosts ("github.com") and absolute URLs, rejects anything that is not
- * http(s). `javascript:` and `data:` URLs are dropped here rather than at render time
- * because a stored one would be a permanent injection hole.
- */
+/** Accepts bare hosts and absolute URLs, rejects anything that is not http(s). */
 export function parseHttpUrl(input: string): URL | null {
   const raw = input.trim();
   if (!raw) return null;
@@ -33,7 +29,7 @@ export function isSafeUrl(input: string): boolean {
   return parseHttpUrl(input) !== null;
 }
 
-/** Host without the leading "www.", used for display and for favicon lookup. */
+/** Host without the leading "www.". */
 export function toDomain(input: string): string | null {
   const url = parseHttpUrl(input);
   if (!url) return null;
@@ -44,7 +40,7 @@ export function toHostname(input: string): string | null {
   return parseHttpUrl(input)?.hostname ?? null;
 }
 
-/** Falls back to the item title so a card without a description still reads well. */
+/** Domain for display, falling back to the input. */
 export function displayUrl(input: string): string {
   return toDomain(input) ?? input;
 }

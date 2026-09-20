@@ -177,11 +177,7 @@ export interface SeedResult {
   tags: number;
 }
 
-/**
- * Demo content so a fresh install shows the real layout instead of an empty page.
- * Refuses to run on a database that already has categories, so it can be invoked
- * repeatedly without duplicating anything.
- */
+/** 演示数据；库里已有分类时直接返回，不重复写入。 */
 export function seedDatabase(db: Db): SeedResult {
   const existing = db.select({ id: categories.id }).from(categories).all();
   if (existing.length > 0) return { categories: 0, items: 0, tags: 0 };

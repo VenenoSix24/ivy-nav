@@ -10,7 +10,7 @@ interface CategorySectionProps {
   items: PortalItem[];
   layout: LayoutId;
   action?: React.ReactNode;
-  /** 编辑模式传入已经包好拖动能力的网格，此时不再自己渲染条目 */
+  /** 编辑模式传入已包好拖动能力的网格，此时不再自己渲染条目 */
   children?: React.ReactNode;
 }
 
@@ -26,7 +26,6 @@ export function CategorySection({
   return (
     <section aria-labelledby={id}>
       <div className="mb-4 flex items-center justify-between gap-4 px-0.5">
-        {/* 窄屏放不下并列：描述自己占一行（w-full 顶到下一行），宽屏回到标题右边 */}
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
           <h2 id={id} className="text-[15px] font-semibold tracking-[-0.015em]">
             {title}

@@ -8,11 +8,11 @@ import type { PortalItem } from "@/lib/portal/types";
 interface ItemCardProps {
   item: PortalItem;
   index?: number;
-  /** 公开视图整张卡片就是链接；编辑模式换成普通容器，避免与拖动抢手势 */
+  /** 公开视图整张卡片就是链接 */
   interactive?: boolean;
   /** 管理视图里标出 Private 与置顶状态 */
   showState?: boolean;
-  /** 编辑模式：拖动把手浮在左上角，卡片左内边距要让出位置 */
+  /** 编辑模式：拖动把手浮在左上角 */
   draggable?: boolean;
   cornerAction?: React.ReactNode;
   onEdit?: () => void;
@@ -66,14 +66,9 @@ export function ItemCard({
         </p>
       ) : null}
 
-      {/* 手机上标签与「打开」各占一行：间距取和卡片内边距一样的 1rem，
-          按钮上下的留白才一样宽，不会显得被标签顶着 */}
       <div className="mt-auto flex flex-col items-start gap-4 pt-4 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:pt-5">
         <TagList tags={item.tags} lines={2} className="flex-1" />
 
-        {/* 按钮跟内容一起从左边排起（手机），桌面上贴到右下角。
-            没有标签时这一行是页脚里唯一的孩子，justify-between 会把它留在最左边，
-            所以自带一个 ml-auto 兜住 */}
         <div className="flex shrink-0 items-center gap-3 self-start sm:ml-auto sm:self-auto">
           {onEdit ? (
             <button

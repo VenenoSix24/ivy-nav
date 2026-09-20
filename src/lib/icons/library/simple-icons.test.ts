@@ -10,7 +10,7 @@ describe("simpleIconsSource", () => {
   });
 
   it("matches every word, so a spaced query still lands", async () => {
-    // 名字里没有空格，整串匹配会搜不到；分词之后「google chrome」才命中
+    // 名字里没有空格，分词之后才能命中
     const { hits } = await simpleIconsSource.search("google chrome");
     expect(hits.map((hit) => hit.name)).toContain("googlechrome");
   });

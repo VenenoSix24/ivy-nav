@@ -8,8 +8,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/80",
-        // 编辑模式里的动作按钮走玻璃：它们就浮在首页内容之上，
-        // 不透明的底色会像贴上去的一块，与身后的卡面材质对不上
+        // 玻璃底：浮在首页内容之上的编辑模式动作按钮
         glass:
           "border-hairline bg-glass-strong text-foreground backdrop-blur-md hover:bg-glass aria-expanded:bg-glass",
         outline:

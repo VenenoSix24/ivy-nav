@@ -5,10 +5,7 @@ interface ItemStateProps {
   featured: boolean;
 }
 
-/**
- * 管理视图里标出 Private 与置顶。三种布局共用一套判断，免得各写一遍。
- * 只负责画，定位交给各自的形状 —— 紧凑布局里它是角标上的小锁，列表里是一枚胶囊。
- */
+/** 管理视图里标出 Private 与置顶 */
 export function ItemState({ visibility, featured }: ItemStateProps) {
   if (visibility !== "private" && !featured) return null;
 
@@ -32,12 +29,7 @@ export function ItemState({ visibility, featured }: ItemStateProps) {
   );
 }
 
-/**
- * 紧凑布局用的角标：地方只有拇指大，Private 缩成一枚小锁。
- *
- * 摆在顶部那条留白带的**中间**：这条带子的左右两端分别是拖动把手与右上角菜单，
- * 挤到任一端都会和它们叠在一起。角标只在管理视图出现，而管理视图一定有那条带子。
- */
+/** 紧凑布局用的角标：Private 缩成一枚小锁，摆在顶部留白带的中间 */
 export function ItemStateCompact({ visibility, featured }: ItemStateProps) {
   if (visibility !== "private" && !featured) return null;
 

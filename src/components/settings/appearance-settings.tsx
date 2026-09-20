@@ -31,9 +31,7 @@ export function AppearanceSettings({ initialPalette }: AppearanceSettingsProps) 
     if (next === palette || pending) return;
     const previous = palette;
 
-    // 先把颜色换上去：配色是观感选择，值得即时反馈；写库失败再退回来
-    // 用 setAttribute 而不是改 dataset：后者是三层成员赋值，会被 React Compiler 的
-    // 不可变规则拦下（"Modifying a variable defined outside a component"）
+    // 用 setAttribute 而不是改 dataset：后者会被 React Compiler 的不可变规则拦下
     document.documentElement.setAttribute("data-palette", next);
     setPalette(next);
     setPending(true);

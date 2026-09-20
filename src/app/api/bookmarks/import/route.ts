@@ -5,10 +5,7 @@ import { applyBookmarkImport } from "@/lib/bookmarks/import";
 import { readBookmarkBody } from "@/lib/bookmarks/request";
 import { prepareBookmarkImport } from "@/lib/bookmarks/service";
 
-/**
- * 导入按「文件 + 挑中的目录 + 重复网址怎么处理」重新算一遍计划再落库，服务端不保存预览状态 ——
- * 预览与实际写入因此必然一致，也不需要为一次导入引入临时存储。
- */
+/** 按「文件 + 挑中的目录 + 重复网址怎么处理」重新算一遍计划再落库。 */
 export async function POST(request: Request) {
   return withAdmin(async () => {
     const body = readBookmarkBody(await readJson(request));

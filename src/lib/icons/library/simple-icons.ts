@@ -10,15 +10,7 @@ import {
   type SearchOptions,
 } from "./types";
 
-/**
- * Simple Icons：一个图标一枚品牌，数据随 npm 包（CC0）一起装在本地 —— 搜索与取图
- * 都不碰网络，这对一个常常被墙的部署环境是实打实的好处。
- *
- * 两条要守的规范（这也是它们在文档里反复强调的）：
- * - 图标是单色的，官方给的颜色是 `hex`（品牌色），要用颜色就用它，别自己编；
- * - 品牌标志的商标权属于各品牌，`guidelines` 是品牌自己的规范页，
- *   挑的时候把链接摆出来，让人知道去哪儿看能怎么用。
- */
+/** Simple Icons：数据随 npm 包装在本地，搜索与取图都不碰网络 */
 interface SimpleIconEntry {
   title: string;
   slug: string;
@@ -49,7 +41,7 @@ function search(query: string, options: SearchOptions = {}): LibrarySearchResult
   const trimmed = query.trim();
 
   if (!trimmed) {
-    // 空关键词不搬全库：按标题给个头一批，让人有个下手的地方
+    // 空关键词按标题给头一批，不搬全库
     const head = [...ALL].sort((a, b) => a.title.localeCompare(b.title));
     return { hits: head.slice(offset, offset + limit).map(toHit), total: head.length, offset };
   }
@@ -67,7 +59,7 @@ function search(query: string, options: SearchOptions = {}): LibrarySearchResult
   };
 }
 
-/** 官方 SVG 不带 fill（默认黑），要上色就在根节点写 fill —— CDN 也是这么干的。 */
+/** 官方 SVG 不带 fill，要上色就在根节点写 fill */
 function colorize(svg: string, color: string | null): string {
   if (!color) return svg;
   return svg.replace(/^<svg\b/, `<svg fill="${color}"`);

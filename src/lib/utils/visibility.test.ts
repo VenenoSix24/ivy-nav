@@ -30,7 +30,7 @@ describe("visibleItems", () => {
   });
 
   it("hides every item of a category that is hidden as a whole", () => {
-    // 整类隐藏：分类设成 Private 之后，里面的公开条目对匿名也不可见
+    // 整类隐藏：Private 分类里的公开条目对匿名也不可见
     const hidden = new Set([30]);
     const rows = [
       { id: 7, categoryId: 30, visibility: "public" as const },

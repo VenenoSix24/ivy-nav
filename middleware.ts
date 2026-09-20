@@ -1,10 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME, SESSION_TTL_MS, sessionCookieOptions } from "@/lib/auth/constants";
 
-/**
- * 滑动续期。数据库侧的顺延在各接口里完成，这里只负责把浏览器上的 Cookie 到期时间
- * 一起推后，否则常来的用户在 30 天后仍会被登出（设计文档 §11）。
- */
+/** 会话滑动续期：把浏览器上的 Cookie 到期时间一起推后。 */
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;

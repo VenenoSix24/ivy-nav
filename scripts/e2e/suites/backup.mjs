@@ -30,9 +30,7 @@ async function call(path, { method = "GET", body, auth = true, raw = false } = {
   let json = null;
   try {
     json = JSON.parse(text);
-  } catch {
-    /* html 或二进制 */
-  }
+  } catch {}
   return { status: response.status, json, text, headers: response.headers };
 }
 
@@ -53,7 +51,6 @@ async function signIn() {
 }
 await signIn();
 
-// 匿名边界
 for (const [path, method] of [
   ["/api/backup/export", "GET"],
   ["/api/backup/list", "GET"],
@@ -69,7 +66,6 @@ for (const [path, method] of [
   assert(`匿名 ${method} ${path} 被拒`, response.status === 401, `HTTP ${response.status}`);
 }
 
-// 导出
 const exported = await call("/api/backup/export", { raw: true });
 const exportText = await exported.text();
 const document = JSON.parse(exportText);
@@ -96,7 +92,6 @@ assert(
   document.categories.some((c) => c.visibleOnHomepage === true),
 );
 
-// 改内容，再用导出的文件导入，应该回到原状
 const before = await portalOf();
 const first = before.items[0];
 await call(`/api/items/${first.id}`, { method: "PATCH", body: { title: "被改掉的标题" } });
@@ -126,7 +121,6 @@ assert("导入后条目数一致", after.items.length === 15, `${after.items.len
 assert("导入后标签保留", after.items.find((i) => i.title === "GitHub")?.tags.includes("Dev"));
 assert("导入不影响登录", (await call("/api/auth/session")).json.authenticated === true);
 
-// 非法导入
 const badUrl = JSON.stringify({
   format: "ivy-nav",
   version: 1,
@@ -152,7 +146,6 @@ assert("导入拒绝非 JSON", notJson.status === 400, `HTTP ${notJson.status}`)
 const emptyBody = await call("/api/backup/import", { method: "POST", body: "" });
 assert("导入拒绝空内容", emptyBody.status === 400, `HTTP ${emptyBody.status}`);
 
-// 数据库备份
 const created = await call("/api/backup/create", { method: "POST" });
 assert(
   "创建备份",
@@ -181,7 +174,7 @@ assert(
 const badName = await call("/api/backup/download?name=../../portal.db", { raw: true });
 assert("下载拒绝路径穿越", badName.status === 404, `HTTP ${badName.status}`);
 
-// 备份之后改内容，然后恢复。导入/恢复会重建行，编号会变，所以这里重新取一次
+// 导入与恢复会重建行，编号会变，这里重新取一次
 const currentFirst = (await portalOf()).items[0];
 await call(`/api/items/${currentFirst.id}`, { method: "PATCH", body: { title: "备份之后改的" } });
 await call("/api/categories", { method: "POST", body: { name: "又一个临时分类" } });

@@ -130,7 +130,7 @@ describe("planBookmarkImport", () => {
       index,
     );
 
-    // 「工具」里已经有了 → 标记出来；「收藏夹」里没有 → 是另一条，不算重复
+    // 「工具」里已有，标记出来；「收藏夹」里没有，不算重复
     expect(result.items.find((entry) => entry.title === "GitHub")?.existingItemId).toBe(7);
     expect(
       result.items.find((entry) => entry.title === "GitHub 再放一份")?.existingItemId,

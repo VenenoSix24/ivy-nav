@@ -13,8 +13,7 @@ describe("planTagRows", () => {
   });
 
   it("splits evenly instead of filling the first row", () => {
-    // 五个 45px：填满第一行能放四个（195），第五个孤零零占第二行 —— 那是原来那个毛病。
-    // 均分后是 3 + 2，最宽的一行 145，比 195 舒服
+    // 五个 45px：均分后是 3 + 2，最宽的一行 145
     expect(planTagRows(equal(5, 45), 0, 200, 6, 2)).toEqual({ rows: [3, 2], hidden: 0 });
   });
 
@@ -24,8 +23,7 @@ describe("planTagRows", () => {
   });
 
   it("moves the last tags into +N when even two rows are not enough", () => {
-    // 八个 45px 正好两行放下（4 + 4 各 198），不加「+N」；
-    // 第九个塞不进来，于是收到七个，末行是三个标签加那个胶囊
+    // 八个 45px 正好两行放下（4 + 4），第九个塞不下，收到七个
     expect(planTagRows(equal(8, 45), 30, 200, 6, 2)).toEqual({ rows: [4, 4], hidden: 0 });
     expect(planTagRows(equal(9, 45), 30, 200, 6, 2)).toEqual({ rows: [4, 3], hidden: 2 });
   });
@@ -36,8 +34,7 @@ describe("planTagRows", () => {
   });
 
   it("works with mixed widths and keeps the order", () => {
-    // 宽窄混杂时也按「最宽那行尽量窄」分：80+40+80+12 = 212 塞得下 220，
-    // 而填满式的 80+40+80+40+18 = 258 塞不下
+    // 宽窄混杂时也按「最宽那行尽量窄」分：80+40+80+12 = 212 塞得下 220
     expect(planTagRows([80, 40, 80, 40, 80], 0, 220, 6, 2)).toEqual({ rows: [3, 2], hidden: 0 });
   });
 
@@ -48,7 +45,7 @@ describe("planTagRows", () => {
   });
 
   it("falls back to just the +N when even one tag cannot fit", () => {
-    // 一个标签比容器还宽：一个都不显示，只留「+N」，不会渲染出一行超出去的东西
+    // 一个标签比容器还宽：一个都不显示，只留「+N」
     expect(planTagRows([300], 30, 100, 6, 2)).toEqual({ rows: [0], hidden: 1 });
   });
 });

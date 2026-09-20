@@ -1,5 +1,5 @@
 export interface TagRows {
-  /** 每行放几个标签（不含行末的「+N」），从第一行到最后一行 */
+  /** 每行放几个标签（不含行末的「+N」） */
   rows: number[];
   /** 被收进「+N」的标签个数 */
   hidden: number;
@@ -11,19 +11,7 @@ interface Row {
   width: number;
 }
 
-/**
- * 标签排版：行数不超过 `lines`，每行都得放得下，行与行之间尽量平均。
- *
- * 不能只按「填满一行再换行」：五个标签里前四个塞满第一行、第五个孤零零占第二行，
- * 看着就是第一行挤、第二行空。同样是两行，宁可 3 + 2 也不要 4 + 1 —— 这里把能放下的
- * 标签尽量均分到各行（最小化「最宽那一行」），放不下的才从尾部收进「+N」。
- *
- * @param widths 每个标签的宽度（含内边距）
- * @param chipWidth 行末「+N」的宽度；没有「+N」时传 0
- * @param containerWidth 可用宽度
- * @param gap 同一行里两个胶囊之间的间距
- * @param lines 允许的行数上限
- */
+/** 标签排版：行数不超过 `lines`，行与行之间尽量平均，放不下的从尾部收进「+N」 */
 export function planTagRows(
   widths: number[],
   chipWidth: number,
@@ -32,7 +20,7 @@ export function planTagRows(
   lines: number,
 ): TagRows {
   if (widths.length === 0) return { rows: [], hidden: 0 };
-  // 还没量到尺寸（首屏、或被隐藏）时不做判断：先交给浏览器自己换行
+  // 还没量到尺寸时不做判断
   if (containerWidth <= 0 || widths.some((width) => width <= 0)) {
     return { rows: [widths.length], hidden: 0 };
   }
@@ -45,7 +33,7 @@ export function planTagRows(
     const rows = layout(items, containerWidth, gap, lines);
     if (!rows) continue;
 
-    // 「+N」永远挂在最后一行，所以只有最后一行要少算一个标签
+    // 「+N」永远挂在最后一行
     const counts = rows.map((row) => row.count);
     if (folded) counts[counts.length - 1] = counts[counts.length - 1]! - 1;
     return { rows: counts, hidden: widths.length - shown };
@@ -56,7 +44,7 @@ export function planTagRows(
 
 /** 找出「行数不超过 lines」的排法；放不下返回 null */
 function layout(items: number[], limit: number, gap: number, lines: number): Row[] | null {
-  // 行数从少到多试：一行放得下就不排两行
+  // 行数从少到多试
   for (let count = 1; count <= lines; count += 1) {
     const rows = balance(items, count, gap);
     if (rows && rows.every((row) => row.width <= limit)) return rows;
@@ -64,10 +52,7 @@ function layout(items: number[], limit: number, gap: number, lines: number): Row
   return null;
 }
 
-/**
- * 把 items 顺序切成 count 段，让最宽的一段尽量窄（最小化最大值）。
- * 段内顺序不能变 —— 标签的先后是用户自己排的。
- */
+/** 把 items 顺序切成 count 段，让最宽的一段尽量窄 */
 function balance(items: number[], count: number, gap: number): Row[] | null {
   const total = items.length;
   if (count > total) return null;
@@ -90,8 +75,7 @@ function balance(items: number[], count: number, gap: number): Row[] | null {
         const previous = dp[start]![row - 1]!;
         if (!Number.isFinite(previous)) continue;
         const candidate = Math.max(previous, widthOf(start, end));
-        // 用 <= 而不是 <：同样宽时取「最后一行更短」的那种分法 —— 上面一行放满一点，
-        // 观感上比拖着一个小尾巴稳
+        // 用 <= 而不是 <：同样宽时取「最后一行更短」的分法
         if (candidate <= dp[end]![row]!) {
           dp[end]![row] = candidate;
           from[end]![row] = start;

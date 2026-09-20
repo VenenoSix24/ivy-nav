@@ -12,7 +12,7 @@ const loginSchema = z.object({
 
 let dummyHash: string | null = null;
 
-/** 用户名不存在时也照样跑一次哈希校验，用耗时差异枚举用户名就行不通了。 */
+/** 用户名不存在时也跑一次哈希校验，抹平耗时差异。 */
 async function timingDecoyHash(): Promise<string> {
   dummyHash ??= await hashPassword("decoy-password-for-timing");
   return dummyHash;
@@ -22,8 +22,7 @@ export async function POST(request: Request) {
   const parsed = loginSchema.safeParse(await readJson(request));
   if (!parsed.success) return jsonError(firstIssueMessage(parsed.error), 400);
 
-  // 限流按用户名与全局两个维度计。IP 不作为键：转发头由客户端自己写，
-  // 每次换一个值就等于换一个新桶，那样的限流形同虚设。
+  // 限流按用户名与全局两个维度计
   const userKey = `user:${parsed.data.username.toLowerCase()}`;
   const perUser = loginLimiter.check(userKey);
   const global = loginGlobalLimiter.check(LOGIN_GLOBAL_KEY);

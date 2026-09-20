@@ -29,12 +29,7 @@ const PILL_EXISTING = `${PILL} bg-secondary text-muted-foreground tabular-nums`;
 const CATEGORY_ROWS = 24;
 const TAG_CHIPS = 24;
 
-/**
- * 浏览器书签导入：选文件 → 挑目录 → 看预览 → 确认。
- *
- * 预览与实际写入是同一段服务端逻辑（两边都按「文件 + 挑中的目录」重算一遍计划），所以这里
- * 只负责把计划讲清楚，以及把勾选范围里的数字加起来（`mergePreview`），不自己推断会发生什么。
- */
+/** 浏览器书签导入：选文件 → 挑目录 → 看预览 → 确认 */
 export function BookmarkImport() {
   const [pending, setPending] = useState<{ html: string; payload: BookmarkPreviewPayload } | null>(
     null,
@@ -63,7 +58,6 @@ export function BookmarkImport() {
 
     const data = preview as BookmarkPreviewPayload;
     setOverwrite(false);
-    // 默认全选：多数人就是整份导进来，要挑再把某几行去掉
     setSelected(data.groups.map((group) => group.key));
     setPending({ html: text, payload: data });
   }
@@ -406,7 +400,6 @@ function GroupRow({ group, checked, onToggle }: GroupRowProps) {
           checked={checked}
           onChange={onToggle}
           className="size-3.5 shrink-0"
-          // 原生勾选框的默认色各浏览器不一，跟着主题主色走
           style={{ accentColor: "var(--primary)" }}
         />
         <span className="min-w-0 flex-1 truncate">
@@ -451,7 +444,7 @@ function countToCreate(preview: BookmarkPreview, overwrite: boolean): number {
   return Math.max(0, preview.importable - duplicates);
 }
 
-/** 底部按钮上的数字要跟着勾选走，所以这里按同一套规则现算一遍 */
+/** 底部按钮上的数字，按同一套规则现算 */
 function countToWrite(
   pending: { payload: BookmarkPreviewPayload },
   selected: string[],

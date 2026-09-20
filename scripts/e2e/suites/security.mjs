@@ -11,11 +11,7 @@ function assert(label, condition, detail) {
   if (!condition) failures += 1;
 }
 
-/**
- * 响应体是不是那张 1×1 的透明占位图。
- * 不去数字节数：占位图换个编码就变长变短（曾经断言 70 字节，于是换一张正常 PNG 就误报），
- * 读 IHDR 里的宽高才是它真正的特征。
- */
+/** 响应体是不是那张 1×1 的透明占位图（按 IHDR 里的宽高判断）。 */
 function isPlaceholderBody(buffer) {
   return (
     buffer.length >= 24 &&
@@ -44,9 +40,7 @@ async function call(path, { method = "GET", body, auth = true, headers: extra = 
   let json = null;
   try {
     json = JSON.parse(text);
-  } catch {
-    /* html */
-  }
+  } catch {}
   return { status: response.status, json, text, headers: response.headers };
 }
 
@@ -63,7 +57,6 @@ assert("拿到会话 Cookie", cookie.startsWith("ivy_session="));
 const listed = await call("/api/backup/list");
 assert("管理员可用", listed.status === 200, `HTTP ${listed.status}`);
 
-// ---- F1：换 X-Forwarded-For 也不能绕过限流
 const statuses = [];
 for (let i = 0; i < 14; i += 1) {
   const response = await fetch(`${BASE}/api/auth/login`, {
@@ -75,7 +68,6 @@ for (let i = 0; i < 14; i += 1) {
 }
 assert("轮换 X-Forwarded-For 仍会被限流", statuses.includes(429), statuses.join(","));
 
-// 每次都换用户名与转发头，唯一能拦住它的只能是全局上限
 let globalBlockedAt = 0;
 for (let i = 0; i < 40 && globalBlockedAt === 0; i += 1) {
   const response = await fetch(`${BASE}/api/auth/login`, {
@@ -87,7 +79,6 @@ for (let i = 0; i < 40 && globalBlockedAt === 0; i += 1) {
 }
 assert("轮换用户名与转发头也逃不过全局限流", globalBlockedAt > 0, `第 ${globalBlockedAt} 次被拦`);
 
-// ---- F2：匿名响应不含隐藏分类里的条目
 const portal = await call("/api/portal");
 const hiddenCategory = portal.json.portal.categories.find((c) => c.name === "Entertainment");
 await call(`/api/categories/${hiddenCategory.id}`, {
@@ -96,11 +87,10 @@ await call(`/api/categories/${hiddenCategory.id}`, {
 });
 
 const anonymousHtml = await fetch(`${BASE}/`).then((r) => r.text());
-// 只断言被隐藏的那个分类：其余分类现在默认都在首页显示
+// 只断言被隐藏的那个分类
 assert("匿名响应不含被隐藏分类的条目", !anonymousHtml.includes("YouTube"), "Entertainment 已隐藏");
 assert("匿名响应仍含首页分类的条目", anonymousHtml.includes("Vercel"));
 
-// ---- F6：Private 条目的图标对外是 404，不暴露它存在
 const adminPortal = await call("/api/portal");
 const privateItem = adminPortal.json.portal.items.find((item) => item.visibility === "private");
 const croppedCookie = cookie;
@@ -111,7 +101,6 @@ const anonMissing = await call("/api/icons/favicon?item=999999", { auth: false }
 assert("不存在的编号同样是 404", anonMissing.status === 404);
 cookie = croppedCookie;
 
-// ---- F3：指向内网地址的条目不会触发抓取
 const created = await call("/api/items", {
   method: "POST",
   body: {
@@ -169,8 +158,6 @@ assert(
   `HTTP ${hexIcon.status} ${hexIconBody.length}B`,
 );
 
-// ---- 分类级隐藏：整类设为 Private 之后，匿名连分类带条目都看不到。
-// 匿名视图没有 JSON 接口（/api/portal 是管理接口），所以照旧读首页 HTML 来判断。
 const PROBE_CATEGORY = "整类隐藏探针";
 const PROBE_ITEM = "整类隐藏样例";
 
@@ -239,7 +226,6 @@ const probeItemId = (cleanupPortal.json?.portal?.items ?? []).find(
 if (probeItemId) await call(`/api/items/${probeItemId}`, { method: "DELETE" });
 await call(`/api/categories/${probeCategoryId}`, { method: "DELETE" });
 
-// ---- 按网址猜标题（/api/site-meta）：同样是管理接口，也走同一套出口检查
 const metaAnon = await call("/api/site-meta?url=github.com", { auth: false });
 assert("匿名问标题被拒", metaAnon.status === 401, `HTTP ${metaAnon.status}`);
 
@@ -249,7 +235,6 @@ assert("空网址被拒", metaEmpty.status === 400, `HTTP ${metaEmpty.status}`);
 const metaBad = await call("/api/site-meta?url=javascript:alert(1)");
 assert("非 http(s) 网址被拒", metaBad.status === 400, `HTTP ${metaBad.status}`);
 
-// 回环地址：出口检查拦下，不去抓，但「猜不到标题」不算错误
 const metaPrivate = await call("/api/site-meta?url=http%3A%2F%2F127.0.0.1%3A3222%2F");
 assert(
   "内网地址只回 title: null（未发起抓取）",
@@ -257,7 +242,6 @@ assert(
   `HTTP ${metaPrivate.status} ${JSON.stringify(metaPrivate.json)}`,
 );
 
-// ---- 图标候选（/api/icons/candidates）：一次列出所有取图方案，同样只有管理员能用
 const candidatesAnon = await call("/api/icons/candidates?url=example.com", { auth: false });
 assert("匿名列图标候选被拒", candidatesAnon.status === 401, `HTTP ${candidatesAnon.status}`);
 
@@ -270,7 +254,6 @@ assert(
   `HTTP ${candidatesEmpty.status} ${JSON.stringify(candidatesEmpty.json)}`,
 );
 
-// 回环地址：出口检查拦下，每个方案都取不到，前端据此把格子画成灰的
 const candidatesPrivate = await call("/api/icons/candidates?url=http%3A%2F%2F127.0.0.1%3A3222%2F");
 assert(
   "内网地址的候选全部是取不到",
@@ -284,7 +267,6 @@ assert(
 const resolveBadSource = await call("/api/icons/resolve?url=example.com&source=google");
 assert("认不出的图标来源被拒", resolveBadSource.status === 400, `HTTP ${resolveBadSource.status}`);
 
-// ---- 图标库（/api/icons/library）：搜、看、挑三段都是管理接口
 const libraryAnon = await call("/api/icons/library", { auth: false });
 assert("匿名列图标库被拒", libraryAnon.status === 401, `HTTP ${libraryAnon.status}`);
 
@@ -299,7 +281,7 @@ assert(
 const libraryBad = await call("/api/icons/library/search?lib=nope&q=home");
 assert("认不出的图标库被拒", libraryBad.status === 400, `HTTP ${libraryBad.status}`);
 
-// Simple Icons 的数据随包装在本地：这条断言同时盯着「搜索不依赖外网」
+// Simple Icons 的数据随包装在本地，这条同时盯着搜索不依赖外网
 const siSearch = await call("/api/icons/library/search?lib=simple-icons&q=github");
 assert(
   "Simple Icons 搜得到 GitHub 并带上品牌色",
@@ -347,7 +329,6 @@ const pickBadLibrary = await call("/api/icons/library/pick", {
 });
 assert("往不存在的库挑被拒", pickBadLibrary.status === 400, `HTTP ${pickBadLibrary.status}`);
 
-// ---- 自建图标集（/api/icon-sets）：地址、抓取、删除
 const setsAnon = await call("/api/icon-sets", { auth: false });
 assert("匿名列图标集被拒", setsAnon.status === 401, `HTTP ${setsAnon.status}`);
 
@@ -374,7 +355,6 @@ assert(
   `HTTP ${setDeleteMissing.status}`,
 );
 
-// ---- 图标图标遮罩与单色跟随主题：两个新列要能存能取（迁移在既有库上加的列）
 const portalBefore = await call("/api/portal");
 const firstItem = (portalBefore.json?.portal?.items ?? [])[0];
 assert(
@@ -412,7 +392,6 @@ assert(
   `HTTP ${flagsBack.status}`,
 );
 
-// ---- 图标摆法（原样 / 自动裁边 / 裁剪铺满 / 拉伸）：这一列要能存能取
 const fitPatch = await call(`/api/items/${firstItem?.id}`, {
   method: "PATCH",
   body: { title: firstItem?.title, url: firstItem?.url, iconFit: "auto" },
@@ -431,7 +410,6 @@ const fitBad = await call(`/api/items/${firstItem?.id}`, {
 });
 assert("认不出的图标摆法被拒", fitBad.status === 400, `HTTP ${fitBad.status}`);
 
-// 默认值：条目没设过就跟设置页里那个走，设过就听条目自己的
 const fitDefault = await call("/api/settings", { method: "PATCH", body: { iconFit: "cover" } });
 assert("设置默认图标摆法", fitDefault.status === 200, `HTTP ${fitDefault.status}`);
 const fitFollows = (await call("/api/portal")).json?.portal;
@@ -462,7 +440,6 @@ assert(
   `HTTP ${fitClear.status}`,
 );
 
-// ---- F8：管理数据响应禁止中间缓存
 const portalAgain = await call("/api/portal");
 assert(
   "管理接口带 no-store",

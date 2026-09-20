@@ -14,7 +14,7 @@ function isBlockedV4(address: string): boolean {
   const [first, second] = octets as [number, number, number, number];
   if (first === 0) return true; // 本网络
   if (first === 127) return true; // 回环
-  if (first === 169 && second === 254) return true; // link-local，云元数据服务在这里
+  if (first === 169 && second === 254) return true; // link-local
   if (first >= 224) return true; // 组播与保留段
 
   return false;
@@ -23,7 +23,7 @@ function isBlockedV4(address: string): boolean {
 function isBlockedV6(address: string): boolean {
   const host = address.toLowerCase();
 
-  // IPv4 映射地址按 IPv4 规则判断，::ffff:127.0.0.1 不能漏
+  // IPv4 映射地址按 IPv4 规则判断
   const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(host);
   if (mapped?.[1]) return isBlockedV4(mapped[1]);
 
@@ -37,20 +37,14 @@ function isBlockedV6(address: string): boolean {
   return false;
 }
 
-/** 回环、link-local 与保留段一律拒绝：这几个是拿服务器当跳板最常用的目标。 */
+/** 回环、link-local 与保留段一律拒绝 */
 export function isBlockedIp(address: string): boolean {
   const host = (address.split("%")[0] ?? "").trim();
   if (!host) return true;
   return host.includes(":") ? isBlockedV6(host) : isBlockedV4(host);
 }
 
-/**
- * 取图标前先确认目标不是一个内网地址。主机名可能解析到回环（含 0x7f000001 这类
- * 变体，URL 会先把它们规范化成点分十进制），所以必须解析后再判断。
- *
- * FAVICON_ALLOW_PRIVATE_HOSTS=true 可以关掉这道检查：局域网与 localhost 上的
- * 条目本来就取不到图标，只能回落首字母；把本机服务也当导航条目时可能需要它。
- */
+/** 取图标前先确认目标不是内网地址；FAVICON_ALLOW_PRIVATE_HOSTS=true 可关掉 */
 export async function assertFetchableHost(hostname: string): Promise<void> {
   if (process.env.FAVICON_ALLOW_PRIVATE_HOSTS === "true") return;
 
@@ -72,7 +66,7 @@ export async function assertFetchableHost(hostname: string): Promise<void> {
   }
 }
 
-/** 解析跳转目标并确认协议，手动跟随每一跳，避免一次放行后跑到别的地址。 */
+/** 解析跳转目标并确认协议 */
 export function nextRedirectTarget(location: string, base: URL): URL {
   let target: URL;
   try {

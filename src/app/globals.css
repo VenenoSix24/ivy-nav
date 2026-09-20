@@ -56,7 +56,7 @@
 }
 
 :root {
-  /* 系统字体栈：避免为了一次首屏额外下载字体（设计文档 §43），也最贴近 Apple 原生观感 */
+  /* 系统字体栈 */
   --app-font-sans:
     -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
@@ -154,15 +154,7 @@
   --grain-opacity: 0.05;
 }
 
-/*
- * 配色主题：与浅色/深色正交的另一维偏好，由设置页写入 <html data-palette>。
- * 每套只覆盖带色相的 token —— 中性色、卡面材质、阴影共用一套，否则六套配色
- * 会变成六份完整主题。
- *
- * 一叶青（默认）不在这里出现：它由上面 :root / .dark 的基础 token 承担，
- * 这样 data-palette 缺失时也能渲染出完整主题。取值都按正文 4.5:1 校过，
- * 深色那一档的 primary 偏亮，填充上的文字因此改用深墨而不是白色。
- */
+/* 配色主题：与浅色/深色正交，由设置页写入 <html data-palette>；每套只覆盖带色相的 token */
 :root[data-palette="blue"] {
   --primary: #0066cc;
   --primary-foreground: #ffffff;
@@ -271,8 +263,7 @@
   html {
     @apply font-sans;
     -webkit-tap-highlight-color: transparent;
-    /* 画布底色：iOS 底部安全区（悬浮工具栏那一圈）在布局视口之外，归画布管，
-       画布是白的就会出现一条白底 */
+    /* 画布底色：iOS 底部安全区（悬浮工具栏那一圈）归画布管 */
     background-color: var(--background);
   }
 
@@ -280,8 +271,7 @@
     @apply text-foreground;
     letter-spacing: -0.012em;
     overflow-x: hidden;
-    /* 底色不在这里画，交给画布与环境光那层（见 AmbientBackground）；
-       这条内边距给 Home 指示条让位，算在 min-h-lvh 里，不会多出一截滚动 */
+    /* 底部内边距给 Home 指示条让位 */
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
@@ -291,8 +281,7 @@
   }
 }
 
-/* 轻玻璃卡面（设计文档 §46）。这里只能写不带前缀的 backdrop-filter：手写 -webkit-
-   会被 Next 的 CSS 优化当成作者自备前缀，把无前缀那条合并掉，Chrome 上就没有磨砂了。 */
+/* 轻玻璃卡面。只能写不带前缀的 backdrop-filter：手写 -webkit- 会被构建当成自备前缀合并掉 */
 @utility surface {
   background: var(--surface-glass);
   border: 1px solid var(--surface-border);
@@ -300,7 +289,7 @@
   box-shadow: var(--surface-shadow);
 }
 
-/* 浮层玻璃：弹窗、菜单这些压在内容之上的表面，比卡面更实一点，模糊也更大一圈 */
+/* 浮层玻璃：弹窗、菜单这些压在内容之上的表面 */
 @utility surface-float {
   background: var(--surface-glass-strong);
   backdrop-filter: blur(34px) saturate(160%);
@@ -312,19 +301,15 @@
     box-shadow 0.35s var(--ease-out-soft),
     border-color 0.35s var(--ease-out-soft);
 
-  /* 触摸设备没有真正的悬停，加上限制免得点击后卡片停在抬起状态 */
   @media (hover: hover) and (pointer: fine) {
     &:hover {
-      /* 只做位移不做缩放：缩放会让文字在动画期间被反复栅格化，
-         观感上就是"清晰—模糊—清晰"地抖一下 */
       transform: translateY(-3px);
       box-shadow: var(--surface-shadow-hover);
     }
   }
 }
 
-/* 滚动驱动动画：光斑随页面下移一点，页面不再是"背景钉死、内容滑动"。
-   浏览器不支持 animation-timeline 时这段整体不生效，退回 fixed 的静态效果。 */
+/* 滚动驱动的视差：光斑随页面下移；浏览器不支持 animation-timeline 时整段不生效 */
 @supports (animation-timeline: scroll()) {
   @media (prefers-reduced-motion: no-preference) {
     @keyframes ambient-drift {
@@ -339,19 +324,14 @@
     .ambient-layer {
       animation: ambient-drift linear both;
       animation-timeline: scroll(root block);
-      /* 把位移映射到第一屏的滚动范围内，视差才看得出来 */
+      /* 位移映射到第一屏的滚动范围 */
       animation-range: 0 120vh;
     }
   }
 }
 
-/* 显示图标那个方框的投影（只在浅色下）：它是压在白卡面上的一块小面板，
-   给一点离地感，图标就不像印在卡面上。影子给得很浅 —— 它是卡片上的第二层，
-   不能抢卡面自己的那层大投影。深色下卡面本来就暗，再加影子只会脏，直接关掉。 */
+/* 图标方框的投影（只在浅色下） */
 @utility plate-lift {
-  /* 三层递进（模糊 2 → 4 → 8，透明度 7% → 5% → 3%）：这是各家设计系统里最常见的
-     「柔和阴影」写法，近处锐、远处散，比单层硬影子更接近真东西投下来的样子。
-     数值按小方块（40–56px）给的 —— 卡片自己那层大投影（0 20px 60px）是另一回事 */
   box-shadow:
     0 1px 2px rgb(0 0 0 / 0.07),
     0 2px 4px rgb(0 0 0 / 0.05),
@@ -362,12 +342,8 @@
   }
 }
 
-/* 没有图标遮罩时，方框里只有图形自己 —— 影子就跟着图形走（按 alpha 描影，透明区域不带影子），
-   补上同一份「离地感」。这时候不能把影子加在方框上：方框没有面，
-   影子会变成一块悬在图标背后的灰方块，看着像又垫了一层板。 */
+/* 没有图标遮罩时的投影，跟着图形的透明区域走 */
 @utility icon-lift {
-  /* 与方框那套同一份意思，换成跟着图案走的 drop-shadow，参数略轻：
-     图案的边比整块方板碎，影子重了会糊 */
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.1)) drop-shadow(0 3px 6px rgb(0 0 0 / 0.05));
 
   &:is(.dark *) {
@@ -375,12 +351,12 @@
   }
 }
 
-/* 顶栏分类条：右缘渐隐，提示右侧还有可滚动的内容 */
+/* 顶栏分类条：右缘渐隐 */
 @utility fade-right {
   mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 1.75rem), transparent 100%);
 }
 
-/* 已经滚到中间了：两头都还有内容，两侧都渐隐 */
+/* 已经滚到中间：两侧都渐隐 */
 @utility fade-both {
   mask-image: linear-gradient(
     to right,
@@ -391,14 +367,7 @@
   );
 }
 
-/*
- * 环境光的时间维度：两团光斑各自慢慢漂移并微微胀缩，不滚动时背景也是活的。
- * 时长与方向都错开（46s / 58s），周期之间差得够远，肉眼几乎看不出来在循环。
- *
- * 只动 transform：位移与缩放都留在合成层上。改 blur 半径或渐变本身会每帧重绘，
- * 这是这类背景最容易踩的坑。呼吸交给子元素，滚动视差交给父层 .ambient-layer，
- * 两者各自持有自己的 transform，互不覆盖。
- */
+/* 环境光的时间维度：两团光斑各自漂移并微微胀缩，只动 transform */
 @keyframes ambient-breathe-a {
   from {
     transform: translate3d(0, 0, 0) scale(1);
@@ -427,18 +396,14 @@
   }
 }
 
-/*
- * 极细噪点：大面积渐变常见的色带会被它打散，"纯 CSS 背景"因此多一点纸感。
- * 一张 160px 无缝平铺的 SVG 噪声（stitchTiles 保证接缝对得上），绘制一次就不再动。
- * 灰噪点压在浅色底上是暗斑、压在纯黑底上是亮斑，所以一套噪点两个主题都能用。
- */
+/* 极细噪点：打散大面积渐变里的色带 */
 @utility ambient-grain {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
   background-size: 160px 160px;
   opacity: var(--grain-opacity);
 }
 
-/* 横向滚动的分类条不该露出滚动条 */
+/* 横向滚动的分类条不露滚动条 */
 @utility no-scrollbar {
   scrollbar-width: none;
 
@@ -447,8 +412,7 @@
   }
 }
 
-/* iOS 26 Safari 的底色取样条（来历见 layout.tsx 里那段注释）。默认不出现：第一组条件
-   只有触屏 Safari 认，再配一条窄屏把 iPad 排除 —— 那里没有悬浮工具栏，不需要它。 */
+/* iOS 26 Safari 的底色取样条，只在触屏 Safari 的窄屏上出现 */
 .safari-band {
   display: none;
 }
@@ -462,8 +426,7 @@
   }
 }
 
-/* 入场动效：轻微上移 + 淡入。backwards 填充让动画结束后交还 transform，
-   否则 forwards 填充的终态会压住 hover 位移（设计文档 §28） */
+/* 入场动效：轻微上移 + 淡入 */
 @keyframes rise-in {
   from {
     opacity: 0;

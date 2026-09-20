@@ -12,7 +12,7 @@ const MODES = [
   { value: "system", label: "跟随系统", Icon: Monitor },
 ] as const;
 
-/** 只给图标：文字留给 title 与 aria-label，顶栏保持安静。 */
+/** 图标按钮：文字走 title 与 aria-label */
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const mounted = useMounted();
@@ -30,7 +30,6 @@ export function ThemeToggle() {
     const next = MODES[(Math.max(activeIndex, 0) + 1) % MODES.length];
     if (next) {
       setTheme(next.value);
-      // 没有文字标签时，用一次短暂提示说明切到了哪一档
       setHint(next.label);
     }
   }

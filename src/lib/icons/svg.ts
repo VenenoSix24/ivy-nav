@@ -1,13 +1,10 @@
-/** 会执行代码或嵌入外部内容的元素，一律连内容一起删掉。 */
+/** 会执行代码或嵌入外部内容的元素，连内容一起删掉 */
 const FORBIDDEN_ELEMENTS = ["script", "foreignObject", "iframe", "embed", "object", "handler"];
 
 const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 const REMOTE_IN_STYLE = /url\s*\(|@import|expression\s*\(/i;
 
-/**
- * 只允许同文档内的引用（#fragment 与相对路径）：外部地址既能外传数据，
- * 也能把图标变成远程加载入口。
- */
+/** 只允许同文档内的引用（#fragment 与相对路径） */
 function keepOnlyLocalReferences(svg: string): string {
   return svg.replace(
     /\s(href|xlink:href|src)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi,
@@ -19,7 +16,7 @@ function keepOnlyLocalReferences(svg: string): string {
   );
 }
 
-/** style 里同样能塞 url() 与 @import，放行等于留下一条对外请求的通道。 */
+/** style 里的 url() 与 @import 也要去掉 */
 function dropRemoteStyles(svg: string): string {
   return svg
     .replace(/<\s*style\b[^>]*>[\s\S]*?<\s*\/\s*style\s*>/gi, "")
@@ -28,13 +25,9 @@ function dropRemoteStyles(svg: string): string {
     );
 }
 
-/**
- * 用户上传的 SVG 不能直接信任。这里的清洗是纵深防御的一层：
- * 真正兜底的是 /api/icons/file 上的 CSP sandbox，以及图标只用 <img> 渲染
- * （通过 img 加载的 SVG 不会执行脚本）。
- */
+/** 清洗用户上传的 SVG */
 export function sanitizeSvg(source: string): string {
-  // DOCTYPE 里可以声明实体，实体能读本地文件，整段去掉
+  // 去掉 DOCTYPE 与 ENTITY
   let out = source.replace(/<!DOCTYPE[\s\S]*?>/gi, "").replace(/<!ENTITY[^>]*>/gi, "");
 
   for (const tag of FORBIDDEN_ELEMENTS) {
@@ -52,7 +45,7 @@ export function sanitizeSvg(source: string): string {
   return out;
 }
 
-/** 清洗后的内容还必须确实是一份 SVG，别把 HTML 当图标存进来。 */
+/** 清洗后的内容还得是一份 SVG */
 export function looksLikeSvg(source: string): boolean {
   const head = source.trimStart().slice(0, 512).toLowerCase();
   return head.startsWith("<svg") || (head.startsWith("<?xml") && head.includes("<svg"));

@@ -3,13 +3,8 @@ import { createFirstAdminUser, listAdminUsers, resetAllPasswords } from "./users
 import { PASSWORD_MIN_LENGTH, checkPasswordStrength, hashPassword } from "@/lib/auth/password";
 
 /**
- * 管理员只在服务器上创建，不通过网页：门户本身是公开可访问的，
- * 一个「谁都能打开的建号页面」本身就是缺口（设计文档 §11 单管理员）。
- *
- * 用法：
- *   pnpm admin:create <用户名>                      首次创建
- *   pnpm admin:create --reset                       重置现有管理员密码
- *   ADMIN_PASSWORD=... pnpm admin:create <用户名>    不走交互，便于脚本化
+ * 管理员只在服务器上创建，不通过网页。
+ * 用法：pnpm admin:create <用户名> | --reset | ADMIN_PASSWORD=... pnpm admin:create <用户名>
  */
 async function main() {
   const args = process.argv.slice(2);

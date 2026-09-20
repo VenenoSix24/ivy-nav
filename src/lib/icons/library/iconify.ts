@@ -8,15 +8,7 @@ import {
   type SearchOptions,
 } from "./types";
 
-/**
- * Iconify 是个聚合库（20 万+ 图标、上百套），也是少数几个真正提供搜索接口的：
- * 只能靠搜索驱动，一次一个关键词、一次一页，绝不能想着把库里搬回来。
- *
- * 接口用法照官方文档来：
- * - 搜索 `GET /search?query=&limit=`，回 `icons`（`prefix:name`）与 `collections`（含许可）
- * - 取图 `GET /{prefix}/{name}.svg`，单色套件可以带 `?color=` 改色
- * 官方还明确要求「别拿它当批量下载口、请缓存结果」—— 所以两层都落盘缓存。
- */
+/** Iconify 聚合库：按关键词搜索，搜索与取图都落盘缓存 */
 const API = "https://api.iconify.design";
 const SEARCH_TTL_MS = 24 * 60 * 60 * 1000;
 const ICON_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -34,7 +26,7 @@ interface SearchPayload {
   collections?: unknown;
 }
 
-/** 「图标集名 · 许可」：许可随套件不同（MIT / Apache / CC-BY…），得跟着图标一起说明。 */
+/** 「图标集名 · 许可」 */
 function noteFor(prefix: string, collections: Record<string, CollectionInfo>): string | null {
   const collection = collections[prefix];
   if (!collection) return prefix;
@@ -58,7 +50,7 @@ function parseSearch(raw: string, limit: number, offset: number): LibrarySearchR
     hits.push({
       name: entry,
       title: name,
-      // 单色套件给个黑白任选；彩色套件（palette）改色无效，界面上就不摆了
+      // 单色套件给个黑白任选，彩色套件不给颜色
       color: collections[prefix]?.palette ? null : "#000000",
       note: noteFor(prefix, collections),
       guidelines: null,
@@ -77,7 +69,7 @@ async function searchQuery(
   const trimmed = query.trim();
   const offset = Math.max(0, options.offset ?? 0);
   const limit = options.limit ?? SEARCH_LIMIT;
-  // Iconify 自己会用 total 截断 start，这里照它的规矩来
+  // 空查询直接回空
   if (!trimmed) return { hits: [], total: 0, offset };
 
   const key = `search\n${trimmed.toLowerCase()}\n${offset}\n${limit}`;

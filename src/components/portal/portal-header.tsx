@@ -8,16 +8,8 @@ import { ThemeToggle } from "@/components/portal/theme-toggle";
 import { useScrolled } from "@/hooks/use-scrolled";
 import { site } from "@/lib/site";
 
-/**
- * 滚动感知的悬浮顶栏：停在顶部时完全透明、没有分隔线；往下滚动后
- * 才浮起一层毛玻璃与细线。这样首屏干净，滚动后又始终压得住内容。
- *
- * 玻璃挂在绝对定位的内层、`sticky` 外壳自己保持透明，是给 iOS 26 的 Safari 让路：
- * 那一版起浏览器底色由 Safari 自己「找」—— 它扫视口边缘的 fixed / sticky 元素、
- * 读它们的 background-color 与 backdrop-filter 算底色，而**带 backdrop-filter 的那个
- * 元素会让它整片放弃取样**（WebKit bug 319479）。取样失败就只剩一层素色兜底，
- * 悬浮工具栏下面那条白灰带就是这么来的。外壳干净、玻璃下沉一层，Safari 才认得出这一条。
- */
+/** 滚动感知的悬浮顶栏：停在顶部时透明，滚动后浮起毛玻璃。
+ *  玻璃必须挂在绝对定位的内层：带 backdrop-filter 的 sticky 外壳会让 iOS 底色取样整个失败（WebKit bug 319479）。 */
 export function PortalHeader() {
   const scrolled = useScrolled();
 
@@ -51,7 +43,6 @@ export function PortalHeader() {
         <div className="flex shrink-0 items-center gap-0.5">
           <ThemeToggle />
 
-          {/* 管理入口不公开张扬，做成安静的设置图标（设计文档 §12） */}
           <Link
             href="/settings"
             aria-label="设置"

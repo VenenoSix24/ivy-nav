@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BrandMark } from "@/components/portal/brand-mark";
 import { site } from "@/lib/site";
 
-/** 页脚：品牌、口号、几个入口。不放统计与装饰，保持安静。 */
+/** 页脚：品牌、口号与几个入口 */
 export function PortalFooter() {
   return (
     <footer className="border-border/60 mt-6 border-t">

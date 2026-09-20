@@ -29,7 +29,7 @@ interface IconPickerProps {
   /** 用于预览还没保存的网址 */
   url: string;
   title: string;
-  /** 打开时这个条目的图标已经取过了（编辑已有条目）：预览直接显示，不用再点一次 */
+  /** 打开时这个条目的图标已经取过了 */
   initialFetched?: boolean;
 }
 
@@ -57,7 +57,7 @@ type ColorPick = { kind: "brand" } | { kind: "original" } | { kind: "hex"; hex: 
 const MAX_UPLOAD_BYTES = 512 * 1024;
 const LUCIDE = "lucide";
 
-/** 重开面板时别又把页签丢回「自动」：上一次用的是哪一档就还停在哪一档。 */
+/** 打开时停在用户上次用的那一档页签。 */
 function initialTab(spec: IconSpec): TabId {
   if (spec.type === "emoji") return "emoji";
   if (spec.type === "lucide") return "library";
@@ -74,40 +74,31 @@ export function IconPicker({
 }: IconPickerProps) {
   const [tab, setTab] = useState<TabId>(() => initialTab(spec));
 
-  // ---- 网站图标
   const [fetchState, setFetchState] = useState<FetchState>(initialFetched ? "ok" : "idle");
   const [candidates, setCandidates] = useState<IconCandidate[] | null>(null);
   const [autoOk, setAutoOk] = useState(initialFetched);
 
-  // ---- 图标库
   const [libraries, setLibraries] = useState<LibraryOption[]>([]);
   const [library, setLibrary] = useState("");
-  /**
-   * 关键词：在框里打过字就听用户的，没打过就按标题或域名现算。
-   * 之所以是「现算」而不是挂载时算一次：标题是输入网址之后才异步取回来的，
-   * 取回来这一刻搜索框里就该有词了，不必等保存再重开。
-   */
+  /** 用户在搜索框里打过的关键词；没打过则按标题或域名现算 */
   const [typedQuery, setTypedQuery] = useState<string | null>(null);
   const query = typedQuery ?? seedQuery(title, url);
   const [results, setResults] = useState<SearchState | null>(null);
   const [searching, setSearching] = useState(false);
-  /** 按库记各家的颜色选择：换回来还是刚才那个色，不必用 effect 同步 */
+  /** 按库记各自选的颜色 */
   const [colorPicks, setColorPicks] = useState<Record<string, ColorPick>>({});
   const [picking, setPicking] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
-  // ---- 自建图标集
   const [addOpen, setAddOpen] = useState(false);
   const [addUrl, setAddUrl] = useState("");
   const [addMirror, setAddMirror] = useState(true);
   const [addBusy, setAddBusy] = useState(false);
 
-  // ---- Emoji / 上传
   const [emojiQuery, setEmojiQuery] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  // 网址一换，之前那次获取就不作数了，免得拿着旧站点的结果当新站点的
   const lastUrl = useRef(url.trim());
   useEffect(() => {
     const next = url.trim();
@@ -118,16 +109,8 @@ export function IconPicker({
     setAutoOk(false);
   }, [url]);
 
-  /**
-   * 网址一填好就自己去抓一次候选，不必先点「获取图标」（按钮留着当「重新获取」）。
-   *
-   * 只在**打开面板之后新输入的网址**上抓：编辑已有条目时，重开一次面板就重新抓一轮
-   * 是白费一次出网（每个候选来源都要走一遍），打开时就有的那个网址不自动抓 ——
-   * 想看别的候选点按钮即可。只有这一档抓：每个来源都要出一次网，用户在别的档上
-   * 打字时不该被这些请求陪着。
-   */
   const autoUrl = parseHttpUrl(url) ? url.trim() : "";
-  /** 打开面板那一刻的网址：就是它不触发自动获取 */
+  /** 打开面板那一刻的网址 */
   const openedUrl = useRef(url.trim());
   const lastAutoFetch = useRef(url.trim());
 
@@ -141,7 +124,6 @@ export function IconPicker({
     }, 1500);
 
     return () => clearTimeout(timer);
-    // fetchCandidates 只读当前 url 与自身状态，不必进依赖
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoUrl, tab]);
 
@@ -154,20 +136,18 @@ export function IconPicker({
         const list = readLibraries(payload);
         if (cancelled || list.length === 0) return;
         setLibraries(list);
-        // 上次挑的是哪个库就还选哪个（从落盘文件名的前缀里读回来）
         const preset = libraryFromPrelude(
           spec.type === "upload" ? spec.value : null,
           list.map((entry) => entry.id),
         );
         setLibrary((current) => current || preset || list[0]!.id || LUCIDE);
       } catch {
-        // 拿不到列表就先只用 Lucide 那一档，不打扰用户
+        // 拿不到列表就只用 Lucide 那一档
       }
     })();
     return () => {
       cancelled = true;
     };
-    // 只在挂载时取一次：spec 是打开那一刻的快照，之后由用户自己改
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -180,10 +160,7 @@ export function IconPicker({
     setColorPicks((previous) => ({ ...previous, [library]: pick }));
   }
 
-  /**
-   * 搜索随打随搜（停 350ms 再问），一次一页；「显示更多」按同一关键词接着往下要。
-   * 空关键词一个请求都不发 —— 库里几千几万个图标，没有关键词就不该往外搬。
-   */
+  /** 随打随搜，一次一页 */
   useEffect(() => {
     if (!library || library === LUCIDE) return;
     const trimmed = query.trim();
@@ -244,15 +221,11 @@ export function IconPicker({
             ? "还没获取：点左边的按钮，列出可用图标。"
             : "请先填写网址，再来获取图标。";
 
-  /**
-   * 列出所有方案。以前是一次只给一张（抓到哪个算哪个），用户无从知道还有别的取法；
-   * 现在每个来源各取各的，取不到、只给占位图的都照样列出来。
-   */
+  /** 列出所有候选图标 */
   async function fetchCandidates() {
     const target = url.trim();
     if (!target) return;
 
-    // 不动当前选中的方案：这一步只是把候选列出来，选哪张得用户自己点
     setFetchState("loading");
     setCandidates(null);
 
@@ -266,7 +239,6 @@ export function IconPicker({
       }
 
       const list = readCandidates(payload);
-      // 自动链那一张也要真看一眼：占位图是「加载成功但没有内容」
       const autoResolved = await probeImage(previewFaviconSrc(target));
       setCandidates(list);
       setAutoOk(autoResolved);
@@ -283,7 +255,7 @@ export function IconPicker({
     return null;
   }
 
-  /** 挑一张：服务端把它下载到本地上传目录，之后这张图标就不再看那个库的脸色了。 */
+  /** 挑一张：服务端把它下载到本地上传目录 */
   async function pickHit(hit: IconHit) {
     setPicking(hit.name);
     try {
@@ -323,7 +295,6 @@ export function IconPicker({
       const response = await fetch("/api/icon-sets", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        // raw.githubusercontent 在很多网络里连不上，地址带它就一并把镜像打开
         body: JSON.stringify({
           url: target,
           mirror: addMirror || target.includes("raw.githubusercontent.com"),
@@ -423,7 +394,6 @@ export function IconPicker({
   const plate = usesPlate(spec);
   const mono = spec.mono === true;
   const canMono = spec.type === "upload" && Boolean(spec.value?.endsWith(".svg"));
-  // 摆法只对图片类有意义（Emoji、Lucide 与首字母都是矢量字体，铺不铺满由字号说了算）
   const canFit = spec.type === "upload" || spec.type === "favicon";
   const fit = spec.fit ?? DEFAULT_ICON_FIT;
   const fitHint = ICON_FITS.find((entry) => entry.id === fit)?.hint ?? "";
@@ -440,7 +410,6 @@ export function IconPicker({
   const chips = [...builtIns, lucideChip, ...sets];
   const lucideResults = filterLucide(library === LUCIDE ? query : "");
 
-  // 结果带着自己的库与关键词：换了库或改了词还没回来时，界面上不会先露出上一批
   const fresh = results && results.library === library && results.query === query.trim();
   const shownHits = fresh ? results.hits : null;
   const shownTotal = fresh ? results.total : 0;
@@ -905,7 +874,7 @@ export function IconPicker({
   );
 }
 
-/** 一个方案的缩略图。取不到的照样占一格：摆出来才知道「试过哪些、为什么没得挑」。 */
+/** 一个方案的缩略图；取不到的照样占一格 */
 function CandidateTile({
   label,
   note,
@@ -1004,7 +973,7 @@ function filterLucide(query: string): string[] {
   return lucideNames.filter((name) => terms.every((term) => name.includes(term)));
 }
 
-/** 条目上存的是「图标库里的哪一张」时，文件名前缀写了来路，这里把它读回来给人看。 */
+/** 从条目存的文件名前缀里读出来路 */
 function describeUpload(value: string | null): string {
   const prelude = preludeOf(value);
   if (!prelude) return "已上传的图片";
@@ -1055,7 +1024,7 @@ function readLibraries(payload: unknown): LibraryOption[] {
   });
 }
 
-/** 接口回来的候选列表同样不照单全收：来源名与状态都得认得。 */
+/** 读接口回来的候选列表 */
 function readCandidates(payload: unknown): IconCandidate[] {
   const list = (payload as { candidates?: unknown } | null)?.candidates;
   if (!Array.isArray(list)) return [];
@@ -1099,10 +1068,7 @@ function readTotal(payload: unknown): number {
   return typeof total === "number" && total >= 0 ? total : 0;
 }
 
-/**
- * 真的去取一次那张图。占位图是 1×1 的透明 PNG —— 它「加载成功」但没有内容，
- * 与图标渲染那边的判断保持一致：宽高大于 1 才算取到。
- */
+/** 真的去取一次那张图；占位图是 1×1 的透明 PNG，宽高大于 1 才算取到 */
 function probeImage(src: string): Promise<boolean> {
   return new Promise((resolve) => {
     const image = new Image();

@@ -1,8 +1,11 @@
+![Ivy · 一叶](docs/images/cover.png)
+
 # Ivy · 一叶
 
 > One page. Many places.
 
-![Ivy · 一叶](docs/images/cover.png)
+个人专属的网站、项目与常用工具导航。
+自托管，支持导入书签，所有内容都可以直接在页面中管理，无需修改代码。
 
 [![CI](https://github.com/VenenoSix24/ivy-nav/actions/workflows/ci.yml/badge.svg)](https://github.com/VenenoSix24/ivy-nav/actions/workflows/ci.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000?style=flat-square&logo=nextdotjs&logoColor=white)](https://nextjs.org)
@@ -11,9 +14,6 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06b6d4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![SQLite](https://img.shields.io/badge/SQLite-Drizzle-003b57?style=flat-square&logo=sqlite&logoColor=white)](https://orm.drizzle.team)
 [![License](https://img.shields.io/badge/License-MIT-3da639?style=flat-square)](./LICENSE)
-
-个人专属的网站、项目与常用工具导航。
-自托管，支持导入书签，所有内容都可以直接在页面中管理，无需修改代码。
 
 ## 特性
 
@@ -227,7 +227,7 @@ src/
     └── utils/
 ```
 
-各模块做什么、有哪些坑，见 [docs/](docs/)。
+各模块说明，见 [docs/](docs/)。
 
 ## Roadmap
 

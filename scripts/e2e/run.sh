@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-# 接口回归：每个套件用独立的临时数据库、独立端口、独立管理员账号，互不干扰。
-# 用法：pnpm e2e            跑全部
-#      pnpm e2e palette    只跑某个套件
-# 需要先 pnpm build（套件跑在 pnpm start 的产物上），脚本会自己检查。
+# 接口回归：每个套件用独立的临时数据库、独立端口、独立管理员账号。
+# 用法：pnpm e2e [套件名]；套件跑在 pnpm start 的产物上，需要先 pnpm build。
 set -u
 
 cd "$(dirname "$0")/../.." || exit 1
@@ -25,7 +23,7 @@ if [ -n "$ONLY" ] && [ ! -f "scripts/e2e/suites/$ONLY.mjs" ]; then
   exit 1
 fi
 
-# 账号按套件分：并发建号那条需要一份没被限流过的用户名
+# 账号按套件分
 user_of() {
   case "$1" in
     security|restore) echo "a" ;;
@@ -42,17 +40,16 @@ run_suite() {
   rm -rf "$dir"
   mkdir -p "$dir/data"
 
-  # 迁移与建号都走真实的 CLI，套件面对的是一份和线上同构的库
   DATABASE_PATH="$dir/data/portal.db" pnpm db:seed >/dev/null 2>&1
   DATABASE_PATH="$dir/data/portal.db" ADMIN_PASSWORD="$PASSWORD" pnpm admin:create "$user" >/dev/null 2>&1
 
-  # FAVICON_FALLBACK_SOURCES=false：回归不碰第三方图标服务，取图这件事只留在本机
+  # 回归不碰第三方图标服务
   DATABASE_PATH="$dir/data/portal.db" PORT="$port" SESSION_COOKIE_SECURE=false \
     FAVICON_FALLBACK_SOURCES=false \
     nohup pnpm start >"$dir/server.log" 2>&1 &
   local server=$!
 
-  # 等端口真的起来，而不是盲等固定秒数
+  # 等端口真的起来
   local up=0
   for _ in $(seq 1 40); do
     if curl -sf -o /dev/null "http://127.0.0.1:$port/"; then up=1; break; fi

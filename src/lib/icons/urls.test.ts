@@ -3,8 +3,7 @@ import { itemFaviconSrc, libraryIconSrc, previewFaviconSrc } from "./urls";
 
 describe("itemFaviconSrc", () => {
   it("carries the chosen source as a version stamp", () => {
-    // 换了来源而 URL 不变的话，浏览器会拿 7 天前缓存的那张图，
-    // 看起来就像「挑好的图标保存后没生效」—— 这一条盯着那个参数别被删掉
+    // 这个参数别删：URL 不变的话浏览器会拿 7 天前缓存的那张图
     expect(itemFaviconSrc(7)).toBe("/api/icons/favicon?item=7");
     expect(itemFaviconSrc(7, "favicon.im")).toBe("/api/icons/favicon?item=7&v=favicon.im");
   });
