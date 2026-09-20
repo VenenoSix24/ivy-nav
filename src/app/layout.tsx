@@ -33,12 +33,22 @@ export const viewport: Viewport = {
   ],
   width: "device-width",
   initialScale: 1,
+  // 让页面铺到屏幕边缘。iOS Safari 的悬浮工具栏下方那条安全区默认落在布局视口之外，
+  // 固定在视口上的背景层够不到那里，就露出一条素色底（看着像被拦腰截断）。
+  // 铺满之后背景跟着铺满，底部留白改由 safe-bottom 给。
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN" data-palette={getPreferredPalette()} suppressHydrationWarning>
-      <body className="min-h-dvh antialiased">
+      {/*
+        min-h-lvh 而不是 dvh：开了 viewport-fit=cover 之后，布局视口就是整块屏幕
+        （悬浮工具栏浮在页面之上），而 dvh 跟的是「工具栏展开时的那一小块」——
+        页面会比屏幕矮一截，下面那条就露出素色底，看着像内容被截断。
+        lvh 与布局视口一致，工具栏展开收起时也不会跟着跳。
+      */}
+      <body className="min-h-lvh antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

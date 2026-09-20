@@ -222,7 +222,7 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
               action={
                 editing ? (
                   <Button
-                    variant="outline"
+                    variant="glass"
                     onClick={() =>
                       setEditor({
                         key: `new-${String(section.filter)}`,
@@ -230,7 +230,7 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
                         categoryId: section.categoryId,
                       })
                     }
-                    className="h-8 rounded-full px-3 text-[12px]"
+                    className="text-primary h-8 rounded-full px-3 text-[12px]"
                   >
                     <Plus className="size-3.5" />
                     添加

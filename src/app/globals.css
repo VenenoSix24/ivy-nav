@@ -271,12 +271,19 @@
   html {
     @apply font-sans;
     -webkit-tap-highlight-color: transparent;
+    /* 显式给画布上色：iOS 的回弹区与工具栏后面那片不归 body 管，
+       留白就成了系统默认的白。这里跟着主题走，才不会露出一条素色底。 */
+    background-color: var(--background);
   }
 
   body {
     @apply bg-background text-foreground;
     letter-spacing: -0.012em;
     overflow-x: hidden;
+    /* 铺满屏幕（viewport-fit=cover）之后，屏幕底部那条安全区就归页面了：
+       留出 Home 指示条的高度，最后一行内容才不会被压在它下面。
+       body 是 border-box，这条内边距算在 min-h-dvh 里，不会多出一截滚动。 */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   ::selection {
@@ -294,6 +301,14 @@
   border: 1px solid var(--surface-border);
   backdrop-filter: blur(26px) saturate(145%);
   box-shadow: var(--surface-shadow);
+}
+
+/* 浮层玻璃：弹窗、菜单、下拉这些浮在内容之上的表面，与卡面同一套材质。
+   比卡面更实一点（--surface-glass-strong）—— 压在上面的正文要留得住对比度；
+   模糊也给得更大一圈，浮层与身后的内容才分得出层次。 */
+@utility surface-float {
+  background: var(--surface-glass-strong);
+  backdrop-filter: blur(34px) saturate(160%);
 }
 
 @utility surface-hover {
