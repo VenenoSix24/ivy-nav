@@ -7,6 +7,7 @@ import { AmbientBackground } from "@/components/portal/ambient-background";
 import { ThemeToggle } from "@/components/portal/theme-toggle";
 import { AccountSettings } from "@/components/settings/account-settings";
 import { AppearanceSettings } from "@/components/settings/appearance-settings";
+import { BookmarkImport } from "@/components/settings/bookmark-import";
 import { EditModeSettings } from "@/components/settings/edit-mode-settings";
 import { DataSettings } from "@/components/settings/data-settings";
 import { IconSetSettings } from "@/components/settings/icon-set-settings";
@@ -48,7 +49,7 @@ export default async function SettingsPage() {
 
         <h1 className="mt-12 text-[28px] font-semibold tracking-[-0.03em]">设置</h1>
         <p className="text-muted-foreground mt-2 text-[13px]">
-          外观、前台编辑、首页分类、图标库、数据、账号与会话。
+          外观、前台编辑、首页分类、图标库、书签导入、数据、账号与会话。
         </p>
 
         <div className="mt-8 space-y-4">
@@ -56,6 +57,7 @@ export default async function SettingsPage() {
           <EditModeSettings initialEnabled={editMode} />
           <PortalSettings initialPortal={portal} />
           <IconSetSettings initialSets={listIconSets()} />
+          <BookmarkImport />
           <DataSettings />
           <AccountSettings
             username={session.username}
