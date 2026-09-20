@@ -1,6 +1,7 @@
-import { ArrowUpRight, Lock, Star } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { cn } from "cn";
 import { ItemIcon } from "@/components/portal/item-icon";
+import { ItemState } from "@/components/portal/item-state";
 import type { PortalItem } from "@/lib/portal/types";
 
 // 右边有位置就该多显示几个，超过再折叠成 +N
@@ -13,8 +14,9 @@ interface ItemCardProps {
   interactive?: boolean;
   /** 管理视图里标出 Private 与置顶状态 */
   showState?: boolean;
+  /** 编辑模式：拖动把手浮在左上角，卡片左内边距要让出位置 */
+  draggable?: boolean;
   cornerAction?: React.ReactNode;
-  dragHandle?: React.ReactNode;
   onEdit?: () => void;
 }
 
@@ -23,8 +25,8 @@ export function ItemCard({
   index = 0,
   interactive = true,
   showState = false,
+  draggable = false,
   cornerAction,
-  dragHandle,
   onEdit,
 }: ItemCardProps) {
   const visibleTags = item.tags.slice(0, MAX_VISIBLE_TAGS);
@@ -32,6 +34,7 @@ export function ItemCard({
 
   const className = cn(
     "surface surface-hover group flex h-full flex-col rounded-2xl p-4 sm:p-5",
+    draggable && "pl-9 sm:pl-10",
     interactive &&
       "focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
   );
@@ -47,23 +50,7 @@ export function ItemCard({
           className="size-10 sm:size-11"
         />
         <div className="flex items-center gap-1">
-          {showState && item.visibility === "private" ? (
-            <span
-              title="Private：只有登录后可见"
-              className="text-muted-foreground bg-secondary inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] leading-none"
-            >
-              <Lock className="size-3" />
-              Private
-            </span>
-          ) : null}
-          {showState && item.featured ? (
-            <span
-              title="置顶"
-              className="text-accent-foreground inline-grid size-6 place-items-center"
-            >
-              <Star className="size-3.5 fill-current" />
-            </span>
-          ) : null}
+          {showState ? <ItemState visibility={item.visibility} featured={item.featured} /> : null}
           {cornerAction}
         </div>
       </div>
@@ -108,7 +95,7 @@ export function ItemCard({
 
           {interactive ? (
             <span className="text-primary inline-flex items-center gap-0.5 text-[12px] font-semibold">
-              Open
+              打开
               <ArrowUpRight className="size-3.5" />
             </span>
           ) : (
@@ -118,7 +105,7 @@ export function ItemCard({
               rel="noopener noreferrer"
               className="text-primary focus-visible:outline-ring inline-flex items-center gap-0.5 rounded-md text-[12px] font-semibold focus-visible:outline-2"
             >
-              Open
+              打开
               <ArrowUpRight className="size-3.5" />
             </a>
           )}
@@ -130,7 +117,6 @@ export function ItemCard({
   if (!interactive) {
     return (
       <div style={style} className={cn(className, "relative")}>
-        {dragHandle}
         {body}
       </div>
     );
