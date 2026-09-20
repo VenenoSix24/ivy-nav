@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { getPreferredPalette } from "@/lib/settings/appearance-server";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -36,7 +37,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html lang="zh-CN" data-palette={getPreferredPalette()} suppressHydrationWarning>
       <body className="min-h-dvh antialiased">
         <ThemeProvider
           attribute="class"
