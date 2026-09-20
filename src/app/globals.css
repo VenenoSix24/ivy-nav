@@ -96,6 +96,7 @@
   --ambient-a: #8fd0bb;
   --ambient-b: #c3ddc6;
   --ambient-opacity: 0.26;
+  --grain-opacity: 0.035;
 
   --radius: 0.75rem;
 
@@ -150,6 +151,7 @@
   --ambient-a: #1f8f78;
   --ambient-b: #2f6f5f;
   --ambient-opacity: 0.2;
+  --grain-opacity: 0.05;
 }
 
 /*
@@ -334,6 +336,53 @@
 /* 顶栏分类条：右缘渐隐，提示右侧还有可滚动的内容 */
 @utility fade-right {
   mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 1.75rem), transparent 100%);
+}
+
+/*
+ * 环境光的时间维度：两团光斑各自慢慢漂移并微微胀缩，不滚动时背景也是活的。
+ * 时长与方向都错开（46s / 58s），周期之间差得够远，肉眼几乎看不出来在循环。
+ *
+ * 只动 transform：位移与缩放都留在合成层上。改 blur 半径或渐变本身会每帧重绘，
+ * 这是这类背景最容易踩的坑。呼吸交给子元素，滚动视差交给父层 .ambient-layer，
+ * 两者各自持有自己的 transform，互不覆盖。
+ */
+@keyframes ambient-breathe-a {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3.5vw, -2.5vh, 0) scale(1.12);
+  }
+}
+
+@keyframes ambient-breathe-b {
+  from {
+    transform: translate3d(0, 0, 0) scale(1.08);
+  }
+  to {
+    transform: translate3d(-3vw, 3vh, 0) scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ambient-blob-a {
+    animation: ambient-breathe-a 46s ease-in-out infinite alternate;
+  }
+
+  .ambient-blob-b {
+    animation: ambient-breathe-b 58s ease-in-out infinite alternate;
+  }
+}
+
+/*
+ * 极细噪点：大面积渐变常见的色带会被它打散，"纯 CSS 背景"因此多一点纸感。
+ * 一张 160px 无缝平铺的 SVG 噪声（stitchTiles 保证接缝对得上），绘制一次就不再动。
+ * 灰噪点压在浅色底上是暗斑、压在纯黑底上是亮斑，所以一套噪点两个主题都能用。
+ */
+@utility ambient-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  opacity: var(--grain-opacity);
 }
 
 /* 横向滚动的分类条不该露出滚动条 */
