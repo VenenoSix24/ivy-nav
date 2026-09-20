@@ -1,6 +1,6 @@
 {
   "name": "ivy-nav",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "NEXT_DIST_DIR=.next-dev next dev",
