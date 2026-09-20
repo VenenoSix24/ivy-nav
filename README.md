@@ -86,6 +86,7 @@ pnpm format         # Prettier 格式化
 pnpm format:check   # 校验格式（CI 使用）
 pnpm db:generate    # 修改 schema 后生成迁移
 pnpm db:seed        # 导入演示内容（已有数据时跳过）
+pnpm brand:assets   # 从 scripts/brand/source 重新生成图标与分享图
 ```
 
 `pnpm dev` 与 `pnpm build` 使用不同的产物目录（`.next-dev` 与 `.next`）。
@@ -103,6 +104,7 @@ pnpm db:seed        # 导入演示内容（已有数据时跳过）
 - 搜索状态下不开放拖动，避免把一部分结果当成完整顺序写回。
 - **设置页**（`/settings`）包含外观、前台编辑、首页分类、数据、账号五个分区；分类的名称与描述也在那里改。
 - **响应式**：手机两列卡片，桌面三列；卡片在窄屏下收窄内边距并把标签与 Open 改成上下排布。
+- **品牌标记**是一片叶子，顶栏与页脚共用；标签页图标、Apple 图标与分享卡片由 `pnpm brand:assets` 从源图生成，顶栏与页脚用不带底板的叶子，标签页用带底板的方块版本。
 
 ## 权限模型
 
@@ -213,7 +215,8 @@ rsync -a /tmp/ivy-deploy/ server:/srv/ivy-nav/
 cd /srv/ivy-nav && DATABASE_PATH=/srv/ivy-nav/data/portal.db PORT=3000 HOSTNAME=127.0.0.1 node server.js
 ```
 
-> 本项目自身不放静态文件；如果后来在 `public/` 下添加了资源，再执行 `cp -r public /srv/ivy-nav/public`。
+> `public/brand/` 与 `src/app/` 下的图标是 `pnpm brand:assets` 的产物，部署时要一起带过去：
+> `cp -r public /srv/ivy-nav/public`。
 
 ### systemd
 
@@ -258,6 +261,8 @@ WantedBy=multi-user.target
 ## 目录结构
 
 ```text
+scripts/
+└── brand/                 图标与分享图生成（源图、版式、生成脚本）
 src/
 ├── app/                   路由、页面与 API
 │   ├── api/               服务器端接口
