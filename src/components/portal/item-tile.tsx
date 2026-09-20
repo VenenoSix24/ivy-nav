@@ -42,7 +42,7 @@ export function ItemTile({
         spec={{ type: item.iconType, value: item.iconValue }}
         title={item.title}
         itemId={item.id}
-        className="size-9 rounded-lg text-[18px]"
+        className="size-10 rounded-xl [--icon-glyph:1.5rem]"
       />
       <span className="w-full truncate text-[12px] leading-tight font-medium tracking-[-0.01em]">
         {item.title}

@@ -2,10 +2,8 @@ import { ArrowUpRight } from "lucide-react";
 import { cn } from "cn";
 import { ItemIcon } from "@/components/portal/item-icon";
 import { ItemState } from "@/components/portal/item-state";
+import { TagList } from "@/components/portal/tag-list";
 import type { PortalItem } from "@/lib/portal/types";
-
-// 右边有位置就该多显示几个，超过再折叠成 +N
-const MAX_VISIBLE_TAGS = 4;
 
 interface ItemCardProps {
   item: PortalItem;
@@ -29,9 +27,6 @@ export function ItemCard({
   cornerAction,
   onEdit,
 }: ItemCardProps) {
-  const visibleTags = item.tags.slice(0, MAX_VISIBLE_TAGS);
-  const hiddenTagCount = item.tags.length - visibleTags.length;
-
   const className = cn(
     "surface surface-hover group flex h-full flex-col rounded-2xl p-4 sm:p-5",
     draggable && "pl-9 sm:pl-10",
@@ -47,7 +42,7 @@ export function ItemCard({
           spec={{ type: item.iconType, value: item.iconValue }}
           title={item.title}
           itemId={item.id}
-          className="size-12 text-[24px] [--icon-glyph:1.75rem] sm:size-14 sm:text-[28px] sm:[--icon-glyph:2rem]"
+          className="size-12 [--icon-glyph:1.875rem] sm:size-14 sm:[--icon-glyph:2.25rem]"
         />
         <div className="flex items-center gap-1">
           {showState ? <ItemState visibility={item.visibility} featured={item.featured} /> : null}
@@ -65,25 +60,15 @@ export function ItemCard({
         </p>
       ) : null}
 
-      <div className="mt-auto flex flex-col items-start gap-2 pt-4 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:pt-5">
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-          {visibleTags.map((tag) => (
-            <span
-              key={tag}
-              className="bg-accent text-accent-foreground rounded-full px-2 py-[3px] text-[11px] leading-none"
-            >
-              {tag}
-            </span>
-          ))}
-          {hiddenTagCount > 0 ? (
-            <span className="text-muted-foreground text-[11px] leading-none">
-              +{hiddenTagCount}
-            </span>
-          ) : null}
-        </div>
+      {/* 手机上标签与「打开」各占一行：间距取和卡片内边距一样的 1rem，
+          按钮上下的留白才一样宽，不会显得被标签顶着 */}
+      <div className="mt-auto flex flex-col items-start gap-4 pt-4 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:pt-5">
+        <TagList tags={item.tags} lines={2} className="flex-1" />
 
-        {/* 手机上这一行单独占一行，靠右放：整卡左对齐时「打开」会贴在左下角 */}
-        <div className="flex shrink-0 items-center gap-3 self-end sm:self-auto">
+        {/* 按钮跟内容一起从左边排起（手机），桌面上贴到右下角。
+            没有标签时这一行是页脚里唯一的孩子，justify-between 会把它留在最左边，
+            所以自带一个 ml-auto 兜住 */}
+        <div className="flex shrink-0 items-center gap-3 self-start sm:ml-auto sm:self-auto">
           {onEdit ? (
             <button
               type="button"
