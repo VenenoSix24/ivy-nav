@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Ban, ImageDown, Loader2, Plus, Search, Trash2, Upload } from "lucide-react";
 import { cn } from "cn";
 import { toast } from "sonner";
-import { IconGlyph, type IconSpec } from "@/components/icons/icon-glyph";
+import { IconGlyph, iconBox, type IconSpec } from "@/components/icons/icon-glyph";
 import { lucideNames, lucideRegistry } from "@/components/icons/lucide-registry";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,6 +20,7 @@ import {
   type IconSourceId,
 } from "@/lib/icons/sources";
 import { libraryIconSrc, previewFaviconSrc } from "@/lib/icons/urls";
+import { parseHttpUrl } from "@/lib/utils/url";
 
 interface IconPickerProps {
   spec: IconSpec;
@@ -80,8 +81,13 @@ export function IconPicker({
   // ---- 图标库
   const [libraries, setLibraries] = useState<LibraryOption[]>([]);
   const [library, setLibrary] = useState("");
-  // 关键词按标题或域名先填一个：换库要搜同样的词，输一遍就够了
-  const [query, setQuery] = useState(() => seedQuery(title, url));
+  /**
+   * 关键词：在框里打过字就听用户的，没打过就按标题或域名现算。
+   * 之所以是「现算」而不是挂载时算一次：标题是输入网址之后才异步取回来的，
+   * 取回来这一刻搜索框里就该有词了，不必等保存再重开。
+   */
+  const [typedQuery, setTypedQuery] = useState<string | null>(null);
+  const query = typedQuery ?? seedQuery(title, url);
   const [results, setResults] = useState<SearchState | null>(null);
   const [searching, setSearching] = useState(false);
   /** 按库记各家的颜色选择：换回来还是刚才那个色，不必用 effect 同步 */
@@ -110,6 +116,26 @@ export function IconPicker({
     setCandidates(null);
     setAutoOk(false);
   }, [url]);
+
+  /**
+   * 网址一填好就自己去抓一次候选，不必先点「获取图标」（按钮留着当「重新获取」）。
+   * 同一个网址只自动抓一次，且只在「自动」这一档上抓 —— 每个来源都要出一次网，
+   * 用户在别的档上打字时不该被这些请求陪着。
+   */
+  const autoUrl = parseHttpUrl(url) ? url.trim() : "";
+  const lastAutoFetch = useRef("");
+
+  useEffect(() => {
+    if (!autoUrl || tab !== "favicon" || lastAutoFetch.current === autoUrl) return;
+    const timer = setTimeout(() => {
+      lastAutoFetch.current = autoUrl;
+      void fetchCandidates();
+    }, 1500);
+
+    return () => clearTimeout(timer);
+    // fetchCandidates 只读当前 url 与自身状态，不必进依赖
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoUrl, tab]);
 
   useEffect(() => {
     let cancelled = false;
@@ -414,8 +440,9 @@ export function IconPicker({
       <div className="mb-3 flex items-center gap-3">
         <span
           aria-hidden
+          style={iconBox(plate)}
           className={cn(
-            "inline-grid size-12 shrink-0 place-items-center leading-none [--icon-glyph:1.75rem]",
+            "inline-grid size-12 shrink-0 place-items-center leading-none",
             plate && "border-hairline bg-glass-strong rounded-lg border",
           )}
         >
@@ -469,7 +496,7 @@ export function IconPicker({
         ) : null}
         <span className="text-muted-foreground min-w-0 flex-1 truncate text-[11px]">
           {canMono
-            ? "跟随主题：单色图标按主题前景色上色，深浅两套都不必各存一份"
+            ? "跟随主题：浅色下按上面选的色，深色下转成前景色（黑图标不会消失）"
             : "底板：图标底下那层描边与玻璃底，应用类图标自带外形时可以不套"}
         </span>
       </div>
@@ -552,7 +579,7 @@ export function IconPicker({
         <TabsContent value="library" className="pt-3">
           <SearchField
             value={query}
-            onChange={setQuery}
+            onChange={setTypedQuery}
             placeholder={
               library === LUCIDE
                 ? `搜索 ${lucideNames.length} 个线性图标（英文名）`

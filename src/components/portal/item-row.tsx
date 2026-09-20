@@ -58,7 +58,7 @@ export function ItemRow({
         }}
         title={item.title}
         itemId={item.id}
-        className="size-11 rounded-xl [--icon-glyph:1.75rem]"
+        className="size-11 rounded-xl"
       />
 
       <div className="min-w-0 flex-1 space-y-1">

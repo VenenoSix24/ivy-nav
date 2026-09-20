@@ -47,7 +47,7 @@ export function ItemCard({
           }}
           title={item.title}
           itemId={item.id}
-          className="size-12 [--icon-glyph:1.875rem] sm:size-14 sm:[--icon-glyph:2.25rem]"
+          className="size-12 sm:size-14"
         />
         <div className="flex items-center gap-1">
           {showState ? <ItemState visibility={item.visibility} featured={item.featured} /> : null}
