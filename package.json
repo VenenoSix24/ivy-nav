@@ -16,7 +16,8 @@
     "db:generate": "drizzle-kit generate",
     "db:seed": "tsx src/db/seed.ts",
     "admin:create": "tsx src/db/create-admin.ts",
-    "brand:assets": "node scripts/brand/generate-assets.mjs"
+    "brand:assets": "node scripts/brand/generate-assets.mjs",
+    "e2e": "bash scripts/e2e/run.sh"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

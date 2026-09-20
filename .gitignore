@@ -54,3 +54,6 @@ TASKS.md
 
 # next dev 每次自动生成，提交它只会反复产生噪音
 AGENTS.md
+
+# e2e 临时库与日志
+scripts/e2e/.tmp
