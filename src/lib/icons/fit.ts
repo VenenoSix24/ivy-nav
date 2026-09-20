@@ -62,6 +62,12 @@ const MAX_SCALE = 2;
 const FULL_ENOUGH = 0.98;
 /** 不到三成：多半量错了（比如整张图只有一个小点），宁可不动 */
 const TOO_SMALL = 0.34;
+/**
+ * 过扫：裁完之后再往外多铺百分之三。量出来的墨迹范围总有两三个像素的误差，
+ * 「正好填满」在屏幕上看就是还差一条细边 —— 多铺一点、超出的部分由外层裁掉，
+ * 才是肉眼上的「踩满」。
+ */
+const OVERSCAN = 1.03;
 
 /**
  * 把「透明边距」换算成一次 transform：缩放 + 平移，让图案的最长边正好填满底板。
@@ -95,7 +101,7 @@ export function trimTransform(box: AlphaBox | null, aspect: number): FitTransfor
   const extent = Math.max(contentWidth, contentHeight);
   if (extent > FULL_ENOUGH || extent < TOO_SMALL) return null;
 
-  const scale = Math.min(1 / extent, MAX_SCALE);
+  const scale = Math.min(1 / extent, MAX_SCALE) * OVERSCAN;
   return {
     scale,
     x: 0.5 - (x0 + x1) / 2,

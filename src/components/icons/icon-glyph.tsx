@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- favicon 与上传图标尺寸固定、数量多，走本地代理即可，
    用 next/image 反而要拉远端白名单并多一次优化往返，与「不为小图标加载大资源」相悖 */
-import { createElement, useCallback, useEffect, useRef, useState } from "react";
+import { createElement, useCallback, useState } from "react";
 import { cn } from "cn";
 import type { IconType } from "@/db/schema";
 import { getLucideIcon } from "@/components/icons/lucide-registry";
@@ -13,7 +13,6 @@ import {
   type FitTransform,
   type IconFitId,
 } from "@/lib/icons/fit";
-import { emojiInkBox, emojiTransform, measureEmoji } from "@/lib/icons/emoji-ink";
 
 export interface IconSpec {
   type: IconType;
@@ -31,6 +30,15 @@ export interface IconSpec {
    * 就显得大小不一 —— 这一档决定按原样放、还是裁掉透明边/铺满。空值即默认（原样）。
    */
   fit?: IconFitId | null;
+}
+
+/**
+ * 这个图标有没有底板。Emoji 一律没有：它自己就是一个彩色图案，再垫一块板只是多余的一圈，
+ * 而各家 emoji 字体把图案摆在字框里的位置又不一致，垫了板反而更显歪。
+ * 判断只写在这里一处 —— 卡片、选择器预览与那个开关都读它。
+ */
+export function usesPlate(spec: IconSpec): boolean {
+  return spec.type !== "emoji" && spec.plate !== false;
 }
 
 /** 四种摆法对应的 object-fit；自动裁边先按原样放，量出透明边之后再补一个 transform */
@@ -106,7 +114,20 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
   }, []);
 
   if (spec.type === "emoji") {
-    return <EmojiGlyph value={spec.value ?? ""} className={className} />;
+    return (
+      <span
+        className={cn(
+          // 各家 emoji 字体把图案摆在字框里的位置并不一致（Apple 的键盘明显偏下、
+          // 有的又偏小），逐个去量不值当 —— 就按行内盒居中摆着，尺寸统一由字号给，
+          // 看上去整齐就够了
+          "flex size-full items-center justify-center text-[length:var(--icon-glyph,1.25rem)] leading-none select-none",
+          "icon-lift",
+          className,
+        )}
+      >
+        {spec.value}
+      </span>
+    );
   }
 
   if (spec.type === "lucide") {
@@ -135,11 +156,16 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
       ? `scale(${applied.scale}) translate(${applied.x * 100}%, ${applied.y * 100}%)`
       : undefined;
 
+    // 没有底板时这层盒子没有面，影子只能跟着里面的图形走：加在容器上，
+    // 图片与首字母托底就一起有了（图片没取到时那片首字母也在里面）
+    const lift = !usesPlate(spec);
+
     return (
       <span
         className={cn(
           "relative grid size-full place-items-center",
           clipped && "overflow-hidden rounded-[inherit]",
+          lift && "icon-lift",
           className,
         )}
       >
@@ -158,8 +184,6 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
             className={cn(
               "relative size-[var(--icon-glyph,1.25rem)]",
               FIT_CLASS[fit],
-              // 底板开着时影子在方框上，图标自己不再套一层（盒子里套盒子）
-              spec.plate === false && "icon-lift",
               darkMono && "dark:hidden",
             )}
             style={transform ? { transform } : undefined}
@@ -180,65 +204,6 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
   // none，以及属于第二阶段（设计文档 §40）的 simple-icons / iconify：直接显示首字母，
   // 不假装可用，也不为此把整库图标打进首页包里
   return <LetterMark title={title} className={className} />;
-}
-
-/**
- * Emoji：量出这个字符的墨迹范围，再挪到正中间、缩到统一大小。
- *
- * 各家的 emoji 字体都把自己的图案摆在字框的某个位置 —— Apple 的键盘、显示器明显偏下，
- * 有些又偏小，一排放几个就参差不齐。量法与图标裁边同源（都在 canvas 上数像素/量度量），
- * 换算也用同一个 `trimTransform`。
- */
-function EmojiGlyph({ value, className }: { value: string; className?: string }) {
-  const node = useRef<HTMLSpanElement>(null);
-  const [adjust, setAdjust] = useState<{ src: string; transform: string } | null>(null);
-
-  useEffect(() => {
-    const element = node.current;
-    if (!element || !value) return;
-
-    let cancelled = false;
-
-    const measure = () => {
-      const style = window.getComputedStyle(element);
-      // 只取字号与字体栈：canvas 的 font 简写不认 CSS 里那个 "16px/1.5 …" 写法
-      const font = `${style.fontSize} ${style.fontFamily}`;
-      const transform = emojiTransform(emojiInkBox(measureEmoji(value, font)));
-
-      if (cancelled) return;
-      setAdjust({
-        src: value,
-        transform: transform
-          ? `scale(${transform.scale}) translate(${transform.x * 100}%, ${transform.y * 100}%)`
-          : "",
-      });
-    };
-
-    // emoji 字体没就绪时量到的是后备字体的形状，等它加载完再量
-    if (document.fonts?.status === "loaded") measure();
-    else void document.fonts?.ready.then(measure, () => {});
-
-    return () => {
-      cancelled = true;
-    };
-  }, [value]);
-
-  const transform = adjust?.src === value ? adjust.transform : "";
-
-  return (
-    <span
-      ref={node}
-      style={transform ? { transform } : undefined}
-      className={cn(
-        // 1em 见方、行高 1、居中：`emojiInkBox` 就是按这个盒子算的 0..1 坐标
-        "inline-block size-[1em] text-center leading-none select-none",
-        "text-[length:var(--icon-glyph,1.25rem)]",
-        className,
-      )}
-    >
-      {value}
-    </span>
-  );
 }
 
 /**
@@ -282,7 +247,9 @@ function MaskGlyph({
  * `getImageData` 会抛，这里按「量不出来」处理，退回原样显示。
  */
 function measureAlphaBox(image: HTMLImageElement): AlphaBox | null {
-  const side = 48;
+  // 96 而不是 48：48 的时候一个像素就是整幅的 2%，量化误差正好会留下「一点点边距」，
+  // 而这一步只看形状、不保留像素，画大一点不花什么代价
+  const side = 96;
   const canvas = document.createElement("canvas");
   canvas.width = side;
   canvas.height = side;

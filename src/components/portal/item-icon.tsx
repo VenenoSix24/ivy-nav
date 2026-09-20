@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { IconGlyph, iconBox, type IconSpec } from "@/components/icons/icon-glyph";
+import { IconGlyph, iconBox, usesPlate, type IconSpec } from "@/components/icons/icon-glyph";
 import { DEFAULT_ICON_FIT } from "@/lib/icons/fit";
 import { itemFaviconSrc } from "@/lib/icons/urls";
 
@@ -21,7 +21,7 @@ interface ItemIconProps {
  */
 export function ItemIcon({ spec, title, itemId, className, glyphClassName }: ItemIconProps) {
   // 底板关掉时尺寸照旧：格子还在原来的位置，只是不再画描边与玻璃底
-  const plate = spec.plate !== false;
+  const plate = usesPlate(spec);
   // 「填满」的档位里图形要顶到板边：这时不画那圈描边 —— 描边是画在盒子内侧的，
   // 留着它，图形就永远差那么一圈（1px 的边 + 圆角处的缺口）
   const filled = (spec.fit ?? DEFAULT_ICON_FIT) !== "contain";

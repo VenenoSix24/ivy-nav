@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Ban, ImageDown, Loader2, Plus, Search, Trash2, Upload } from "lucide-react";
 import { cn } from "cn";
 import { toast } from "sonner";
-import { IconGlyph, iconBox, type IconSpec } from "@/components/icons/icon-glyph";
+import { IconGlyph, iconBox, usesPlate, type IconSpec } from "@/components/icons/icon-glyph";
 import { lucideNames, lucideRegistry } from "@/components/icons/lucide-registry";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -420,7 +420,7 @@ export function IconPicker({
     }
   }
 
-  const plate = spec.plate !== false;
+  const plate = usesPlate(spec);
   const mono = spec.mono === true;
   const canMono = spec.type === "upload" && Boolean(spec.value?.endsWith(".svg"));
   // 摆法只对图片类有意义（Emoji、Lucide 与首字母都是矢量字体，铺不铺满由字号说了算）
@@ -489,14 +489,16 @@ export function IconPicker({
       </div>
 
       <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2">
-        <label className="flex items-center gap-2 text-[12px]">
-          <Switch
-            size="sm"
-            checked={plate}
-            onCheckedChange={() => onChange({ ...spec, plate: !plate })}
-          />
-          底板
-        </label>
+        {spec.type === "emoji" ? null : (
+          <label className="flex items-center gap-2 text-[12px]">
+            <Switch
+              size="sm"
+              checked={plate}
+              onCheckedChange={() => onChange({ ...spec, plate: !plate })}
+            />
+            底板
+          </label>
+        )}
         {canMono ? (
           <label className="flex items-center gap-2 text-[12px]">
             <Switch
@@ -508,9 +510,11 @@ export function IconPicker({
           </label>
         ) : null}
         <span className="text-muted-foreground min-w-0 flex-1 truncate text-[11px]">
-          {canMono
-            ? "跟随主题：浅色下按上面选的色，深色下转成前景色（黑图标不会消失）"
-            : "底板：图标底下那层描边与玻璃底，应用类图标自带外形时可以不套"}
+          {spec.type === "emoji"
+            ? "Emoji 不套底板：它自己就是一块彩色图案，再垫一层反而显得歪"
+            : canMono
+              ? "跟随主题：浅色下按上面选的色，深色下转成前景色（黑图标不会消失）"
+              : "底板：图标底下那层描边与玻璃底，应用类图标自带外形时可以不套"}
         </span>
       </div>
 
