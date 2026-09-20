@@ -31,10 +31,12 @@ export function ItemIcon({ spec, title, itemId, className, glyphClassName }: Ite
       aria-hidden
       style={iconBox(plate, spec.fit ?? DEFAULT_ICON_FIT)}
       className={cn(
-        // 圆角三种布局统一（原来是卡片 8px、列表与紧凑 12px，后者在 40px 的格子上
-        // 已经圆得像个圆了）；底板关掉时也要圆：那时盒子里直接是一张图
-        "inline-grid size-11 shrink-0 place-items-center rounded-lg leading-none",
-        plate && "plate-lift bg-glass-strong",
+        // 圆角按 Apple 应用图标那个比例给（22%，随格子大小走）：固定 8px 在大格子上偏方、
+        // 在小格子上偏圆，比例才是三种布局看起来一致的原因。
+        // 影子也**不看底板**给 —— 它的用途是让「图标这一块」与卡面分开，
+        // 所以无论有没有底板，这个方框都要有影子（没有底板时方框没有面，影子就是那唯一的一层）
+        "plate-lift inline-grid size-11 shrink-0 place-items-center rounded-[22%] leading-none",
+        plate && "bg-glass-strong",
         plate && !filled && "border-hairline border",
         className,
       )}

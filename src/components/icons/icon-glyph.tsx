@@ -120,8 +120,9 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
           // 各家 emoji 字体把图案摆在字框里的位置并不一致（Apple 的键盘明显偏下、
           // 有的又偏小），逐个去量不值当 —— 就按行内盒居中摆着，尺寸统一由字号给，
           // 看上去整齐就够了
-          "flex size-full items-center justify-center text-[length:var(--icon-glyph,1.25rem)] leading-none select-none",
-          "icon-lift",
+          // 字号比图片类再小一档：emoji 的墨迹本来就比字框大一圈，照足给会显得傻大
+          "flex size-full items-center justify-center leading-none select-none",
+          "text-[length:calc(var(--icon-glyph,1.25rem)*0.8)]",
           className,
         )}
       >
@@ -156,16 +157,11 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
       ? `scale(${applied.scale}) translate(${applied.x * 100}%, ${applied.y * 100}%)`
       : undefined;
 
-    // 没有底板时这层盒子没有面，影子只能跟着里面的图形走：加在容器上，
-    // 图片与首字母托底就一起有了（图片没取到时那片首字母也在里面）
-    const lift = !usesPlate(spec);
-
     return (
       <span
         className={cn(
           "relative grid size-full place-items-center",
           clipped && "overflow-hidden rounded-[inherit]",
-          lift && "icon-lift",
           className,
         )}
       >
