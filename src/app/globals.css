@@ -72,20 +72,20 @@
   --popover: #ffffff;
   --popover-foreground: #1d1d1f;
 
-  --primary: #0071e3;
+  --primary: #0f6b5f;
   --primary-foreground: #ffffff;
 
   --secondary: rgba(0, 0, 0, 0.05);
   --secondary-foreground: #1d1d1f;
   --muted: rgba(0, 0, 0, 0.045);
   --muted-foreground: #6e6e73;
-  --accent: rgba(0, 113, 227, 0.09);
-  --accent-foreground: #0071e3;
+  --accent: rgba(15, 107, 95, 0.1);
+  --accent-foreground: #0f6b5f;
   --destructive: #d70015;
 
   --border: rgba(0, 0, 0, 0.09);
   --input: rgba(0, 0, 0, 0.1);
-  --ring: rgba(0, 113, 227, 0.45);
+  --ring: rgba(15, 107, 95, 0.45);
 
   --surface-glass: rgba(255, 255, 255, 0.62);
   --surface-glass-strong: rgba(255, 255, 255, 0.76);
@@ -93,8 +93,8 @@
   --surface-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
   --surface-shadow-hover: 0 28px 70px rgba(0, 0, 0, 0.12);
 
-  --ambient-a: #8ab4ff;
-  --ambient-b: #d8b4ff;
+  --ambient-a: #8fd0bb;
+  --ambient-b: #c3ddc6;
   --ambient-opacity: 0.26;
 
   --radius: 0.75rem;
@@ -126,20 +126,20 @@
   --popover: #1c1c1e;
   --popover-foreground: #f5f5f7;
 
-  --primary: #0a84ff;
-  --primary-foreground: #ffffff;
+  --primary: #4fd1b5;
+  --primary-foreground: #05201b;
 
   --secondary: rgba(255, 255, 255, 0.08);
   --secondary-foreground: #f5f5f7;
   --muted: rgba(255, 255, 255, 0.06);
   --muted-foreground: #a1a1a6;
-  --accent: rgba(41, 151, 255, 0.13);
-  --accent-foreground: #2997ff;
+  --accent: rgba(79, 209, 181, 0.14);
+  --accent-foreground: #4fd1b5;
   --destructive: #ff453a;
 
   --border: rgba(255, 255, 255, 0.11);
   --input: rgba(255, 255, 255, 0.14);
-  --ring: rgba(41, 151, 255, 0.5);
+  --ring: rgba(79, 209, 181, 0.5);
 
   --surface-glass: rgba(28, 28, 30, 0.58);
   --surface-glass-strong: rgba(38, 38, 40, 0.72);
@@ -147,9 +147,118 @@
   --surface-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
   --surface-shadow-hover: 0 32px 80px rgba(0, 0, 0, 0.55);
 
-  --ambient-a: #2b5cff;
-  --ambient-b: #7b3fe4;
+  --ambient-a: #1f8f78;
+  --ambient-b: #2f6f5f;
   --ambient-opacity: 0.2;
+}
+
+/*
+ * 配色主题：与浅色/深色正交的另一维偏好，由设置页写入 <html data-palette>。
+ * 每套只覆盖带色相的 token —— 中性色、卡面材质、阴影共用一套，否则六套配色
+ * 会变成六份完整主题。
+ *
+ * 一叶青（默认）不在这里出现：它由上面 :root / .dark 的基础 token 承担，
+ * 这样 data-palette 缺失时也能渲染出完整主题。取值都按正文 4.5:1 校过，
+ * 深色那一档的 primary 偏亮，填充上的文字因此改用深墨而不是白色。
+ */
+:root[data-palette="blue"] {
+  --primary: #0066cc;
+  --primary-foreground: #ffffff;
+  --accent: rgba(0, 102, 204, 0.1);
+  --accent-foreground: #0066cc;
+  --ring: rgba(0, 102, 204, 0.45);
+  --ambient-a: #8ab4ff;
+  --ambient-b: #b3c9ff;
+}
+
+.dark[data-palette="blue"] {
+  --primary: #4fa3ff;
+  --primary-foreground: #04182b;
+  --accent: rgba(79, 163, 255, 0.14);
+  --accent-foreground: #4fa3ff;
+  --ring: rgba(79, 163, 255, 0.5);
+  --ambient-a: #1f5fd0;
+  --ambient-b: #2b3fa0;
+}
+
+:root[data-palette="violet"] {
+  --primary: #5b3fbf;
+  --primary-foreground: #ffffff;
+  --accent: rgba(91, 63, 191, 0.1);
+  --accent-foreground: #5b3fbf;
+  --ring: rgba(91, 63, 191, 0.45);
+  --ambient-a: #b6a5ff;
+  --ambient-b: #d6b8ff;
+}
+
+.dark[data-palette="violet"] {
+  --primary: #a98fff;
+  --primary-foreground: #140a2e;
+  --accent: rgba(169, 143, 255, 0.14);
+  --accent-foreground: #a98fff;
+  --ring: rgba(169, 143, 255, 0.5);
+  --ambient-a: #5b3fd0;
+  --ambient-b: #7b3fe4;
+}
+
+:root[data-palette="clay"] {
+  --primary: #9a4a12;
+  --primary-foreground: #ffffff;
+  --accent: rgba(154, 74, 18, 0.1);
+  --accent-foreground: #9a4a12;
+  --ring: rgba(154, 74, 18, 0.45);
+  --ambient-a: #ffc79a;
+  --ambient-b: #ffdcbb;
+}
+
+.dark[data-palette="clay"] {
+  --primary: #f0a868;
+  --primary-foreground: #2a1405;
+  --accent: rgba(240, 168, 104, 0.14);
+  --accent-foreground: #f0a868;
+  --ring: rgba(240, 168, 104, 0.5);
+  --ambient-a: #b06a24;
+  --ambient-b: #7a3f1f;
+}
+
+:root[data-palette="rose"] {
+  --primary: #ab2a5a;
+  --primary-foreground: #ffffff;
+  --accent: rgba(171, 42, 90, 0.1);
+  --accent-foreground: #ab2a5a;
+  --ring: rgba(171, 42, 90, 0.45);
+  --ambient-a: #ffaec2;
+  --ambient-b: #ffcbd8;
+}
+
+.dark[data-palette="rose"] {
+  --primary: #ff8fa8;
+  --primary-foreground: #2c0713;
+  --accent: rgba(255, 143, 168, 0.14);
+  --accent-foreground: #ff8fa8;
+  --ring: rgba(255, 143, 168, 0.5);
+  --ambient-a: #c02a5f;
+  --ambient-b: #7a1f4a;
+}
+
+:root[data-palette="graphite"] {
+  --primary: #3f3f46;
+  --primary-foreground: #ffffff;
+  --accent: rgba(63, 63, 70, 0.09);
+  --accent-foreground: #3f3f46;
+  --ring: rgba(63, 63, 70, 0.4);
+  --ambient-a: #c8ccd4;
+  --ambient-b: #ded9d2;
+}
+
+.dark[data-palette="graphite"] {
+  --primary: #d4d4d8;
+  --primary-foreground: #1a1a1d;
+  --accent: rgba(212, 212, 216, 0.14);
+  --accent-foreground: #d4d4d8;
+  --ring: rgba(212, 212, 216, 0.45);
+  --ambient-a: #4a4a52;
+  --ambient-b: #3a3a42;
 }
 
 @layer base {

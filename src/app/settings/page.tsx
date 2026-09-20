@@ -12,6 +12,7 @@ import { DataSettings } from "@/components/settings/data-settings";
 import { HomepageSettings } from "@/components/settings/homepage-settings";
 import { getAdminPortalData } from "@/lib/portal/admin";
 import { EDIT_MODE_COOKIE } from "@/lib/portal/edit-mode";
+import { getPreferredPalette } from "@/lib/settings/appearance-server";
 import { getSession } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +50,7 @@ export default async function SettingsPage() {
         </p>
 
         <div className="mt-8 space-y-4">
-          <AppearanceSettings />
+          <AppearanceSettings initialPalette={getPreferredPalette()} />
           <EditModeSettings initialEnabled={editMode} />
           <HomepageSettings initialPortal={portal} />
           <DataSettings />
