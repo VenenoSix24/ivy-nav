@@ -61,7 +61,7 @@ export function LoginForm({ needsSetup }: LoginFormProps) {
         </div>
         <h1 className="text-[22px] font-semibold tracking-[-0.02em]">登录</h1>
         <p className="text-muted-foreground mt-2 text-[13px] leading-relaxed">
-          登录后可以进入编辑模式，并看到 Private 内容。
+          登录后可以进入编辑模式。
         </p>
       </div>
 
