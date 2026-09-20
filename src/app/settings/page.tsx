@@ -11,8 +11,6 @@ import { BookmarkImport } from "@/components/settings/bookmark-import";
 import { EditModeSettings } from "@/components/settings/edit-mode-settings";
 import { DataSettings } from "@/components/settings/data-settings";
 import { IconSetSettings } from "@/components/settings/icon-set-settings";
-import { PortalSettings } from "@/components/settings/portal-settings";
-import { getAdminPortalData } from "@/lib/portal/admin";
 import { EDIT_MODE_COOKIE } from "@/lib/portal/edit-mode";
 import { listIconSets } from "@/lib/icons/library/sets";
 import { getPreferredPalette } from "@/lib/settings/appearance-server";
@@ -29,7 +27,7 @@ export default async function SettingsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const [portal, store] = [getAdminPortalData(), await cookies()];
+  const store = await cookies();
   const editMode = store.get(EDIT_MODE_COOKIE)?.value === "1";
 
   return (
@@ -49,13 +47,17 @@ export default async function SettingsPage() {
 
         <h1 className="mt-12 text-[28px] font-semibold tracking-[-0.03em]">设置</h1>
         <p className="text-muted-foreground mt-2 text-[13px]">
-          外观、前台编辑、首页分类、图标库、书签导入、数据、账号与会话。
+          外观、前台编辑、图标库、书签导入、数据、账号与会话。
         </p>
 
-        <div className="mt-8 space-y-4">
+        <p className="text-muted-foreground mt-8 text-[13px] leading-relaxed">
+          分类的名字、描述、布局与顺序都在首页的编辑模式里改：每个分区标题右边有「⋯」，
+          工具条上有「整理分类」。
+        </p>
+
+        <div className="mt-4 space-y-4">
           <AppearanceSettings initialPalette={getPreferredPalette()} />
           <EditModeSettings initialEnabled={editMode} />
-          <PortalSettings initialPortal={portal} />
           <IconSetSettings initialSets={listIconSets()} />
           <BookmarkImport />
           <DataSettings />

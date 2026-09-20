@@ -28,7 +28,7 @@ export function EditModeSettings({ initialEnabled }: EditModeSettingsProps) {
   return (
     <SettingsSection
       title="前台编辑"
-      description="打开后回到首页即可拖动排序、编辑、增删条目。分类本身在下面的「首页分类」里管理。"
+      description="打开后回到首页即可拖动排序、编辑、增删条目；分类的名字、描述、布局与顺序也在首页改（分区标题右边的「⋯」与工具条上的「整理分类」）。"
     >
       <div className="flex items-center justify-between gap-4">
         <Label htmlFor="edit-mode" className="text-[13px] font-normal">
