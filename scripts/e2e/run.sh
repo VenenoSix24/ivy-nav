@@ -79,7 +79,7 @@ run_suite() {
 }
 
 port=$PORT_BASE
-for suite in edit backup security restore palette layout; do
+for suite in edit backup security restore palette layout bookmarks; do
   if [ -n "$ONLY" ] && [ "$ONLY" != "$suite" ]; then
     port=$((port + 1))
     continue
