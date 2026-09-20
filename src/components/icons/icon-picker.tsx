@@ -69,7 +69,11 @@ export function IconPicker({ spec, onChange, url, title }: IconPickerProps) {
           aria-hidden
           className="border-hairline bg-glass-strong inline-grid size-12 place-items-center rounded-lg border text-[22px] leading-none"
         >
-          <IconGlyph spec={spec} title={title || "?"} faviconSrc={previewFaviconSrc(url)} />
+          <IconGlyph
+            spec={spec}
+            title={title || "?"}
+            faviconSrc={url.trim() ? previewFaviconSrc(url) : ""}
+          />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[13px] font-medium">图标</p>
