@@ -64,6 +64,13 @@ export const items = sqliteTable("items", {
     .notNull()
     .default("favicon"),
   iconValue: text("icon_value"),
+  /**
+   * 图标底下那层底板（描边 + 玻璃底）。应用类图标自带圆角外形，再套一层底板就成了
+   * 大圆套小圆，所以这张卡片可以按条目关掉它。
+   */
+  iconPlate: integer("icon_plate", { mode: "boolean" }).notNull().default(true),
+  /** 单色图标按主题前景色渲染（CSS mask 上色）。彩色图标开这个会变成剪影。 */
+  iconMono: integer("icon_mono", { mode: "boolean" }).notNull().default(false),
   visibility: text("visibility", { enum: ["public", "private"] })
     .notNull()
     .default("public"),

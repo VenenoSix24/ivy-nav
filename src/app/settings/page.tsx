@@ -9,9 +9,11 @@ import { AccountSettings } from "@/components/settings/account-settings";
 import { AppearanceSettings } from "@/components/settings/appearance-settings";
 import { EditModeSettings } from "@/components/settings/edit-mode-settings";
 import { DataSettings } from "@/components/settings/data-settings";
+import { IconSetSettings } from "@/components/settings/icon-set-settings";
 import { PortalSettings } from "@/components/settings/portal-settings";
 import { getAdminPortalData } from "@/lib/portal/admin";
 import { EDIT_MODE_COOKIE } from "@/lib/portal/edit-mode";
+import { listIconSets } from "@/lib/icons/library/sets";
 import { getPreferredPalette } from "@/lib/settings/appearance-server";
 import { getSession } from "@/lib/auth/session";
 
@@ -46,13 +48,14 @@ export default async function SettingsPage() {
 
         <h1 className="mt-12 text-[28px] font-semibold tracking-[-0.03em]">设置</h1>
         <p className="text-muted-foreground mt-2 text-[13px]">
-          外观、前台编辑、首页分类、数据、账号与会话。
+          外观、前台编辑、首页分类、图标库、数据、账号与会话。
         </p>
 
         <div className="mt-8 space-y-4">
           <AppearanceSettings initialPalette={getPreferredPalette()} />
           <EditModeSettings initialEnabled={editMode} />
           <PortalSettings initialPortal={portal} />
+          <IconSetSettings initialSets={listIconSets()} />
           <DataSettings />
           <AccountSettings
             username={session.username}

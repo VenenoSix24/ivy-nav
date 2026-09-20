@@ -68,6 +68,8 @@ export function getPortalData(options: { includePrivate: boolean }): PortalData 
       domain: toDomain(item.url) ?? item.url,
       iconType: item.iconType,
       iconValue: item.iconValue,
+      iconPlate: item.iconPlate,
+      iconMono: item.iconMono,
       tags: tagsByItem.get(item.id) ?? [],
       visibility: item.visibility,
       featured: item.featured,

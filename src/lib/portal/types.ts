@@ -12,6 +12,10 @@ export interface PortalItem {
   domain: string;
   iconType: IconType;
   iconValue: string | null;
+  /** 图标底下要不要那层底板 */
+  iconPlate: boolean;
+  /** 单色图标是否跟随主题前景色 */
+  iconMono: boolean;
   tags: string[];
   visibility: Visibility;
   featured: boolean;

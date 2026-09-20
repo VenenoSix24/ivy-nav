@@ -46,7 +46,9 @@ run_suite() {
   DATABASE_PATH="$dir/data/portal.db" pnpm db:seed >/dev/null 2>&1
   DATABASE_PATH="$dir/data/portal.db" ADMIN_PASSWORD="$PASSWORD" pnpm admin:create "$user" >/dev/null 2>&1
 
+  # FAVICON_FALLBACK_SOURCES=false：回归不碰第三方图标服务，取图这件事只留在本机
   DATABASE_PATH="$dir/data/portal.db" PORT="$port" SESSION_COOKIE_SECURE=false \
+    FAVICON_FALLBACK_SOURCES=false \
     nohup pnpm start >"$dir/server.log" 2>&1 &
   local server=$!
 

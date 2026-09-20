@@ -42,7 +42,8 @@ export async function GET(request: Request) {
   const target = parseHttpUrl(item.url);
   if (!target) return jsonError("条目网址不合法：请修正后再试。", 400);
 
-  const payload = await resolveFavicon(target);
+  // iconValue 记着在选择器里挑中的那个方案（为空即「按顺序自己挑」）
+  const payload = await resolveFavicon(target, item.iconValue);
   // 取不到不是错误：回一张透明占位图，图标位的首字母托底就会露出来，
   // 控制台也不会多一条 404。条目本身不存在才用 404。
   if (!payload) return placeholderResponse(session !== null);

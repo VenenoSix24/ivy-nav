@@ -1,30 +1,46 @@
 import { createHash } from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
-import { resolveDatabasePath } from "@/db/client";
-import { assertFetchableHost, nextRedirectTarget } from "./egress";
+import { readCache as readCached, writeCache as writeCached } from "./cache";
+import { fetchWithTimeout } from "@/lib/net/fetch";
+import {
+  ICON_SOURCES,
+  type IconCandidate,
+  type IconCandidateStatus,
+  type IconSourceId,
+  normalizeIconSource,
+} from "./sources";
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_HTML_BYTES = 256 * 1024;
 const MAX_ICON_BYTES = 512 * 1024;
-const TIMEOUT_MS = 4000;
-const MAX_REDIRECTS = 3;
 /** 取不到时也记一小会儿，别让匿名请求每次都去撞两轮外网。 */
 const MISS_TTL_MS = 10 * 60 * 1000;
 
+const CACHE_NAMESPACE = "favicon";
+
 /**
- * 兜底的第三方图标服务，按顺序试，前一个拿不到就用下一个。
+ * 兜底的第三方图标服务，前一个拿不到就用下一个。
  * 这两个都实测过：从本机可达、认得的域名回真图（Google s2 与 DuckDuckGo 在部分网络下
  * 连不上，列上去只是每次白等一个超时）。只在前面的直连都失败时才用 ——
  * 代价是把域名给了第三方，所以留了开关：FAVICON_FALLBACK_SOURCES=false 可以关掉。
  */
-const FALLBACK_SOURCES: ((host: string) => string)[] = [
-  (host) => `https://favicon.im/${host}`,
-  (host) => `https://icon.horse/icon/${host}`,
-];
+const FALLBACK_URLS: Partial<Record<IconSourceId, (host: string) => string>> = {
+  "favicon.im": (host) => `https://favicon.im/${host}`,
+  "icon.horse": (host) => `https://icon.horse/icon/${host}`,
+};
+
+function isFallback(source: IconSourceId): boolean {
+  return source in FALLBACK_URLS;
+}
 
 function fallbackEnabled(): boolean {
   return process.env.FAVICON_FALLBACK_SOURCES !== "false";
+}
+
+/** 按顺序问这些来源；第三方服务被关掉时就不出现在链子上。 */
+function sourcesInOrder(): IconSourceId[] {
+  return ICON_SOURCES.filter((entry) => !isFallback(entry.id) || fallbackEnabled()).map(
+    (entry) => entry.id,
+  );
 }
 
 export interface IconPayload {
@@ -32,77 +48,22 @@ export interface IconPayload {
   contentType: string;
 }
 
-function cacheDir(): string {
-  return path.join(path.dirname(resolveDatabasePath()), "favicon-cache");
-}
-
-function cachePaths(origin: string): { body: string; meta: string } {
-  const key = createHash("sha256").update(origin).digest("hex").slice(0, 32);
-  const dir = cacheDir();
-  return { body: path.join(dir, `${key}.bin`), meta: path.join(dir, `${key}.json`) };
-}
-
-function readCache(origin: string): IconPayload | null {
-  const { body, meta } = cachePaths(origin);
-  try {
-    const stats = fs.statSync(body);
-    if (Date.now() - stats.mtimeMs > CACHE_TTL_MS) return null;
-    const parsed: unknown = JSON.parse(fs.readFileSync(meta, "utf8"));
-    if (!parsed || typeof parsed !== "object") return null;
-    const contentType = (parsed as { contentType?: unknown }).contentType;
-    if (typeof contentType !== "string") return null;
-    return { body: fs.readFileSync(body), contentType };
-  } catch {
-    return null;
-  }
-}
-
-function writeCache(origin: string, payload: IconPayload): void {
-  try {
-    const { body, meta } = cachePaths(origin);
-    fs.mkdirSync(cacheDir(), { recursive: true });
-    fs.writeFileSync(body, payload.body);
-    fs.writeFileSync(meta, JSON.stringify({ contentType: payload.contentType }));
-  } catch {
-    // 缓存写不进去不影响这次响应
-  }
-}
-
 /**
- * 手动跟随跳转，每一跳都重新做内网检查。用 redirect: "follow" 的话，
- * 第二个请求的目标就由被访问站点的 Location 决定，等于把出口检查让给别人。
+ * 缓存按「来源」分开存：选择器要一次列出每个方案各拿到什么，各自都得留下自己那份。
+ * `auto` 是自动链最终选中的那一份，条目的常规取图走的就是它。
  */
-async function fetchWithTimeout(url: string, accept: string): Promise<Response | null> {
-  let target: URL;
-  try {
-    target = new URL(url);
-  } catch {
-    return null;
-  }
+type CacheKey = IconSourceId | "auto";
 
-  for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
-    try {
-      await assertFetchableHost(target.hostname);
-      const response = await fetch(target, {
-        redirect: "manual",
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-        headers: { accept, "user-agent": "ivy-nav/0.1 (+favicon)" },
-      });
+function readCache(origin: string, source: CacheKey): IconPayload | null {
+  return readCached(CACHE_NAMESPACE, `${source}\n${origin}`, CACHE_TTL_MS);
+}
 
-      const location = response.headers.get("location");
-      if (response.status < 300 || response.status >= 400 || !location) return response;
-
-      target = nextRedirectTarget(location, target);
-    } catch {
-      return null;
-    }
-  }
-
-  return null;
+function writeCache(origin: string, source: CacheKey, payload: IconPayload): void {
+  writeCached(CACHE_NAMESPACE, `${source}\n${origin}`, payload);
 }
 
 /** 图标格式靠文件头判断，不信 Content-Type —— 很多站点把 .ico 报成 octet-stream。 */
-function sniff(body: Buffer): string | null {
+export function sniffImageType(body: Buffer): string | null {
   const head = body.subarray(0, 16);
   if (body.length < 4) return null;
   if (head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47)
@@ -147,8 +108,8 @@ function linkHref(html: string, rel: string, base: URL): string | null {
   return null;
 }
 
-/** 从 <link rel="icon"> 里挑一个尽量大的尺寸；挑不到就退回 /favicon.ico。 */
-export function pickIconHref(html: string, base: URL): string {
+/** 从 <link rel="icon"> 里挑一个尽量大的尺寸；页面里什么都没写就返回 null。 */
+function declaredIconHref(html: string, base: URL): string | null {
   const tags = html.match(/<link\b[^>]*>/gi) ?? [];
   let best: { href: string; score: number } | null = null;
 
@@ -169,15 +130,17 @@ export function pickIconHref(html: string, base: URL): string {
     if (!best || score > best.score) best = { href, score };
   }
 
-  if (best) {
-    try {
-      return new URL(best.href, base).toString();
-    } catch {
-      /* 落到下面的默认值 */
-    }
+  if (!best) return null;
+  try {
+    return new URL(best.href, base).toString();
+  } catch {
+    return null;
   }
+}
 
-  return new URL("/favicon.ico", base.origin).toString();
+/** 声明里挑不到就退回 /favicon.ico：自动链上这一条必然有得试。 */
+export function pickIconHref(html: string, base: URL): string {
+  return declaredIconHref(html, base) ?? new URL("/favicon.ico", base.origin).toString();
 }
 
 /** HTML 实体只认最常见的几个：标题里主要是 &amp; &#39; 这类，不值得引一个解析器。 */
@@ -305,7 +268,7 @@ async function download(candidates: string[]): Promise<IconPayload | null> {
     }
     if (buffer.length === 0 || buffer.length > MAX_ICON_BYTES) continue;
 
-    const contentType = sniff(buffer);
+    const contentType = sniffImageType(buffer);
     if (contentType) return { body: buffer, contentType };
   }
   return null;
@@ -319,16 +282,16 @@ async function download(candidates: string[]): Promise<IconPayload | null> {
  */
 const SENTINEL_CACHE = new Map<string, Promise<string | null>>();
 
-function sentinelFor(index: number, host: string): Promise<string | null> {
-  const key = `${index}:${host.charAt(0).toLowerCase()}`;
+function sentinelFor(source: IconSourceId, host: string): Promise<string | null> {
+  const key = `${source}:${host.charAt(0).toLowerCase()}`;
   const cached = SENTINEL_CACHE.get(key);
   if (cached) return cached;
 
   const job = (async () => {
-    const source = FALLBACK_SOURCES[index];
-    if (!source) return null;
+    const build = FALLBACK_URLS[source];
+    if (!build) return null;
     const response = await fetchWithTimeout(
-      source(`${host.charAt(0)}-ivy-nav-nonexistent.invalid`),
+      build(`${host.charAt(0)}-ivy-nav-nonexistent.invalid`),
       "image/*,*/*;q=0.8",
     );
     if (!response?.ok) return null;
@@ -345,27 +308,138 @@ function sentinelFor(index: number, host: string): Promise<string | null> {
   return job;
 }
 
-/** 直连都失败之后的兜底：按顺序问几个服务，只认「不是占位图」的那份。 */
-async function downloadFromFallbackSources(host: string): Promise<IconPayload | null> {
-  for (const [index, source] of FALLBACK_SOURCES.entries()) {
-    const response = await fetchWithTimeout(source(host), "image/*,*/*;q=0.8");
-    if (!response?.ok) continue;
+/** 一次来源尝试的结果。「服务活着但只回占位图」与「压根没取到」对用户是两件事。 */
+interface SourceResult {
+  payload: IconPayload | null;
+  /** 走到了第三方服务、拿到的却是它自己生成的占位图 */
+  placeholder: boolean;
+}
 
-    let buffer: Buffer;
-    try {
-      buffer = Buffer.from(await response.arrayBuffer());
-    } catch {
-      continue;
-    }
-    if (buffer.length === 0 || buffer.length > MAX_ICON_BYTES) continue;
+const MISS: SourceResult = { payload: null, placeholder: false };
 
-    const digest = createHash("sha256").update(buffer).digest("hex");
-    if (digest === (await sentinelFor(index, host))) continue;
+async function fetchFallback(source: IconSourceId, host: string): Promise<SourceResult> {
+  const build = FALLBACK_URLS[source];
+  if (!build || !fallbackEnabled()) return MISS;
 
-    const contentType = sniff(buffer);
-    if (contentType) return { body: buffer, contentType };
+  const response = await fetchWithTimeout(build(host), "image/*,*/*;q=0.8");
+  if (!response?.ok) return MISS;
+
+  let buffer: Buffer;
+  try {
+    buffer = Buffer.from(await response.arrayBuffer());
+  } catch {
+    return MISS;
   }
-  return null;
+  if (buffer.length === 0 || buffer.length > MAX_ICON_BYTES) return MISS;
+
+  const digest = createHash("sha256").update(buffer).digest("hex");
+  if (digest === (await sentinelFor(source, host))) return { payload: null, placeholder: true };
+
+  const contentType = sniffImageType(buffer);
+  if (!contentType) return MISS;
+  return { payload: { body: buffer, contentType }, placeholder: false };
+}
+
+/** 只有「读页面里声明的东西」这两条来源需要先有 HTML。 */
+function needsPageHtml(source: IconSourceId): boolean {
+  return source === "declared" || source === "manifest";
+}
+
+/**
+ * 朝某一个来源要一次图标。`html` 由调用方给：一次列出全部方案时页面只抓一遍，
+ * 声明与 manifest 两条都从这份 HTML 里读。
+ */
+async function fetchFromSource(
+  source: IconSourceId,
+  pageUrl: URL,
+  html: string | null,
+): Promise<SourceResult> {
+  if (source === "declared") {
+    const href = html ? declaredIconHref(html, pageUrl) : null;
+    return { payload: href ? await download([href]) : null, placeholder: false };
+  }
+
+  if (source === "manifest") {
+    if (!html) return MISS;
+    return {
+      payload: await download(await manifestIconCandidates(html, pageUrl)),
+      placeholder: false,
+    };
+  }
+
+  if (source === "/favicon.ico") {
+    const href = new URL("/favicon.ico", pageUrl.origin).toString();
+    return { payload: await download([href]), placeholder: false };
+  }
+
+  return fetchFallback(source, pageUrl.hostname);
+}
+
+/** 抓一次页面 HTML。读正文同样会抛（对端断流、正文拖过超时），这里一律当拿不到。 */
+async function pageHtml(pageUrl: URL): Promise<string | null> {
+  const response = await fetchWithTimeout(pageUrl.toString(), "text/html,*/*;q=0.8");
+  if (!response?.ok) return null;
+  try {
+    return (await response.text()).slice(0, MAX_HTML_BYTES);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 把每个方案都真问一遍，让用户在图标选择器里看着挑 —— 以前是「一个不行就悄悄换下一个」，
+ * 结果是哪个方案给的图、为什么是这张，用户都看不到。
+ * 各方案并行问，页面 HTML 只抓一遍（声明与 manifest 共用）。
+ */
+export async function listFaviconCandidates(pageUrl: URL): Promise<IconCandidate[]> {
+  const html = await pageHtml(pageUrl);
+
+  return Promise.all(
+    ICON_SOURCES.map(async (entry) => {
+      if (isFallback(entry.id) && !fallbackEnabled()) {
+        return { source: entry.id, label: entry.label, status: "miss" as const };
+      }
+
+      let result: SourceResult;
+      try {
+        result = await fetchFromSource(entry.id, pageUrl, html);
+      } catch {
+        result = MISS;
+      }
+
+      if (result.payload) writeCache(pageUrl.origin, entry.id, result.payload);
+
+      const status: IconCandidateStatus = result.payload
+        ? "ok"
+        : result.placeholder
+          ? "placeholder"
+          : "miss";
+      return { source: entry.id, label: entry.label, status };
+    }),
+  );
+}
+
+/**
+ * 取某一个来源的图标，不做任何退让：选择器里的缩略图要的就是「这个方案给的是哪张」，
+ * 退让会拿别的来源的图顶上来，标签就对不上了。
+ */
+export async function resolveIconSource(
+  pageUrl: URL,
+  source: IconSourceId,
+): Promise<IconPayload | null> {
+  const cached = readCache(pageUrl.origin, source);
+  if (cached) return cached;
+
+  let result: SourceResult;
+  try {
+    result = await fetchFromSource(source, pageUrl, await pageHtml(pageUrl));
+  } catch {
+    return null;
+  }
+  if (!result.payload) return null;
+
+  writeCache(pageUrl.origin, source, result.payload);
+  return result.payload;
 }
 
 const inFlight = new Map<string, Promise<IconPayload | null>>();
@@ -382,13 +456,25 @@ function recentlyMissed(origin: string, now: number): boolean {
 }
 
 /**
- * 取站点图标：先读页面里的 <link rel="icon">，失败再试 /favicon.ico。
+ * 取站点图标：按方案顺序问，第一个拿到的就是它。
  * 结果按 origin 落盘缓存，避免每次打开首页都对每个站点发一轮请求。
+ *
+ * `preferred` 是用户在选择器里点过的那一个方案：先只问它，它这会儿取不到再回到自动链 ——
+ * 用户挑的是「更好看的那张」，不是「取不到就空着」。
  */
-export async function resolveFavicon(pageUrl: URL): Promise<IconPayload | null> {
+export async function resolveFavicon(
+  pageUrl: URL,
+  preferred?: string | null,
+): Promise<IconPayload | null> {
   const origin = pageUrl.origin;
+  const picked = normalizeIconSource(preferred);
 
-  const cached = readCache(origin);
+  if (picked) {
+    const chosen = await resolveIconSource(pageUrl, picked);
+    if (chosen) return chosen;
+  }
+
+  const cached = readCache(origin, "auto");
   if (cached) return cached;
   if (recentlyMissed(origin, Date.now())) return null;
 
@@ -396,25 +482,22 @@ export async function resolveFavicon(pageUrl: URL): Promise<IconPayload | null> 
   if (pending) return pending;
 
   const job = (async (): Promise<IconPayload | null> => {
-    const candidates: string[] = [];
+    /** 页面 HTML 按需抓：选择器刚把每个方案都取过一遍，缓存命中时一个请求都不该多发。 */
+    let page: string | null | undefined;
 
     try {
-      const page = await fetchWithTimeout(pageUrl.toString(), "text/html,*/*;q=0.8");
-      if (page?.ok) {
-        const html = (await page.text()).slice(0, MAX_HTML_BYTES);
-        // 先看 HTML 里声明的图标，再看 manifest 里声明的，都没有才去碰 /favicon.ico
-        candidates.push(pickIconHref(html, pageUrl));
-        candidates.push(...(await manifestIconCandidates(html, pageUrl)));
-      }
-      candidates.push(new URL("/favicon.ico", origin).toString());
+      for (const source of sourcesInOrder()) {
+        // 单来源的缓存先看：命中了就不用再问一次外网，也不用为了它去抓页面
+        let payload = readCache(origin, source);
+        if (!payload) {
+          if (needsPageHtml(source) && page === undefined) page = await pageHtml(pageUrl);
+          payload = (await fetchFromSource(source, pageUrl, page ?? null)).payload;
+        }
+        if (!payload) continue;
 
-      let payload = await download(candidates);
-      if (!payload && fallbackEnabled()) {
-        payload = await downloadFromFallbackSources(pageUrl.hostname);
-      }
-      if (payload) {
         misses.delete(origin);
-        writeCache(origin, payload);
+        writeCache(origin, source, payload);
+        writeCache(origin, "auto", payload);
         return payload;
       }
     } catch {

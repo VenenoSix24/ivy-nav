@@ -168,6 +168,8 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
       tagNames: item.tags,
       iconType: item.iconType,
       iconValue: item.iconValue,
+      iconPlate: item.iconPlate,
+      iconMono: item.iconMono,
       visibility: item.visibility,
       featured: item.featured,
     };

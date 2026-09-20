@@ -27,6 +27,8 @@ const itemSchema = z.object({
   description: z.string().max(300).nullish(),
   iconType: z.enum(iconTypeValues).optional(),
   iconValue: z.string().max(500).nullish(),
+  iconPlate: z.boolean().optional(),
+  iconMono: z.boolean().optional(),
   visibility: z.enum(visibilityValues).optional(),
   sortOrder: z.number().int().min(0).optional(),
   featured: z.boolean().optional(),
