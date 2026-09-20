@@ -13,11 +13,11 @@ export interface PortalItem {
   domain: string;
   iconType: IconType;
   iconValue: string | null;
-  /** 图标底下要不要那层底板 */
+  /** 图标底下要不要那层图标遮罩 */
   iconPlate: boolean;
   /** 单色图标是否跟随主题前景色 */
   iconMono: boolean;
-  /** 图标在底板里怎么摆 —— 算好之后的结果（条目没设过就是设置页里那个默认） */
+  /** 图标在图标遮罩里怎么摆 —— 算好之后的结果（条目没设过就是设置页里那个默认） */
   iconFit: IconFitId;
   /** 条目自己设的那一份；空值表示跟随 defaultIconFit */
   iconFitOwn: IconFitId | null;

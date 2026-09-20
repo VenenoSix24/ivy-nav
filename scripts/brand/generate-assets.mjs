@@ -1,6 +1,6 @@
 // 由 scripts/brand/source/yiye.png 生成站点用到的全部图标与品牌标记。
 // 这台机器上没有 ImageMagick / potrace，所以这里只用 node 内置的 zlib 自己解码、合成、编码。
-// 换 logo 或调底板颜色后重跑：pnpm brand:assets
+// 换 logo 或调图标遮罩颜色后重跑：pnpm brand:assets
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -10,7 +10,7 @@ import { deflateSync, inflateSync } from "node:zlib";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SOURCE = join(ROOT, "scripts/brand/source/yiye.png");
 
-/** 图标底板：一道 135° 的深青渐变，白叶压在上面才有足够对比 */
+/** 图标图标遮罩：一道 135° 的深青渐变，白叶压在上面才有足够对比 */
 const PLATE_TOP = [0x3d, 0x9b, 0x86];
 const PLATE_BOTTOM = [0x16, 0x53, 0x4b];
 
@@ -23,7 +23,7 @@ const PLATE_BOTTOM = [0x16, 0x53, 0x4b];
  */
 const PLATE_RADIUS_RATIO = 0;
 
-/** 叶子在底板里占的边长比例，留出呼吸空间 */
+/** 叶子在图标遮罩里占的边长比例，留出呼吸空间 */
 const LEAF_RATIO_TILE = 0.62;
 const LEAF_RATIO_APPLE = 0.66;
 
@@ -185,7 +185,7 @@ function insideRounded(px, py, size, radius) {
   return dx * dx + dy * dy <= radius * radius;
 }
 
-/** 圆角底板 + 135° 对角渐变 */
+/** 圆角图标遮罩 + 135° 对角渐变 */
 function plate(size, radiusRatio) {
   const radius = size * radiusRatio;
   const data = new Uint8Array(size * size * 4);
@@ -234,7 +234,7 @@ function opaqueBounds(image) {
 }
 
 /**
- * 底板图标：以 4 倍超采样绘制再缩下来，圆角与叶缘的锯齿就交给面积平均处理。
+ * 图标遮罩图标：以 4 倍超采样绘制再缩下来，圆角与叶缘的锯齿就交给面积平均处理。
  * 叶子只取轮廓染白——16px 的标签页上，带内部渐变的叶子会糊成一团。
  */
 function tileIcon(size, { radiusRatio, leafRatio, opaque }) {

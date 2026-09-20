@@ -40,7 +40,7 @@ export function IconFitSettings({ initialFit }: { initialFit: IconFitId }) {
   return (
     <SettingsSection
       title="条目图标"
-      description="取回来的图标大小不一：有的把画布填满，有的四周留一大圈透明边，同一个底板下就显得一大一小。这里定默认怎么摆，单个条目可以在图标选择器里改。"
+      description="取回来的图标大小不一：有的把画布填满，有的四周留一大圈透明边，同一个图标遮罩下就显得一大一小。这里设置默认裁切样式，单个条目可以在图标选择器里改。"
     >
       <ul className="space-y-1.5">
         {ICON_FITS.map((entry) => (

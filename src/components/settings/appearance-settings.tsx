@@ -88,7 +88,7 @@ export function AppearanceSettings({ initialPalette }: AppearanceSettingsProps) 
 
       <SettingsSection
         title="配色"
-        description="与浅色/深色各管一维：配色只换强调色与背景光晕，中性色和卡面材质不变。"
+        description="配色只更改强调色与背景光晕，中性色和卡面材质不变。"
       >
         <div className="flex flex-wrap gap-2" role="group" aria-label="配色主题">
           {PALETTES.map((entry) => {

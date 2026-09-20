@@ -235,14 +235,14 @@ export function IconPicker({
 
   const faviconHint =
     fetchState === "failed"
-      ? "这个网站没能取到图标：可以改用图标库、Emoji 或自己上传，也可以就这样保存（会显示标题首字母）。"
+      ? "这个网站没能取到图标：可以改用图标库、Emoji 或自己上传，也可以直接保存（会显示标题首字母）。"
       : fetchState === "ok"
-        ? "挨着试出来的几个方案，点一张就用它。"
+        ? "选择一张你喜欢的。"
         : fetchState === "loading"
           ? "正在逐个来源试取…"
           : url.trim()
-            ? "还没获取：点左边的按钮，把能取到的图标都列出来。"
-            : "先在上面填上网址，再来获取图标。";
+            ? "还没获取：点左边的按钮，列出可用图标。"
+            : "请先填写网址，再来获取图标。";
 
   /**
    * 列出所有方案。以前是一次只给一张（抓到哪个算哪个），用户无从知道还有别的取法；
@@ -496,7 +496,7 @@ export function IconPicker({
               checked={plate}
               onCheckedChange={() => onChange({ ...spec, plate: !plate })}
             />
-            底板
+            图标遮罩
           </label>
         )}
         {canMono ? (
@@ -511,10 +511,10 @@ export function IconPicker({
         ) : null}
         <span className="text-muted-foreground min-w-0 flex-1 truncate text-[11px]">
           {spec.type === "emoji"
-            ? "Emoji 不套底板：它自己就是一块彩色图案，再垫一层反而显得歪"
+            ? "Emoji 不显示背景遮罩"
             : canMono
-              ? "跟随主题：浅色下按上面选的色，深色下转成前景色（黑图标不会消失）"
-              : "底板：图标底下那层描边与玻璃底，应用类图标自带外形时可以不套"}
+              ? "跟随主题：浅色下为自选色，深色下转成前景色"
+              : "图标遮罩：应用类图标自带外形时可以取消"}
         </span>
       </div>
 
@@ -608,7 +608,7 @@ export function IconPicker({
                           : "网站自己声明"
                         : candidate.status === "placeholder"
                           ? "只给占位图"
-                          : "取不到"
+                          : "获取不到"
                     }
                     active={spec.type === "favicon" && spec.value === candidate.source}
                     src={ok ? previewFaviconSrc(url, candidate.source) : ""}
@@ -627,7 +627,7 @@ export function IconPicker({
             placeholder={
               library === LUCIDE
                 ? `搜索 ${lucideNames.length} 个线性图标（英文名）`
-                : "搜索图标（英文名，换库不用重输）"
+                : "搜索图标（英文名或拼音）"
             }
           />
 
@@ -821,12 +821,12 @@ export function IconPicker({
                     : note
                       ? note
                       : !query.trim()
-                        ? "输入关键词开始搜索：点哪张就把哪张下载到本地。"
+                        ? "输入关键词开始搜索。"
                         : shownHits === null
                           ? "…"
                           : shownHits.length === 0
                             ? "没有匹配的图标：换个词试试。"
-                            : `显示 ${shownHits.length} / ${shownTotal} 个，点哪张就把哪张下载到本地。`}
+                            : `显示 ${shownHits.length} / ${shownTotal} 个`}
                 </span>
                 {canLoadMore ? (
                   <button
@@ -1015,7 +1015,7 @@ function describe(spec: IconSpec): string {
   switch (spec.type) {
     case "favicon": {
       const source = iconSource(spec.value);
-      return source ? `网站图标：${source.label}` : "网站图标：自动挑一张";
+      return source ? `网站图标：${source.label}` : "网站图标：自动获取一张可用图标";
     }
     case "emoji":
       return `Emoji ${spec.value ?? ""}`;

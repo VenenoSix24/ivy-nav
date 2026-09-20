@@ -108,7 +108,7 @@ export function BookmarkImport() {
     <>
       <SettingsSection
         title="浏览器书签"
-        description="Chrome、Edge、Firefox、Safari 导出的书签文件都能读。一级目录当分类，二级及更深的目录当标签，顶层的浏览器自带目录会被忽略；导入前可以只挑其中几个目录。"
+        description="支持 Chrome、Edge、Firefox、Safari 导出的书签文件。一级目录作为分类，二级及更深的目录作为分类下的标签；可以自由选择导入的书签文件夹。"
       >
         <input
           ref={fileInput}
@@ -137,13 +137,11 @@ export function BookmarkImport() {
             )}
             {reading ? "读取中…" : "选择书签文件"}
           </Button>
-          <span className="text-muted-foreground text-[12px]">先看一遍预览，确认后才写入</span>
+          <span className="text-muted-foreground text-[12px]">预览确认后写入</span>
         </div>
 
         <p className="text-muted-foreground mt-3 text-[12px] leading-relaxed">
-          导入只新增与更新，不会删除现有内容；新分类默认公开显示在首页。同一个网址出现在两个分类里
-          会在两处各建一条（合并成一条会让另一个分类少一条），预览里会提示。图标不在这里抓取，
-          打开首页时按需缓存，所以导入本身很快、也不碰外网。
+          导入只新增与更新，不会删除现有内容；新分类默认公开显示在首页。
         </p>
       </SettingsSection>
 

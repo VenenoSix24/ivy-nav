@@ -191,7 +191,7 @@ export function ItemDialog({
                   setTitleHint(null);
                 }}
                 maxLength={80}
-                placeholder="填网址后会自动填上"
+                placeholder="填写网址后将自动获取"
                 className="h-10 rounded-xl text-[16px] sm:text-[14px]"
               />
               {titleHint ? (
@@ -208,7 +208,7 @@ export function ItemDialog({
                 value={url}
                 onChange={(event) => setUrl(event.target.value)}
                 required
-                placeholder="github.com"
+                placeholder="example.com"
                 autoCapitalize="none"
                 spellCheck={false}
                 className="h-10 rounded-xl text-[16px] sm:text-[14px]"
@@ -220,6 +220,7 @@ export function ItemDialog({
               <Textarea
                 id="item-description"
                 value={description}
+                placeholder="这里填写描述哦～"
                 onChange={(event) => setDescription(event.target.value)}
                 maxLength={300}
                 rows={2}

@@ -17,7 +17,7 @@ import {
 export interface IconSpec {
   type: IconType;
   value: string | null;
-  /** 图标底下要不要那层底板：应用类图标自带圆角外形，套上底板就成了大圆套小圆 */
+  /** 图标底下要不要那层图标遮罩：应用类图标自带圆角外形，套上图标遮罩就成了大圆套小圆 */
   plate?: boolean;
   /**
    * 深色模式下把这张图标转成单色。图片类图标只能烘死一个颜色，黑图在深色主题下会看不见 ——
@@ -26,14 +26,14 @@ export interface IconSpec {
    */
   mono?: boolean;
   /**
-   * 图标在底板里怎么摆。取回来的图标有的顶格、有的四周留一圈透明边，同一个底板下
+   * 图标在图标遮罩里怎么摆。取回来的图标有的顶格、有的四周留一圈透明边，同一个图标遮罩下
    * 就显得大小不一 —— 这一档决定按原样放、还是裁掉透明边/铺满。空值即默认（原样）。
    */
   fit?: IconFitId | null;
 }
 
 /**
- * 这个图标有没有底板。Emoji 一律没有：它自己就是一个彩色图案，再垫一块板只是多余的一圈，
+ * 这个图标有没有图标遮罩。Emoji 一律没有：它自己就是一个彩色图案，再垫一块板只是多余的一圈，
  * 而各家 emoji 字体把图案摆在字框里的位置又不一致，垫了板反而更显歪。
  * 判断只写在这里一处 —— 卡片、选择器预览与那个开关都读它。
  */
@@ -59,9 +59,9 @@ interface IconGlyphProps {
 
 /**
  * 图标盒子的尺寸参数。图形大小按盒子算（容器查询单位），而不是各处再手写一个像素值 ——
- * 盒子换尺寸时图形跟着走，关掉底板时也不必再去改那一串变量。
+ * 盒子换尺寸时图形跟着走，关掉图标遮罩时也不必再去改那一串变量。
  *
- * 「原样」这一档留一圈呼吸位：底板开着时图形占七成出头，关掉底板（只剩图形自己）时
+ * 「原样」这一档留一圈呼吸位：图标遮罩开着时图形占七成出头，关掉图标遮罩（只剩图形自己）时
  * 涨到接近满格，不然看着忽然小一圈。
  *
  * 另外三档的诉求就是**填满**，所以图形直接顶到盒子边 —— 早先这一档也留七成，
@@ -123,7 +123,7 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
           // 字号比图片类再小一档：emoji 的墨迹本来就比字框大一圈，照足给会显得傻大
           "flex size-full items-center justify-center leading-none select-none",
           "text-[length:calc(var(--icon-glyph,1.25rem)*0.8)]",
-          // emoji 一律没有底板，所以影子总是跟着图案走
+          // emoji 一律没有图标遮罩，所以影子总是跟着图案走
           "icon-lift",
           className,
         )}
@@ -152,14 +152,14 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
     // 蒙版只对 SVG 有意义：位图的 alpha 是整个方块，蒙出来就是一块实心色
     const darkMono = spec.mono === true && /\.svg(\?|$)/i.test(src);
     // 非「原样」的档位会顶到盒子边：放大溢出的部分要裁掉，圆角跟着盒子走，
-    // 否则满幅图片的方角会从底板的圆角外面透出来
+    // 否则满幅图片的方角会从图标遮罩的圆角外面透出来
     const applied = trim && trim.src === src ? trim.transform : null;
     const clipped = fit !== "contain";
     const transform = applied
       ? `scale(${applied.scale}) translate(${applied.x * 100}%, ${applied.y * 100}%)`
       : undefined;
 
-    // 没有底板时这层方框没有面：影子加在它身上会变成一块悬在图标背后的灰方块，
+    // 没有图标遮罩时这层方框没有面：影子加在它身上会变成一块悬在图标背后的灰方块，
     // 所以改加在图形这一层，让它跟着图案的轮廓走（图片与首字母托底都在里面）
     const lift = !usesPlate(spec);
 

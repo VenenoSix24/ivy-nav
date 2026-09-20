@@ -135,7 +135,7 @@ export function applyBackupDocument(db: Db, document: BackupDocument): ImportSum
           description: entry.description ?? null,
           iconType: entry.iconType ?? "favicon",
           iconValue: entry.iconValue ?? null,
-          // 旧备份里没有这两项：底板默认开、单色默认关，与新建条目一致
+          // 旧备份里没有这两项：图标遮罩默认开、单色默认关，与新建条目一致
           iconPlate: entry.iconPlate ?? true,
           iconMono: entry.iconMono ?? false,
           iconFit: entry.iconFit ?? null,
