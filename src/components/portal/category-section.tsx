@@ -26,13 +26,14 @@ export function CategorySection({
   return (
     <section aria-labelledby={id}>
       <div className="mb-4 flex items-center justify-between gap-4 px-0.5">
-        <div className="flex items-baseline gap-2.5">
+        {/* 窄屏放不下并列：描述自己占一行（w-full 顶到下一行），宽屏回到标题右边 */}
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
           <h2 id={id} className="text-[15px] font-semibold tracking-[-0.015em]">
             {title}
           </h2>
           <span className="text-muted-foreground text-[12px] tabular-nums">{items.length} 个</span>
           {description ? (
-            <span className="text-muted-foreground hidden text-[12px] sm:inline">
+            <span className="text-muted-foreground w-full truncate text-[12px] sm:w-auto sm:min-w-0 sm:flex-1">
               {description}
             </span>
           ) : null}

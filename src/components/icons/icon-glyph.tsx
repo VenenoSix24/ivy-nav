@@ -47,7 +47,18 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
   }, []);
 
   if (spec.type === "emoji") {
-    return <span className={cn("translate-y-px select-none", className)}>{spec.value}</span>;
+    return (
+      <span
+        className={cn(
+          // Emoji 的字形比 em 框还大一圈（实测约 1.1 倍），照字号给会盖过图片类图标；
+          // 退回九成，墨迹高度才和图片的一致
+          "translate-y-px text-[length:calc(var(--icon-glyph,1.25rem)*0.9)] select-none",
+          className,
+        )}
+      >
+        {spec.value}
+      </span>
+    );
   }
 
   if (spec.type === "lucide") {
@@ -97,8 +108,9 @@ function LetterMark({ title, className }: { title: string; className?: string })
   return (
     <span
       className={cn(
-        // 跟着图标图形走：默认 1.25rem × 0.75 = 15px，与之前一致
-        "text-accent-foreground grid place-items-center text-[calc(var(--icon-glyph,1.25rem)*0.75)] font-semibold",
+        // 首字母的「墨」只有大写字高（约 0.72em），字号得比 --icon-glyph 小一档才不显得
+        // 压过图片类图标：0.8 倍落到盒子的四成上下，比按 1 倍时的 45% 收敛一些
+        "text-accent-foreground grid place-items-center text-[length:calc(var(--icon-glyph,1.25rem)*0.8)] font-semibold",
         className,
       )}
     >
