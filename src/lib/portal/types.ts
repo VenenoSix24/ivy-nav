@@ -22,6 +22,8 @@ export interface PortalCategory {
   name: string;
   description: string | null;
   visibleOnHomepage: boolean;
+  /** private 表示整类对匿名隐藏（条目自己的可见性在公开分类里仍然算数） */
+  visibility: Visibility;
   /** 空值表示跟随默认布局（卡片） */
   layout: LayoutId | null;
 }

@@ -3,7 +3,7 @@ import { getDb } from "@/db/client";
 import { categories, itemTags, items, tags } from "@/db/schema";
 import { toDomain } from "@/lib/utils/url";
 import { sortByOrder } from "@/lib/utils/sort";
-import { visibleCategories, visibleItems } from "@/lib/utils/visibility";
+import { privateCategoryIds, visibleCategories, visibleItems } from "@/lib/utils/visibility";
 import type { PortalCategory, PortalData, PortalItem } from "./types";
 
 /**
@@ -31,7 +31,8 @@ export function getPortalData(options: { includePrivate: boolean }): PortalData 
     else tagsByItem.set(row.itemId, [row.name]);
   }
 
-  const visible = visibleItems(itemRows, options.includePrivate);
+  const hiddenCategories = privateCategoryIds(categoryRows, options.includePrivate);
+  const visible = visibleItems(itemRows, options.includePrivate, hiddenCategories);
   const shownCategories = visibleCategories(categoryRows, visible, options.includePrivate);
   // 匿名访问者的整个门户就是首页那一屏，没在首页显示的分类不必发过去
   const portalCategoriesSource = options.includePrivate
@@ -43,6 +44,7 @@ export function getPortalData(options: { includePrivate: boolean }): PortalData 
     name: category.name,
     description: category.description,
     visibleOnHomepage: category.visibleOnHomepage,
+    visibility: category.visibility,
     layout: category.layout,
   }));
 

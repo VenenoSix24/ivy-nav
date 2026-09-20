@@ -169,6 +169,94 @@ assert(
   `HTTP ${hexIcon.status} ${hexIconBody.length}B`,
 );
 
+// ---- 分类级隐藏：整类设为 Private 之后，匿名连分类带条目都看不到。
+// 匿名视图没有 JSON 接口（/api/portal 是管理接口），所以照旧读首页 HTML 来判断。
+const PROBE_CATEGORY = "整类隐藏探针";
+const PROBE_ITEM = "整类隐藏样例";
+
+const probeCategory = await call("/api/categories", {
+  method: "POST",
+  body: { name: PROBE_CATEGORY, visibleOnHomepage: true },
+});
+const probeCategoryId = probeCategory.json?.portal?.categories?.find(
+  (category) => category.name === PROBE_CATEGORY,
+)?.id;
+
+const probeItem = await call("/api/items", {
+  method: "POST",
+  body: {
+    title: PROBE_ITEM,
+    url: "https://example.com/",
+    categoryId: probeCategoryId,
+    visibility: "public",
+  },
+});
+assert(
+  "建好探针分类与公开条目",
+  Boolean(probeCategoryId) && probeItem.status === 200,
+  `分类 ${probeCategoryId}`,
+);
+
+const anonBefore = await fetch(`${BASE}/`).then((r) => r.text());
+assert(
+  "隐藏之前匿名首页能看到这个分类与条目",
+  anonBefore.includes(PROBE_CATEGORY) && anonBefore.includes(PROBE_ITEM),
+);
+
+const hidden = await call(`/api/categories/${probeCategoryId}`, {
+  method: "PATCH",
+  body: { visibility: "private" },
+});
+assert("把分类设为整类隐藏", hidden.status === 200, `HTTP ${hidden.status}`);
+
+const anonHidden = await fetch(`${BASE}/`).then((r) => r.text());
+assert(
+  "匿名首页连分类带条目都没有了",
+  !anonHidden.includes(PROBE_CATEGORY) && !anonHidden.includes(PROBE_ITEM),
+);
+
+const adminAfterHide = await call("/api/portal");
+assert(
+  "登录后仍然看得到整类隐藏的分类与条目",
+  (adminAfterHide.json?.portal?.categories ?? []).some((c) => c.id === probeCategoryId) &&
+    (adminAfterHide.json?.portal?.items ?? []).some((item) => item.title === PROBE_ITEM),
+);
+
+await call(`/api/categories/${probeCategoryId}`, {
+  method: "PATCH",
+  body: { visibility: "public" },
+});
+const anonRestored = await fetch(`${BASE}/`).then((r) => r.text());
+assert(
+  "恢复公开后又回来了",
+  anonRestored.includes(PROBE_CATEGORY) && anonRestored.includes(PROBE_ITEM),
+);
+
+const cleanupPortal = await call("/api/portal");
+const probeItemId = (cleanupPortal.json?.portal?.items ?? []).find(
+  (item) => item.title === PROBE_ITEM,
+)?.id;
+if (probeItemId) await call(`/api/items/${probeItemId}`, { method: "DELETE" });
+await call(`/api/categories/${probeCategoryId}`, { method: "DELETE" });
+
+// ---- 按网址猜标题（/api/site-meta）：同样是管理接口，也走同一套出口检查
+const metaAnon = await call("/api/site-meta?url=github.com", { auth: false });
+assert("匿名问标题被拒", metaAnon.status === 401, `HTTP ${metaAnon.status}`);
+
+const metaEmpty = await call("/api/site-meta?url=");
+assert("空网址被拒", metaEmpty.status === 400, `HTTP ${metaEmpty.status}`);
+
+const metaBad = await call("/api/site-meta?url=javascript:alert(1)");
+assert("非 http(s) 网址被拒", metaBad.status === 400, `HTTP ${metaBad.status}`);
+
+// 回环地址：出口检查拦下，不去抓，但「猜不到标题」不算错误
+const metaPrivate = await call("/api/site-meta?url=http%3A%2F%2F127.0.0.1%3A3222%2F");
+assert(
+  "内网地址只回 title: null（未发起抓取）",
+  metaPrivate.status === 200 && metaPrivate.json?.title === null,
+  `HTTP ${metaPrivate.status} ${JSON.stringify(metaPrivate.json)}`,
+);
+
 // ---- F8：管理数据响应禁止中间缓存
 const portalAgain = await call("/api/portal");
 assert(

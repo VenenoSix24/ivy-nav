@@ -16,15 +16,16 @@ const LAYOUT_ICONS: Record<LayoutId, typeof List> = {
 };
 
 interface LayoutSettingsProps {
-  initialPortal: PortalData;
+  /** 与「首页分类」共用同一份数据，那边新建分类这边立刻就有 */
+  portal: PortalData;
+  onPortal: (portal: PortalData) => void;
 }
 
 /**
  * 首页布局按分类各选一套：一个分类常常是另一种用法 ——
  * 项目适合摊开看描述，工具适合紧凑当入口，资料多则适合列表扫。
  */
-export function LayoutSettings({ initialPortal }: LayoutSettingsProps) {
-  const [portal, setPortal] = useState(initialPortal);
+export function LayoutSettings({ portal, onPortal }: LayoutSettingsProps) {
   const [busy, setBusy] = useState(false);
 
   async function pick(category: PortalCategory, next: LayoutId) {
@@ -39,7 +40,7 @@ export function LayoutSettings({ initialPortal }: LayoutSettingsProps) {
       return;
     }
 
-    setPortal(result.portal);
+    onPortal(result.portal);
     toast.success(
       `「${category.name}」改用${LAYOUTS.find((entry) => entry.id === next)?.label}布局`,
     );
