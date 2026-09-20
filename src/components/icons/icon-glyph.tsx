@@ -13,8 +13,9 @@ export interface IconSpec {
   /** 图标底下要不要那层底板：应用类图标自带圆角外形，套上底板就成了大圆套小圆 */
   plate?: boolean;
   /**
-   * 单色图标按主题前景色渲染。图片类图标只能烘死一个颜色，黑图在深色主题下会看不见 ——
-   * 这一档改成拿 SVG 的 alpha 当蒙版、颜色交给 `currentColor`，跟着主题走。
+   * 深色模式下把这张图标转成单色。图片类图标只能烘死一个颜色，黑图在深色主题下会看不见 ——
+   * 开了这一档，浅色下照原样显示（品牌色/原色），深色下改成拿 SVG 的 alpha 当蒙版、
+   * 颜色交给 `currentColor`，于是深色里它是浅的。两个主题各显示一份，CSS 切换，不用 JS。
    */
   mono?: boolean;
 }
@@ -25,6 +26,20 @@ interface IconGlyphProps {
   /** favicon 的来源地址；条目图标与「未保存网址的预览」用的是不同接口 */
   faviconSrc: string;
   className?: string;
+}
+
+/**
+ * 图标盒子的尺寸参数。图形大小按盒子算（容器查询单位），而不是各处再手写一个像素值 ——
+ * 盒子换尺寸时图形跟着走，关掉底板时也不必再去改那一串变量。
+ *
+ * 底板开着时图形占六成出头：底板本身就是一块视觉上的「形」，图形再大半圈就顶格了。
+ * 关掉底板后只剩图形自己，还按六成给就会显得很小 —— 所以让它涨到接近满格。
+ */
+export function iconBox(plate: boolean): React.CSSProperties {
+  return {
+    containerType: "size",
+    "--icon-glyph": plate ? "62cqh" : "88cqh",
+  } as React.CSSProperties;
 }
 
 /**
@@ -85,14 +100,15 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
     if (!hasSource) return <LetterMark title={title} className={className} />;
 
     // 蒙版只对 SVG 有意义：位图的 alpha 是整个方块，蒙出来就是一块实心色
-    if (spec.mono === true && /\.svg(\?|$)/i.test(src)) {
-      return <MaskGlyph src={src} className={className} />;
-    }
+    const darkMono = spec.mono === true && /\.svg(\?|$)/i.test(src);
 
     return (
       <span className={cn("relative grid size-full place-items-center", className)}>
         {phase === "ready" ? null : (
-          <LetterMark title={title} className="absolute inset-0 grid place-items-center" />
+          <LetterMark
+            title={title}
+            className={cn("absolute inset-0 grid place-items-center", darkMono && "dark:hidden")}
+          />
         )}
         {phase === "none" ? null : (
           <img
@@ -100,13 +116,18 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
             alt=""
             loading="lazy"
             decoding="async"
-            className="relative size-[var(--icon-glyph,1.25rem)] object-contain"
+            className={cn(
+              "relative size-[var(--icon-glyph,1.25rem)] object-contain",
+              darkMono && "dark:hidden",
+            )}
             ref={decide}
             // 占位图是 1×1 的透明 PNG：它「加载成功」但没有内容，仍要露首字母
             onLoad={(event) => decide(event.currentTarget)}
             onError={() => setPhase("none")}
           />
         )}
+        {/* 深色那一份：同一张 SVG 当蒙版，形状照旧、颜色交给主题 */}
+        {darkMono ? <MaskGlyph src={src} className="hidden dark:block" /> : null}
       </span>
     );
   }
@@ -117,8 +138,7 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
 }
 
 /**
- * 单色图标：拿 SVG 的 alpha 当蒙版，颜色用 `currentColor`（也就是主题前景色），
- * 所以同一张图在浅色下是黑的、深色下是白的，不必为两种主题各存一份。
+ * 深色里那份单色图标：拿 SVG 的 alpha 当蒙版，颜色用 `currentColor`（主题前景色）。
  * 图片只能走蒙版这一条路 —— `<img>` 里的 `currentColor` 不认页面的颜色。
  */
 function MaskGlyph({ src, className }: { src: string; className?: string }) {

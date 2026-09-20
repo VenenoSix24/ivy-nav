@@ -47,7 +47,7 @@ export function ItemTile({
         }}
         title={item.title}
         itemId={item.id}
-        className="size-10 rounded-xl [--icon-glyph:1.5rem]"
+        className="size-10 rounded-xl"
       />
       <span className="w-full truncate text-[12px] leading-tight font-medium tracking-[-0.01em]">
         {item.title}
