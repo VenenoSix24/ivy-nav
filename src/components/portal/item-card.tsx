@@ -47,7 +47,7 @@ export function ItemCard({
           spec={{ type: item.iconType, value: item.iconValue }}
           title={item.title}
           itemId={item.id}
-          className="size-10 sm:size-11"
+          className="size-12 text-[24px] [--icon-glyph:1.75rem] sm:size-14 sm:text-[28px] sm:[--icon-glyph:2rem]"
         />
         <div className="flex items-center gap-1">
           {showState ? <ItemState visibility={item.visibility} featured={item.featured} /> : null}
