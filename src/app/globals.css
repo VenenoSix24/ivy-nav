@@ -271,10 +271,8 @@
   html {
     @apply font-sans;
     -webkit-tap-highlight-color: transparent;
-    /* 画布底色只在这里给：body 的底色只铺到 body 的盒子，而 iOS 底部安全区
-       （悬浮工具栏与 Home 指示条所在的那条）在布局视口之外 —— 那一片归画布管，
-       画布是白的，看上去就像内容被一条白底拦腰截断。背景铺满整屏、
-       真正怕被挡住的内容用 safe-bottom 让开，这也是 Apple 的分工。 */
+    /* 画布底色：iOS 底部安全区（悬浮工具栏那一圈）在布局视口之外，归画布管，
+       画布是白的就会出现一条白底 */
     background-color: var(--background);
   }
 
@@ -282,12 +280,8 @@
     @apply text-foreground;
     letter-spacing: -0.012em;
     overflow-x: hidden;
-    /* 底色不在这里画，交给画布（html）与环境光那一层（AmbientBackground）——
-       两者颜色都是 --background，而环境光那层正好铺满屏幕、压在底边上，
-       iOS 26 的 Safari 就是靠它读到底色的（见那个组件的注释）。 */
-    /* 铺满屏幕（viewport-fit=cover）之后，屏幕底部那条安全区就归页面了：
-       留出 Home 指示条的高度，最后一行内容才不会被压在它下面。
-       body 是 border-box，这条内边距算在 min-h-lvh 里，不会多出一截滚动。 */
+    /* 底色不在这里画，交给画布与环境光那层（见 AmbientBackground）；
+       这条内边距给 Home 指示条让位，算在 min-h-lvh 里，不会多出一截滚动 */
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
@@ -297,10 +291,8 @@
   }
 }
 
-/* 轻玻璃卡面：卡片是本项目唯一的材质语言，其他表面保持素色（设计文档 §46）。
-   这里只能写不带前缀的 backdrop-filter —— 手写 -webkit- 会被 Next 的 CSS 优化
-   当成作者自备前缀，把无前缀那条合并掉，Chrome 上就完全没有磨砂了。
-   前缀交给构建管线按目标浏览器补。 */
+/* 轻玻璃卡面（设计文档 §46）。这里只能写不带前缀的 backdrop-filter：手写 -webkit-
+   会被 Next 的 CSS 优化当成作者自备前缀，把无前缀那条合并掉，Chrome 上就没有磨砂了。 */
 @utility surface {
   background: var(--surface-glass);
   border: 1px solid var(--surface-border);
@@ -308,9 +300,7 @@
   box-shadow: var(--surface-shadow);
 }
 
-/* 浮层玻璃：弹窗、菜单、下拉这些浮在内容之上的表面，与卡面同一套材质。
-   比卡面更实一点（--surface-glass-strong）—— 压在上面的正文要留得住对比度；
-   模糊也给得更大一圈，浮层与身后的内容才分得出层次。 */
+/* 浮层玻璃：弹窗、菜单这些压在内容之上的表面，比卡面更实一点，模糊也更大一圈 */
 @utility surface-float {
   background: var(--surface-glass-strong);
   backdrop-filter: blur(34px) saturate(160%);

@@ -18,10 +18,8 @@ const MISS_TTL_MS = 10 * 60 * 1000;
 const CACHE_NAMESPACE = "favicon";
 
 /**
- * 兜底的第三方图标服务，前一个拿不到就用下一个。
- * 这两个都实测过：从本机可达、认得的域名回真图（Google s2 与 DuckDuckGo 在部分网络下
- * 连不上，列上去只是每次白等一个超时）。只在前面的直连都失败时才用 ——
- * 代价是把域名给了第三方，所以留了开关：FAVICON_FALLBACK_SOURCES=false 可以关掉。
+ * 兜底的第三方图标服务，前一个拿不到就用下一个：只在前面的直连都失败时才轮到它们。
+ * 代价是把域名给了第三方，所以留了开关 FAVICON_FALLBACK_SOURCES=false。
  */
 const FALLBACK_URLS: Partial<Record<IconSourceId, (host: string) => string>> = {
   "favicon.im": (host) => `https://favicon.im/${host}`,
@@ -48,10 +46,7 @@ export interface IconPayload {
   contentType: string;
 }
 
-/**
- * 缓存按「来源」分开存：选择器要一次列出每个方案各拿到什么，各自都得留下自己那份。
- * `auto` 是自动链最终选中的那一份，条目的常规取图走的就是它。
- */
+/** 缓存按来源分开存：选择器要一次列出每个方案各拿到什么。`auto` 是自动链最终选中的那一份。 */
 type CacheKey = IconSourceId | "auto";
 
 function readCache(origin: string, source: CacheKey): IconPayload | null {
@@ -172,10 +167,7 @@ function decodeEntities(value: string): string {
   });
 }
 
-/**
- * 从 HTML 里挑一个能当条目标题的字符串。
- * 优先 og:site_name（通常就是站点名）→ og:title → <title>：后两者常带一句副标题。
- */
+/** 标题优先 og:site_name → og:title → `<title>`：后两者常带一句副标题。 */
 export function pickSiteTitle(html: string): string | null {
   const meta = (key: string): string | null => {
     const tag = html.match(
@@ -199,10 +191,7 @@ export function pickSiteTitle(html: string): string | null {
   return null;
 }
 
-/**
- * 取网页标题：新建条目时用户只输了网址，标题可以照网页自己填上。
- * 与取图标共用同一套出口检查与超时；拿不到就返回 null —— 这一层同样不抛错。
- */
+/** 取网页标题：与取图标共用同一套出口检查与超时，拿不到就返回 null（这一层不抛错）。 */
 export async function fetchSiteTitle(pageUrl: URL): Promise<string | null> {
   try {
     const response = await fetchWithTimeout(pageUrl.toString(), "text/html,*/*;q=0.8");
@@ -214,10 +203,7 @@ export async function fetchSiteTitle(pageUrl: URL): Promise<string | null> {
   }
 }
 
-/**
- * PWA 的 manifest 里声明的图标。有些站点（尤其是「装着当应用用」的那些）不在 HTML 里
- * 写 <link rel="icon">，图标只放在 manifest.json 里。
- */
+/** 有些站点不在 HTML 里写 `<link rel="icon">`，图标只放在 PWA manifest 里。 */
 async function manifestIconCandidates(html: string, base: URL): Promise<string[]> {
   const href = linkHref(html, "manifest", base);
   if (!href) return [];
@@ -275,10 +261,9 @@ async function download(candidates: string[]): Promise<IconPayload | null> {
 }
 
 /**
- * 服务「查不到图标」时会回自己那张占位图：favicon.im 是一张固定的 SVG（不存在的域名与
- * example.com 都是同一份字节），icon.horse 是按首字母生成的字母图（两个乱造域名只要
- * 首字母相同，字节完全一致）。所以哨兵域名取「同一个首字母 + 必然不存在」，
- * 与它撞上就说明这不是真图标 —— 否则会把服务自己生成的图当成站点图标，比露首字母还糟。
+ * 服务「查不到图标」时会回自己那张占位图：favicon.im 固定一份 SVG，icon.horse 按首字母生成。
+ * 哨兵域名取「同一个首字母 + 必然不存在」，字节撞上就说明这不是真图标 ——
+ * 否则会把服务自己生成的图当成站点图标，比露首字母还糟。
  */
 const SENTINEL_CACHE = new Map<string, Promise<string | null>>();
 
@@ -386,11 +371,7 @@ async function pageHtml(pageUrl: URL): Promise<string | null> {
   }
 }
 
-/**
- * 把每个方案都真问一遍，让用户在图标选择器里看着挑 —— 以前是「一个不行就悄悄换下一个」，
- * 结果是哪个方案给的图、为什么是这张，用户都看不到。
- * 各方案并行问，页面 HTML 只抓一遍（声明与 manifest 共用）。
- */
+/** 把每个方案都真问一遍，让用户在选择器里看着挑；各方案并行，页面 HTML 只抓一遍。 */
 export async function listFaviconCandidates(pageUrl: URL): Promise<IconCandidate[]> {
   const html = await pageHtml(pageUrl);
 
@@ -419,10 +400,7 @@ export async function listFaviconCandidates(pageUrl: URL): Promise<IconCandidate
   );
 }
 
-/**
- * 取某一个来源的图标，不做任何退让：选择器里的缩略图要的就是「这个方案给的是哪张」，
- * 退让会拿别的来源的图顶上来，标签就对不上了。
- */
+/** 取某一个来源的图标，不做退让：缩略图要的就是「这个方案给的是哪张」。 */
 export async function resolveIconSource(
   pageUrl: URL,
   source: IconSourceId,
@@ -456,11 +434,8 @@ function recentlyMissed(origin: string, now: number): boolean {
 }
 
 /**
- * 取站点图标：按方案顺序问，第一个拿到的就是它。
- * 结果按 origin 落盘缓存，避免每次打开首页都对每个站点发一轮请求。
- *
- * `preferred` 是用户在选择器里点过的那一个方案：先只问它，它这会儿取不到再回到自动链 ——
- * 用户挑的是「更好看的那张」，不是「取不到就空着」。
+ * 取站点图标：按方案顺序问，第一个拿到的就是它，结果按 origin 落盘。
+ * `preferred` 是用户在选择器里点过的那一个方案：先只问它，取不到再回到自动链。
  */
 export async function resolveFavicon(
   pageUrl: URL,
