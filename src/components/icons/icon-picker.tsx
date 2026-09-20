@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Ban, Loader2, Search, Sparkles, Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Ban, ImageDown, Loader2, Search, Upload } from "lucide-react";
 import { cn } from "cn";
 import { toast } from "sonner";
 import { IconGlyph, previewFaviconSrc, type IconSpec } from "@/components/icons/icon-glyph";
@@ -15,15 +15,40 @@ interface IconPickerProps {
   /** 用于预览还没保存的网址 */
   url: string;
   title: string;
+  /** 打开时这个条目的图标已经取过了（编辑已有条目）：预览直接显示，不用再点一次 */
+  initialFetched?: boolean;
 }
+
+type FetchState = "idle" | "loading" | "ok" | "failed";
 
 const MAX_UPLOAD_BYTES = 512 * 1024;
 
-export function IconPicker({ spec, onChange, url, title }: IconPickerProps) {
+export function IconPicker({
+  spec,
+  onChange,
+  url,
+  title,
+  initialFetched = false,
+}: IconPickerProps) {
   const [emojiQuery, setEmojiQuery] = useState("");
   const [lucideQuery, setLucideQuery] = useState("");
   const [uploading, setUploading] = useState(false);
+  /**
+   * 网站图标要「点一下才去抓」：以前那一行「使用网站图标」看着像个按钮，
+   * 点下去的其实只是选中态，谁点了都会以为坏了。现在就一个「获取图标」按钮，
+   * 抓到了显示图标，抓不到明说抓不到。
+   */
+  const [fetchState, setFetchState] = useState<FetchState>(initialFetched ? "ok" : "idle");
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // 网址一换，之前那次获取就不作数了，免得拿着旧站点的结果当新站点的
+  const lastUrl = useRef(url.trim());
+  useEffect(() => {
+    const next = url.trim();
+    if (next === lastUrl.current) return;
+    lastUrl.current = next;
+    setFetchState("idle");
+  }, [url]);
 
   const emojiResults = searchEmoji(emojiQuery);
   const lucideResults = filterLucide(lucideQuery);
@@ -62,17 +87,35 @@ export function IconPicker({ spec, onChange, url, title }: IconPickerProps) {
     }
   }
 
+  const faviconHint =
+    fetchState === "failed"
+      ? "没抓到这个网站的图标：可以改用 Emoji、Lucide 或自己上传，也可以就这样保存（会显示标题首字母）。"
+      : fetchState === "ok"
+        ? "已取到网站图标。"
+        : url.trim()
+          ? "还没获取：点左边的按钮去抓一次。"
+          : "先在上面填上网址，再来获取图标。";
+
+  async function fetchFavicon() {
+    const target = url.trim();
+    if (!target) return;
+
+    onChange({ type: "favicon", value: null });
+    setFetchState("loading");
+    setFetchState((await probeImage(previewFaviconSrc(target))) ? "ok" : "failed");
+  }
+
   return (
     <div className="border-border rounded-xl border p-3">
       <div className="mb-3 flex items-center gap-3">
         <span
           aria-hidden
-          className="border-hairline bg-glass-strong inline-grid size-12 place-items-center rounded-lg border text-[22px] leading-none"
+          className="border-hairline bg-glass-strong inline-grid size-12 place-items-center rounded-lg border leading-none [--icon-glyph:1.75rem]"
         >
           <IconGlyph
             spec={spec}
             title={title || "?"}
-            faviconSrc={url.trim() ? previewFaviconSrc(url) : ""}
+            faviconSrc={fetchState === "ok" && url.trim() ? previewFaviconSrc(url) : ""}
           />
         </span>
         <div className="min-w-0 flex-1">
@@ -101,21 +144,36 @@ export function IconPicker({ spec, onChange, url, title }: IconPickerProps) {
 
         <TabsContent value="favicon" className="pt-3">
           <p className="text-muted-foreground mb-3 text-[12px] leading-relaxed">
-            自动读取该网站的图标，取不到时显示标题首字母。结果会缓存在服务器上，不会每次打开都重新抓。
+            点「获取图标」去这个网站抓一张，抓到的会缓存在服务器上，以后打开不用重新抓。
           </p>
-          <button
-            type="button"
-            onClick={() => onChange({ type: "favicon", value: null })}
-            className={cn(
-              "focus-visible:outline-ring inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] transition-colors focus-visible:outline-2",
-              spec.type === "favicon"
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary hover:bg-accent",
-            )}
-          >
-            <Sparkles className="size-3.5" />
-            使用网站图标
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={!url.trim() || fetchState === "loading"}
+              onClick={() => void fetchFavicon()}
+              className={cn(
+                "border-hairline bg-glass-strong focus-visible:outline-ring inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] transition-colors focus-visible:outline-2",
+                "hover:bg-glass",
+                fetchState === "ok" ? "text-primary" : "text-foreground",
+                "disabled:cursor-not-allowed disabled:opacity-60",
+              )}
+            >
+              {fetchState === "loading" ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <ImageDown className="size-3.5" />
+              )}
+              {fetchState === "loading" ? "获取中…" : fetchState === "ok" ? "重新获取" : "获取图标"}
+            </button>
+            <span
+              className={cn(
+                "min-w-0 flex-1 text-[12px] leading-relaxed",
+                fetchState === "failed" ? "text-destructive" : "text-muted-foreground",
+              )}
+            >
+              {faviconHint}
+            </span>
+          </div>
         </TabsContent>
 
         <TabsContent value="emoji" className="pt-3">
@@ -255,6 +313,19 @@ function describe(spec: IconSpec): string {
     default:
       return "该来源暂未开放";
   }
+}
+
+/**
+ * 真的去取一次那张图。占位图是 1×1 的透明 PNG —— 它「加载成功」但没有内容，
+ * 与图标渲染那边的判断保持一致：宽高大于 1 才算取到。
+ */
+function probeImage(src: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve(image.naturalWidth > 1 && image.naturalHeight > 1);
+    image.onerror = () => resolve(false);
+    image.src = src;
+  });
 }
 
 function readError(payload: unknown): string | null {
