@@ -54,7 +54,9 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
     // 图标来自运行时查表，用 createElement 渲染，避免在 render 期间动态构造组件
     const Icon = getLucideIcon(spec.value);
     if (!Icon) return <LetterMark title={title} className={className} />;
-    return createElement(Icon, { className: cn("text-foreground size-5", className) });
+    return createElement(Icon, {
+      className: cn("text-foreground size-[var(--icon-glyph,1.25rem)]", className),
+    });
   }
 
   if (spec.type === "upload" || spec.type === "favicon") {
@@ -75,7 +77,7 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
             alt=""
             loading="lazy"
             decoding="async"
-            className="relative size-5 object-contain"
+            className="relative size-[var(--icon-glyph,1.25rem)] object-contain"
             ref={decide}
             // 占位图是 1×1 的透明 PNG：它「加载成功」但没有内容，仍要露首字母
             onLoad={(event) => decide(event.currentTarget)}
@@ -95,7 +97,8 @@ function LetterMark({ title, className }: { title: string; className?: string })
   return (
     <span
       className={cn(
-        "text-accent-foreground grid place-items-center text-[15px] font-semibold",
+        // 跟着图标图形走：默认 1.25rem × 0.75 = 15px，与之前一致
+        "text-accent-foreground grid place-items-center text-[calc(var(--icon-glyph,1.25rem)*0.75)] font-semibold",
         className,
       )}
     >

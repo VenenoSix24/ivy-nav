@@ -4,7 +4,7 @@ import { ItemIcon } from "@/components/portal/item-icon";
 import { ItemState } from "@/components/portal/item-state";
 import type { PortalItem } from "@/lib/portal/types";
 
-// 标签与描述共用右侧那条位置，最多两个，再多就把描述挤没了
+// 最多两个标签：窄屏还要给描述留出能读的一段（第二个标签窄屏隐藏，见下）
 const MAX_VISIBLE_TAGS = 2;
 
 interface ItemRowProps {
@@ -22,13 +22,13 @@ interface ItemRowProps {
 /**
  * 列表：一行一条，两行文字铺满整行宽度。
  *
- *   图标  标题                                    域名        [角标] [菜单] 打开
- *         描述                              #标签 #标签
+ *   图标  标题  域名                        [角标] [菜单] 打开
+ *         描述  #标签 #标签
  *
- * 域名与标题同一行、标签与描述同一行，并各自靠右 —— 之前把它们串在标题后面、
- * 整行左边挤成一团、右边空着一大片，一行的高度也没被用上。
+ * 域名紧跟在标题后面、标签紧跟在描述后面，两行都从左边排起 —— 靠右会让中间空出
+ * 一大片，而且它们会被误读成「跟打开按钮有关」。窄屏去掉域名，标签只留第一个，
+ * 换描述能读出完整的一句。
  *
- * 窄屏去掉域名（那里没有它的位置，标题与描述更重要），描述与标签保留。
  * 行高定死，因此有没有描述、有几个标签都排得整齐。
  */
 export function ItemRow({
@@ -44,7 +44,7 @@ export function ItemRow({
   const hiddenTagCount = item.tags.length - visibleTags.length;
 
   const className = cn(
-    "surface surface-hover group flex min-h-[4.25rem] items-center gap-3 rounded-xl py-2.5 pr-3.5",
+    "surface surface-hover group flex min-h-[4.75rem] items-center gap-3 rounded-xl py-3.5 pr-3.5",
     draggable ? "pl-9" : "pl-3.5",
     interactive &&
       "focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
@@ -61,28 +61,29 @@ export function ItemRow({
       />
 
       <div className="min-w-0 flex-1 space-y-1">
-        <div className="flex items-center gap-3">
+        {/* 域名紧跟标题，不推到右边 —— 靠右会让中间空出一大片 */}
+        <div className="flex min-w-0 items-center gap-3">
           <span className="truncate text-[14px] leading-snug font-medium tracking-[-0.01em]">
             {item.title}
           </span>
-          <span className="text-muted-foreground ml-auto hidden shrink-0 text-[12px] sm:block">
+          <span className="text-muted-foreground hidden shrink-0 text-[12px] sm:block">
             {item.domain}
           </span>
         </div>
 
-        {/* 窄屏上描述与标签各自占一行：390px 时两个标签就要吃掉一大半宽度，
-            并排的结果是描述被截成「本…」这种没用的残句 */}
-        <div className="flex min-h-[1.05rem] flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-3">
+        <div className="flex min-h-[1.05rem] min-w-0 items-center gap-3">
           {item.description ? (
-            <span className="text-muted-foreground w-full truncate text-[12px] sm:w-auto">
-              {item.description}
-            </span>
+            <span className="text-muted-foreground truncate text-[12px]">{item.description}</span>
           ) : null}
-          <span className="flex shrink-0 items-center gap-1.5 text-[11px] leading-none sm:ml-auto">
-            {visibleTags.map((tag) => (
+          <span className="flex shrink-0 items-center gap-1.5 text-[11px] leading-none">
+            {visibleTags.map((tag, index) => (
               <span
                 key={tag}
-                className="bg-accent text-accent-foreground rounded-full px-2 py-[3px]"
+                // 窄屏只留第一个标签：390px 下两个标签会把描述挤成「本…」这种残句
+                className={cn(
+                  "bg-accent text-accent-foreground rounded-full px-2 py-[3px]",
+                  index > 0 && "hidden sm:inline-block",
+                )}
               >
                 {tag}
               </span>
