@@ -52,6 +52,10 @@ TASKS.md
 # editor local history
 .history
 
+# ZCode 的本地忽略规则
+.zcodeignore
+.zcode/
+
 # next dev 每次自动生成，提交它只会反复产生噪音
 AGENTS.md
 
