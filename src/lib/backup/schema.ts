@@ -11,6 +11,7 @@ const categorySchema = z.object({
   sortOrder: z.number().int().min(0).optional(),
   visibleOnHomepage: z.boolean().optional(),
   visibility: z.enum(visibilityValues).optional(),
+  layout: z.enum(["card", "list", "compact"]).nullish(),
 });
 
 const itemSchema = z.object({

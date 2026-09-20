@@ -10,8 +10,6 @@ export type LayoutId = (typeof LAYOUTS)[number]["id"];
 
 export const DEFAULT_LAYOUT: LayoutId = "card";
 
-export const LAYOUT_SETTING_KEY = "homepage.layout";
-
 /**
  * 三套形状的网格参数。公开视图与编辑视图共用同一份：那串 grid class 以前在两个组件里
  * 各抄了一遍，改一处忘一处就会漂。

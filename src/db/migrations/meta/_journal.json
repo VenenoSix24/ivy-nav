@@ -8,6 +8,13 @@
       "when": 1789828056244,
       "tag": "0000_tan_wong",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1789870946881,
+      "tag": "0001_curious_warbird",
+      "breakpoints": true
     }
   ]
 }

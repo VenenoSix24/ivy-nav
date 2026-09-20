@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { layoutSchema } from "@/lib/settings/homepage";
 import { normalizeUrl, parseHttpUrl } from "@/lib/utils/url";
 
 export const visibilityValues = ["public", "private"] as const;
@@ -32,6 +33,8 @@ export const categoryInputSchema = z.object({
   description: z.string().trim().max(200, "分类说明过长：上限 200 个字符。").nullish(),
   visibleOnHomepage: z.boolean().optional(),
   visibility: z.enum(visibilityValues).optional(),
+  /** null 表示回到默认布局 */
+  layout: layoutSchema.nullable().optional(),
 });
 
 export const itemInputSchema = z.object({

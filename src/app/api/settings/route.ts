@@ -1,7 +1,6 @@
 import { firstIssueMessage, jsonError, jsonOk, readJson } from "@/lib/api/http";
 import { withAdmin } from "@/lib/auth/guard";
 import { PALETTE_SETTING_KEY } from "@/lib/settings/appearance";
-import { LAYOUT_SETTING_KEY } from "@/lib/settings/homepage";
 import { settingsPatchSchema } from "@/lib/settings/schemas";
 import { writeSetting } from "@/lib/settings/store";
 
@@ -16,10 +15,9 @@ export async function PATCH(request: Request) {
     const parsed = settingsPatchSchema.safeParse(await readJson(request));
     if (!parsed.success) return jsonError(firstIssueMessage(parsed.error), 400);
 
-    const { palette, layout } = parsed.data;
-    if (palette !== undefined) writeSetting(PALETTE_SETTING_KEY, palette);
-    if (layout !== undefined) writeSetting(LAYOUT_SETTING_KEY, layout);
+    const { palette } = parsed.data;
+    writeSetting(PALETTE_SETTING_KEY, palette);
 
-    return jsonOk({ palette, layout });
+    return jsonOk({ palette });
   });
 }
