@@ -52,15 +52,16 @@ interface IconGlyphProps {
  * 图标盒子的尺寸参数。图形大小按盒子算（容器查询单位），而不是各处再手写一个像素值 ——
  * 盒子换尺寸时图形跟着走，关掉底板时也不必再去改那一串变量。
  *
- * 底板开着时图形占七成出头：底板本身是一块视觉上的「形」，图形再大半圈就顶格了；
- * 但也不能太小 —— 取回来的图标常自带透明边距，本来就不填格，再留一大圈就成了
- * 「大圆套小圆」，看着还像偏心。关掉底板后只剩图形自己，让它涨到接近满格。
+ * 「原样」这一档留一圈呼吸位：底板开着时图形占七成出头，关掉底板（只剩图形自己）时
+ * 涨到接近满格，不然看着忽然小一圈。
+ *
+ * 另外三档的诉求就是**填满**，所以图形直接顶到盒子边 —— 早先这一档也留七成，
+ * 于是选了「铺满」还是够不着板边：图里自带白底的应用类图标（比如 Excalidraw）
+ * 内容本来就占满整张画布，再没有可裁的透明边，怎么算都差那一圈。
  */
-export function iconBox(plate: boolean): React.CSSProperties {
-  return {
-    containerType: "size",
-    "--icon-glyph": plate ? "72cqh" : "88cqh",
-  } as React.CSSProperties;
+export function iconBox(plate: boolean, fit: IconFitId = DEFAULT_ICON_FIT): React.CSSProperties {
+  const glyph = fit === "contain" ? (plate ? "72cqh" : "88cqh") : "100cqh";
+  return { containerType: "size", "--icon-glyph": glyph } as React.CSSProperties;
 }
 
 /**
@@ -136,8 +137,10 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
 
     // 蒙版只对 SVG 有意义：位图的 alpha 是整个方块，蒙出来就是一块实心色
     const darkMono = spec.mono === true && /\.svg(\?|$)/i.test(src);
-    // 裁边最多放大到 1.6 倍，超出图形框的那部分要由外层裁掉
+    // 非「原样」的档位会顶到盒子边：放大溢出的部分要裁掉，圆角跟着盒子走，
+    // 否则满幅图片的方角会从底板的圆角外面透出来
     const applied = trim && trim.src === src ? trim.transform : null;
+    const clipped = fit !== "contain";
     const transform = applied
       ? `scale(${applied.scale}) translate(${applied.x * 100}%, ${applied.y * 100}%)`
       : undefined;
@@ -146,7 +149,7 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
       <span
         className={cn(
           "relative grid size-full place-items-center",
-          applied && "overflow-hidden",
+          clipped && "overflow-hidden rounded-[inherit]",
           className,
         )}
       >

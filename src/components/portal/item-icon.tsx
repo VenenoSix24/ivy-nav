@@ -2,6 +2,7 @@
 
 import { cn } from "cn";
 import { IconGlyph, iconBox, type IconSpec } from "@/components/icons/icon-glyph";
+import { DEFAULT_ICON_FIT } from "@/lib/icons/fit";
 import { itemFaviconSrc } from "@/lib/icons/urls";
 
 interface ItemIconProps {
@@ -25,7 +26,7 @@ export function ItemIcon({ spec, title, itemId, className, glyphClassName }: Ite
   return (
     <span
       aria-hidden
-      style={iconBox(plate)}
+      style={iconBox(plate, spec.fit ?? DEFAULT_ICON_FIT)}
       className={cn(
         "inline-grid size-11 shrink-0 place-items-center leading-none",
         plate && "border-hairline bg-glass-strong rounded-lg border",

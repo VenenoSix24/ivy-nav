@@ -452,7 +452,7 @@ export function IconPicker({
       <div className="mb-3 flex items-center gap-3">
         <span
           aria-hidden
-          style={iconBox(plate)}
+          style={iconBox(plate, spec.fit ?? DEFAULT_ICON_FIT)}
           className={cn(
             "inline-grid size-12 shrink-0 place-items-center leading-none",
             plate && "border-hairline bg-glass-strong rounded-lg border",
