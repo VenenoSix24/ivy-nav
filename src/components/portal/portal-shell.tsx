@@ -183,15 +183,32 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
     [sections],
   );
 
-  /** 乐观更新：拖完立刻按新顺序重排本地数据 */
+  /** 拖动排序：先按新顺序更新本地，失败就退回拖动前那一份 */
+  async function submitOrder(
+    path: string,
+    orderedIds: number[],
+    apply: (current: PortalData) => PortalData,
+  ) {
+    const before = portal;
+    setPortal(apply(before));
+
+    const result = await portalRequest(path, { orderedIds });
+    if (result.ok) {
+      setPortal(result.portal);
+      return;
+    }
+
+    setPortal(before);
+    toast.error(result.error);
+  }
+
   function submitCategoryOrder(orderedIds: number[]) {
-    setPortal((current) => ({
+    void submitOrder("/api/categories/reorder", orderedIds, (current) => ({
       ...current,
       categories: orderedIds
         .map((id) => current.categories.find((category) => category.id === id))
         .filter((category): category is PortalCategory => category !== undefined),
     }));
-    void mutate("/api/categories/reorder", { orderedIds });
   }
 
   function shiftCategory(category: PortalCategory, direction: -1 | 1) {
@@ -376,13 +393,12 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
                     layout={section.layout}
                     categories={portal.categories}
                     sortable={canDrag}
-                    onReorder={(orderedIds) => {
-                      setPortal((current) => ({
+                    onReorder={(orderedIds) =>
+                      void submitOrder("/api/items/reorder", orderedIds, (current) => ({
                         ...current,
                         items: reorderWithin(current.items, orderedIds),
-                      }));
-                      void mutate("/api/items/reorder", { orderedIds });
-                    }}
+                      }))
+                    }
                     onEdit={(item) => setEditor({ key: `item-${item.id}`, item, categoryId: null })}
                     onDuplicate={(item) =>
                       void mutate(
