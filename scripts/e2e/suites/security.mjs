@@ -132,6 +132,12 @@ assert(
   `HTTP ${anonUploadShared.status}`,
 );
 
+assert(
+  "匿名那份只缓存 7 天（可见性会变）",
+  anonUploadShared.headers.get("cache-control") === "public, max-age=604800",
+  anonUploadShared.headers.get("cache-control") ?? "无",
+);
+
 await call(`/api/items/${uploadItemId}`, { method: "PATCH", body: { visibility: "private" } });
 const anonUploadHidden = await fetch(`${BASE}/api/icons/file/${UPLOAD_NAME}`);
 assert(
@@ -142,6 +148,11 @@ assert(
 
 const adminUpload = await call(`/api/icons/file/${UPLOAD_NAME}`);
 assert("管理员仍然取得到这个图标文件", adminUpload.status === 200, `HTTP ${adminUpload.status}`);
+assert(
+  "管理员那份是 private + immutable",
+  adminUpload.headers.get("cache-control") === "private, max-age=31536000, immutable",
+  adminUpload.headers.get("cache-control") ?? "无",
+);
 
 await call(`/api/items/${uploadItemId}`, { method: "DELETE" });
 fs.rmSync(path.join(DATA_DIR, "uploads", UPLOAD_NAME), { force: true });
