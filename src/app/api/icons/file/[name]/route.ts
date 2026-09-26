@@ -19,10 +19,13 @@ export async function GET(_request: Request, { params }: { params: Promise<{ nam
 
   const contentType = uploadContentType(name);
 
+  // 匿名那份的可见性会变，只缓存 7 天；管理员那份只进他自己的浏览器
+  const cacheControl = session ? "private, max-age=31536000, immutable" : "public, max-age=604800";
+
   return new Response(binaryBody(body), {
     headers: {
       "content-type": contentType,
-      "cache-control": "public, max-age=31536000, immutable",
+      "cache-control": cacheControl,
       "x-content-type-options": "nosniff",
       "content-security-policy":
         "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox",
