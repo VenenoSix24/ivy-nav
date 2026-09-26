@@ -10,11 +10,12 @@
 | `POST /api/items/reorder`                                     | 条目排序（写 `sort_order`） |
 | `POST /api/categories`、`PATCH`/`DELETE /api/categories/[id]` | 分类增删改                  |
 | `POST /api/categories/reorder`                                | 分类排序                    |
-| `POST /api/tags`                                              | 标签                        |
 | `PATCH /api/settings`                                         | 外观与图标偏好的写入        |
 
 都要求管理员会话，未登录返回 401（`src/lib/auth/guard.ts`）。请求体用 zod 校验
 （`src/lib/portal/schemas.ts`），网址只接受 `http` / `https`。
+
+标签没有单独的接口：随条目的 `tagNames` 一起写，写完顺手清掉已经没人引用的那些。
 
 ## 条目
 
