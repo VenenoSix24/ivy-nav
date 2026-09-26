@@ -4,18 +4,20 @@
 
 ## 写接口
 
-| 接口                                                          | 说明                        |
-| ------------------------------------------------------------- | --------------------------- |
-| `POST /api/items`、`PATCH`/`DELETE /api/items/[id]`           | 条目增删改                  |
-| `POST /api/items/reorder`                                     | 条目排序（写 `sort_order`） |
-| `POST /api/categories`、`PATCH`/`DELETE /api/categories/[id]` | 分类增删改                  |
-| `POST /api/categories/reorder`                                | 分类排序                    |
-| `PATCH /api/settings`                                         | 外观与图标偏好的写入        |
+| 接口                                                          | 说明                           |
+| ------------------------------------------------------------- | ------------------------------ |
+| `POST /api/items`、`PATCH`/`DELETE /api/items/[id]`           | 条目增删改                     |
+| `POST /api/items/reorder`                                     | 条目排序（写 `sort_order`）    |
+| `POST /api/categories`、`PATCH`/`DELETE /api/categories/[id]` | 分类增删改                     |
+| `POST /api/categories/reorder`                                | 分类排序                       |
+| `PATCH /api/settings`                                         | 外观与图标偏好的写入           |
+| `PATCH /api/tags/[id]`                                        | 标签改名（名字已存在就是合并） |
 
 都要求管理员会话，未登录返回 401（`src/lib/auth/guard.ts`）。请求体用 zod 校验
 （`src/lib/portal/schemas.ts`），网址只接受 `http` / `https`。
 
-标签没有单独的接口：随条目的 `tagNames` 一起写，写完顺手清掉已经没人引用的那些。
+标签平时随条目的 `tagNames` 一起写，写完顺手清掉已经没人引用的那些；设置页的「标签」一节可以改名
+（`PATCH /api/tags/[id]`），改成一个已经存在的名字就是合并过去。
 
 ## 条目
 

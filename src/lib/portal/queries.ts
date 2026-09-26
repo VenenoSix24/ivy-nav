@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, count, eq } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { categories, itemTags, items, tags } from "@/db/schema";
 import { getDefaultIconFit } from "@/lib/settings/icon-fit";
@@ -10,7 +10,7 @@ import {
   visibleCategories,
   visibleItems,
 } from "@/lib/utils/visibility";
-import type { PortalCategory, PortalData, PortalItem } from "./types";
+import type { PortalCategory, PortalData, PortalItem, TagSummary } from "./types";
 
 /** The only way portal content reaches a page; filtering happens here, on the server. */
 export function getPortalData(options: { includePrivate: boolean }): PortalData {
@@ -106,4 +106,22 @@ export function hasGuestVisibleIcon(name: string): boolean {
       holder.categoryId === null ? null : (byId.get(holder.categoryId) ?? null),
     ),
   );
+}
+
+/** 标签与用它的条目数，按名字排（设置页的「标签」一节用） */
+export function listTagsWithCounts(): TagSummary[] {
+  const db = getDb();
+  const counts = db
+    .select({ tagId: itemTags.tagId, itemCount: count() })
+    .from(itemTags)
+    .groupBy(itemTags.tagId)
+    .all();
+  const byTag = new Map(counts.map((row) => [row.tagId, row.itemCount]));
+
+  return db
+    .select()
+    .from(tags)
+    .all()
+    .map((tag) => ({ id: tag.id, name: tag.name, itemCount: byTag.get(tag.id) ?? 0 }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }

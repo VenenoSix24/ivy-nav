@@ -45,6 +45,13 @@ export interface PortalData {
   defaultIconFit: IconFitId;
 }
 
+/** 设置页「标签」一节用的：标签与用它的条目数 */
+export interface TagSummary {
+  id: number;
+  name: string;
+  itemCount: number;
+}
+
 export const ALL_CATEGORIES = "all" as const;
 /** 未归档条目的伪分类，只在管理视图里出现 */
 export const INBOX = "inbox" as const;
