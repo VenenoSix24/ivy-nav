@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Check, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { SettingsSection } from "@/components/settings/settings-section";
-import { Input } from "@/components/ui/input";
 import type { TagSummary } from "@/lib/portal/types";
 
 interface TagSettingsProps {
@@ -64,19 +63,19 @@ export function TagSettings({ initialTags }: TagSettingsProps) {
   return (
     <SettingsSection
       title="标签"
-      description="标签是共用的：在这里改名，用到它的条目会跟着改；改成一个已经存在的名字就是合并过去。没人用的标签在保存条目时自动清掉，所以这里不提供删除。"
+      description="标签是共用的：点标签名（或铅笔）改名，会作用到所有用到它的条目；改成一个已经存在的名字就是合并过去。名字后面那个数字是有多少条目在用；没人用的标签在保存条目时自动清掉，所以这里不提供删除。"
     >
       {tags.length === 0 ? (
         <p className="text-muted-foreground text-[13px]">
           还没有标签：在条目的标签框里输入就会创建。
         </p>
       ) : (
-        <ul className="divide-border divide-y">
+        <ul className="flex flex-wrap items-center gap-1.5">
           {tags.map((tag) => (
-            <li key={tag.id} className="flex items-center gap-3 py-2.5">
+            <li key={tag.id}>
               {editingId === tag.id ? (
-                <>
-                  <Input
+                <span className="bg-secondary inline-flex items-center gap-1 rounded-full py-1 pr-1 pl-2.5 text-[12px] leading-none">
+                  <input
                     autoFocus
                     value={draft}
                     maxLength={30}
@@ -89,45 +88,55 @@ export function TagSettings({ initialTags }: TagSettingsProps) {
                       }
                       if (event.key === "Escape") cancel();
                     }}
-                    className="h-9 flex-1 rounded-xl text-[16px] sm:text-[13px]"
+                    className="w-[8ch] bg-transparent outline-none"
                   />
                   <button
                     type="button"
                     disabled={busy}
                     title="保存"
                     onClick={() => void save(tag)}
-                    className="text-muted-foreground hover:text-foreground focus-visible:outline-ring inline-flex items-center rounded-md px-1.5 text-[12px] transition-colors focus-visible:outline-2 disabled:opacity-50"
+                    className="hover:text-foreground focus-visible:outline-ring grid size-4 place-items-center rounded-full transition-colors focus-visible:outline-2 disabled:opacity-50"
                   >
-                    <Check className="size-3.5" />
+                    <Check className="size-3" />
                   </button>
                   <button
                     type="button"
                     disabled={busy}
                     title="取消"
                     onClick={cancel}
-                    className="text-muted-foreground hover:text-foreground focus-visible:outline-ring inline-flex items-center rounded-md px-1.5 text-[12px] transition-colors focus-visible:outline-2 disabled:opacity-50"
+                    className="hover:text-foreground focus-visible:outline-ring grid size-4 place-items-center rounded-full transition-colors focus-visible:outline-2 disabled:opacity-50"
                   >
-                    <X className="size-3.5" />
+                    <X className="size-3" />
                   </button>
-                </>
+                </span>
               ) : (
-                <>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-medium">{tag.name}</p>
-                    <p className="text-muted-foreground text-[12px]">{tag.itemCount} 个条目</p>
-                  </div>
+                <span className="bg-secondary text-foreground inline-flex items-center gap-1 rounded-full py-1 pr-1 pl-2.5 text-[12px] leading-none">
                   <button
                     type="button"
-                    title="改名"
+                    title="改这个标签的名字"
                     onClick={() => {
                       setEditingId(tag.id);
                       setDraft(tag.name);
                     }}
-                    className="text-muted-foreground hover:text-foreground focus-visible:outline-ring inline-flex items-center rounded-md px-1.5 text-[12px] transition-colors focus-visible:outline-2"
+                    className="max-w-[16ch] truncate"
                   >
-                    <Pencil className="size-3.5" />
+                    {tag.name}
                   </button>
-                </>
+                  <span className="text-muted-foreground tabular-nums" title="多少个条目在用">
+                    {tag.itemCount}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={`改名 ${tag.name}`}
+                    onClick={() => {
+                      setEditingId(tag.id);
+                      setDraft(tag.name);
+                    }}
+                    className="hover:bg-background/70 focus-visible:outline-ring grid size-4 place-items-center rounded-full transition-colors focus-visible:outline-2"
+                  >
+                    <Pencil className="size-2.5" />
+                  </button>
+                </span>
               )}
             </li>
           ))}
