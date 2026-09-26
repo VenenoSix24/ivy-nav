@@ -46,10 +46,8 @@ export async function pickLibraryIcon(
     throw new PickError("这张图标的格式（不是 PNG / JPG / WEBP / SVG）存不下来：换一张试试。");
   }
 
-  const digest = createHash("sha256")
-    .update(`${library}|${name}|${color ?? ""}`)
-    .digest("hex")
-    .slice(0, 16);
+  // 文件名里的摘要取自图片内容，内容变了文件名就变
+  const digest = createHash("sha256").update(payload.body).digest("hex").slice(0, 16);
   const extension = STORABLE[contentType]!;
 
   try {
