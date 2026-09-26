@@ -48,6 +48,7 @@ next-env.d.ts
 
 # local planning notes (not part of the public repo)
 TASKS.md
+HANDOFF.md
 
 # editor local history
 .history
