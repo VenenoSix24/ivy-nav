@@ -1,5 +1,7 @@
 import { binaryBody, jsonError } from "@/lib/api/http";
+import { getSession } from "@/lib/auth/session";
 import { readUpload, uploadContentType } from "@/lib/icons/uploads";
+import { hasGuestVisibleIcon } from "@/lib/portal/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +10,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ nam
   const { name } = await params;
   const body = readUpload(name);
   if (!body) return jsonError("图标不存在：请重新上传。", 404);
+
+  // 匿名只拿得到「匿名看得见的条目」在用的那份图标
+  const session = await getSession();
+  if (!session && !hasGuestVisibleIcon(name)) {
+    return jsonError("图标不存在：请重新上传。", 404);
+  }
 
   const contentType = uploadContentType(name);
 

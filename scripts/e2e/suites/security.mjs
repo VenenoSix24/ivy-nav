@@ -1,6 +1,10 @@
+import fs from "node:fs";
+import path from "node:path";
+
 const USER = process.env.E2E_USER ?? "a";
 const PASSWORD = process.env.E2E_PASSWORD ?? "concurrent-pass-123";
 const BASE = process.env.BASE ?? "http://127.0.0.1:3110";
+const DATA_DIR = process.env.DATA_DIR ?? "data";
 let cookie = "";
 
 let failures = 0;
@@ -100,6 +104,47 @@ assert("匿名取 Private 条目图标返回 404", anonIcon.status === 404, `HTT
 const anonMissing = await call("/api/icons/favicon?item=999999", { auth: false });
 assert("不存在的编号同样是 404", anonMissing.status === 404);
 cookie = croppedCookie;
+
+// 上传的图标文件同样按可见性挡住匿名
+const UPLOAD_NAME = "probe_0123456789abcdef.png";
+fs.mkdirSync(path.join(DATA_DIR, "uploads"), { recursive: true });
+fs.writeFileSync(
+  path.join(DATA_DIR, "uploads", UPLOAD_NAME),
+  Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+);
+
+const uploadItem = await call("/api/items", {
+  method: "POST",
+  body: {
+    title: "上传图标探针",
+    url: "https://example.org/",
+    categoryId: adminPortal.json.portal.categories[0].id,
+    iconType: "upload",
+    iconValue: UPLOAD_NAME,
+  },
+});
+const uploadItemId = uploadItem.json?.portal?.items?.find((i) => i.title === "上传图标探针")?.id;
+
+const anonUploadShared = await fetch(`${BASE}/api/icons/file/${UPLOAD_NAME}`);
+assert(
+  "匿名看得到公开条目在用的图标文件",
+  anonUploadShared.status === 200,
+  `HTTP ${anonUploadShared.status}`,
+);
+
+await call(`/api/items/${uploadItemId}`, { method: "PATCH", body: { visibility: "private" } });
+const anonUploadHidden = await fetch(`${BASE}/api/icons/file/${UPLOAD_NAME}`);
+assert(
+  "条目转 Private 后匿名取不到这个图标文件",
+  anonUploadHidden.status === 404,
+  `HTTP ${anonUploadHidden.status}`,
+);
+
+const adminUpload = await call(`/api/icons/file/${UPLOAD_NAME}`);
+assert("管理员仍然取得到这个图标文件", adminUpload.status === 200, `HTTP ${adminUpload.status}`);
+
+await call(`/api/items/${uploadItemId}`, { method: "DELETE" });
+fs.rmSync(path.join(DATA_DIR, "uploads", UPLOAD_NAME), { force: true });
 
 const created = await call("/api/items", {
   method: "POST",
