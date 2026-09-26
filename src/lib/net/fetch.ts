@@ -37,22 +37,76 @@ export async function fetchWithTimeout(
   return null;
 }
 
-/** 读正文，异常收成 null */
-export async function readBody(response: Response, maxBytes: number): Promise<Buffer | null> {
+/** 声明就超上限的，不必读 */
+function tooLargeByDeclaration(response: Response, maxBytes: number): boolean {
+  const declared = Number(response.headers.get("content-length") ?? Number.NaN);
+  return Number.isFinite(declared) && declared > maxBytes;
+}
+
+/** 没有可读流的响应（测试里的替身）退回整块读 */
+async function readWholeBody(response: Response, maxBytes: number): Promise<Buffer | null> {
+  if (tooLargeByDeclaration(response, maxBytes)) return null;
   try {
     const buffer = Buffer.from(await response.arrayBuffer());
-    if (buffer.length === 0 || buffer.length > maxBytes) return null;
-    return buffer;
+    return buffer.length === 0 || buffer.length > maxBytes ? null : buffer;
   } catch {
     return null;
   }
 }
 
-/** 读文本正文，异常收成 null */
-export async function readText(response: Response, maxBytes: number): Promise<string | null> {
+/** 读二进制正文，边读边算，超上限就中止；读到一半出错或空正文都收成 null */
+export async function readBody(response: Response, maxBytes: number): Promise<Buffer | null> {
+  const reader = response.body?.getReader();
+  if (!reader) return readWholeBody(response, maxBytes);
+
+  const chunks: Buffer[] = [];
+  let total = 0;
   try {
-    return (await response.text()).slice(0, maxBytes);
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(Buffer.from(value));
+    }
   } catch {
     return null;
   }
+
+  return total === 0 ? null : Buffer.concat(chunks);
+}
+
+/** 读文本正文，超过上限的部分丢掉；出错收成 null */
+export async function readText(response: Response, maxBytes: number): Promise<string | null> {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    try {
+      return (await response.text()).slice(0, maxBytes);
+    } catch {
+      return null;
+    }
+  }
+
+  const decoder = new TextDecoder();
+  let text = "";
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      text += decoder.decode(value, { stream: true });
+      if (total >= maxBytes) {
+        void reader.cancel();
+        break;
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return text.slice(0, maxBytes);
 }

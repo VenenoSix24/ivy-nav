@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { readCache as readCached, writeCache as writeCached } from "./cache";
-import { fetchWithTimeout } from "@/lib/net/fetch";
+import { fetchWithTimeout, readBody, readText } from "@/lib/net/fetch";
 import {
   ICON_SOURCES,
   type IconCandidate,
@@ -193,8 +193,8 @@ export async function fetchSiteTitle(pageUrl: URL): Promise<string | null> {
   try {
     const response = await fetchWithTimeout(pageUrl.toString(), "text/html,*/*;q=0.8");
     if (!response?.ok) return null;
-    const html = (await response.text()).slice(0, MAX_HTML_BYTES);
-    return pickSiteTitle(html);
+    const html = await readText(response, MAX_HTML_BYTES);
+    return html === null ? null : pickSiteTitle(html);
   } catch {
     return null;
   }
@@ -208,9 +208,12 @@ async function manifestIconCandidates(html: string, base: URL): Promise<string[]
   const response = await fetchWithTimeout(href, "application/json,*/*;q=0.8");
   if (!response?.ok) return [];
 
+  const raw = await readText(response, MAX_HTML_BYTES);
+  if (raw === null) return [];
+
   let parsed: unknown;
   try {
-    parsed = JSON.parse((await response.text()).slice(0, MAX_HTML_BYTES));
+    parsed = JSON.parse(raw);
   } catch {
     return [];
   }
@@ -241,14 +244,9 @@ async function download(candidates: string[]): Promise<IconPayload | null> {
     const response = await fetchWithTimeout(candidate, "image/*,*/*;q=0.8");
     if (!response || !response.ok) continue;
 
-    let buffer: Buffer;
-    try {
-      buffer = Buffer.from(await response.arrayBuffer());
-    } catch {
-      // 读 body 在这里也会抛，跳过这个候选
-      continue;
-    }
-    if (buffer.length === 0 || buffer.length > MAX_ICON_BYTES) continue;
+    // 读 body 在这里也会抛，读不到就跳过这个候选
+    const buffer = await readBody(response, MAX_ICON_BYTES);
+    if (!buffer) continue;
 
     const contentType = sniffImageType(buffer);
     if (contentType) return { body: buffer, contentType };
@@ -272,13 +270,8 @@ function sentinelFor(source: IconSourceId, host: string): Promise<string | null>
       "image/*,*/*;q=0.8",
     );
     if (!response?.ok) return null;
-    let body: Buffer;
-    try {
-      body = Buffer.from(await response.arrayBuffer());
-    } catch {
-      return null;
-    }
-    return body.length > 0 ? createHash("sha256").update(body).digest("hex") : null;
+    const body = await readBody(response, MAX_ICON_BYTES);
+    return body ? createHash("sha256").update(body).digest("hex") : null;
   })();
 
   SENTINEL_CACHE.set(key, job);
@@ -301,13 +294,8 @@ async function fetchFallback(source: IconSourceId, host: string): Promise<Source
   const response = await fetchWithTimeout(build(host), "image/*,*/*;q=0.8");
   if (!response?.ok) return MISS;
 
-  let buffer: Buffer;
-  try {
-    buffer = Buffer.from(await response.arrayBuffer());
-  } catch {
-    return MISS;
-  }
-  if (buffer.length === 0 || buffer.length > MAX_ICON_BYTES) return MISS;
+  const buffer = await readBody(response, MAX_ICON_BYTES);
+  if (!buffer) return MISS;
 
   const digest = createHash("sha256").update(buffer).digest("hex");
   if (digest === (await sentinelFor(source, host))) return { payload: null, placeholder: true };
@@ -353,11 +341,7 @@ async function fetchFromSource(
 async function pageHtml(pageUrl: URL): Promise<string | null> {
   const response = await fetchWithTimeout(pageUrl.toString(), "text/html,*/*;q=0.8");
   if (!response?.ok) return null;
-  try {
-    return (await response.text()).slice(0, MAX_HTML_BYTES);
-  } catch {
-    return null;
-  }
+  return readText(response, MAX_HTML_BYTES);
 }
 
 /** 把每个方案都真问一遍，供选择器展示 */
@@ -412,7 +396,23 @@ export async function resolveIconSource(
 const inFlight = new Map<string, Promise<IconPayload | null>>();
 const misses = new Map<string, number>();
 
+/** 失败记录的上限；超了先清过期的，再按最旧的丢 */
+const MAX_MISSES = 500;
+
+function sweepMisses(now: number): void {
+  if (misses.size <= MAX_MISSES) return;
+  for (const [origin, at] of misses) {
+    if (now - at > MISS_TTL_MS) misses.delete(origin);
+  }
+  if (misses.size <= MAX_MISSES) return;
+
+  const byAge = [...misses.entries()].sort((a, b) => a[1] - b[1]);
+  for (const [origin] of byAge.slice(0, misses.size - MAX_MISSES)) misses.delete(origin);
+}
+
 function recentlyMissed(origin: string, now: number): boolean {
+  sweepMisses(now);
+
   const at = misses.get(origin);
   if (at === undefined) return false;
   if (now - at > MISS_TTL_MS) {

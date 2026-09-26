@@ -19,6 +19,38 @@ function cachePaths(namespace: string, key: string): { body: string; meta: strin
   return { body: path.join(dir, `${hash}.bin`), meta: path.join(dir, `${hash}.json`) };
 }
 
+/** 每个命名空间最多留这么多份，超了按最旧的删 */
+const MAX_ENTRIES = 400;
+
+function prune(namespace: string): void {
+  const dir = cacheDir(namespace);
+  let bodies: string[];
+  try {
+    bodies = fs.readdirSync(dir).filter((name) => name.endsWith(".bin"));
+  } catch {
+    return;
+  }
+  if (bodies.length <= MAX_ENTRIES) return;
+
+  const byAge = bodies
+    .map((name) => {
+      const file = path.join(dir, name);
+      try {
+        return { file, at: fs.statSync(file).mtimeMs };
+      } catch {
+        return { file, at: 0 };
+      }
+    })
+    .sort((a, b) => a.at - b.at);
+
+  for (const entry of byAge.slice(0, bodies.length - MAX_ENTRIES)) {
+    try {
+      fs.rmSync(entry.file, { force: true });
+      fs.rmSync(entry.file.replace(/\.bin$/, ".json"), { force: true });
+    } catch {}
+  }
+}
+
 export function readCache(namespace: string, key: string, ttlMs: number): CachedBinary | null {
   const { body, meta } = cachePaths(namespace, key);
   try {
@@ -40,5 +72,6 @@ export function writeCache(namespace: string, key: string, payload: CachedBinary
     fs.mkdirSync(cacheDir(namespace), { recursive: true });
     fs.writeFileSync(body, payload.body);
     fs.writeFileSync(meta, JSON.stringify({ contentType: payload.contentType }));
+    prune(namespace);
   } catch {}
 }
