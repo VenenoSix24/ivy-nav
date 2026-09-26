@@ -2,20 +2,20 @@
 
 ## 环境变量
 
-| 变量                          | 默认值                  | 说明                                                              |
-| ----------------------------- | ----------------------- | ----------------------------------------------------------------- |
-| `DATABASE_PATH`               | `./data/portal.db`      | SQLite 文件路径；同级的 `uploads/`、`*-cache/`、`backups/` 跟着走 |
-| `MIGRATIONS_PATH`             | `./src/db/migrations`   | 迁移目录，standalone 产物要与源码一起带                           |
-| `SESSION_COOKIE_NAME`         | `ivy_session`           | 会话 Cookie 名                                                    |
-| `SESSION_COOKIE_SECURE`       | 生产 `true`             | 只在 HTTPS 下回传 Cookie                                          |
-| `TRUST_PROXY_HEADERS`         | `false`                 | 读 `X-Forwarded-For`，只有反代可信时才开                          |
-| `NEXT_PUBLIC_SITE_URL`        | `http://localhost:3000` | 分享卡片用的绝对链接                                              |
-| `FAVICON_ALLOW_PRIVATE_HOSTS` | `false`                 | 允许抓内网地址的站点图标                                          |
-| `FAVICON_FALLBACK_SOURCES`    | 开                      | 是否走 favicon.im / icon.horse                                    |
-| `LOGIN_ATTEMPT_LIMIT`         | `10`                    | 单个用户名在统计窗口内的失败上限                                  |
-| `LOGIN_GLOBAL_ATTEMPT_LIMIT`  | `30`                    | 全局失败上限                                                      |
-| `LOGIN_ATTEMPT_WINDOW_MS`     | `900000`                | 统计窗口                                                          |
-| `ADMIN_PASSWORD`              | —                       | 只给 `pnpm admin:create` 用，给了就不走交互                       |
+| 变量                          | 默认值                  | 说明                                                                             |
+| ----------------------------- | ----------------------- | -------------------------------------------------------------------------------- |
+| `DATABASE_PATH`               | `./data/portal.db`      | SQLite 文件路径；同级的 `uploads/`、`*-cache/` 跟着走，快照放上一层的 `backups/` |
+| `MIGRATIONS_PATH`             | `./src/db/migrations`   | 迁移目录，standalone 产物要与源码一起带                                          |
+| `SESSION_COOKIE_NAME`         | `ivy_session`           | 会话 Cookie 名                                                                   |
+| `SESSION_COOKIE_SECURE`       | 生产 `true`             | 只在 HTTPS 下回传 Cookie                                                         |
+| `TRUST_PROXY_HEADERS`         | `false`                 | 读 `X-Forwarded-For`，只有反代可信时才开                                         |
+| `NEXT_PUBLIC_SITE_URL`        | `http://localhost:3000` | 分享卡片用的绝对链接                                                             |
+| `FAVICON_ALLOW_PRIVATE_HOSTS` | `false`                 | 允许抓内网地址的站点图标                                                         |
+| `FAVICON_FALLBACK_SOURCES`    | 开                      | 是否走 favicon.im / icon.horse                                                   |
+| `LOGIN_ATTEMPT_LIMIT`         | `10`                    | 单个用户名在统计窗口内的失败上限                                                 |
+| `LOGIN_GLOBAL_ATTEMPT_LIMIT`  | `30`                    | 全局失败上限                                                                     |
+| `LOGIN_ATTEMPT_WINDOW_MS`     | `900000`                | 统计窗口                                                                         |
+| `ADMIN_PASSWORD`              | —                       | 只给 `pnpm admin:create` 用，给了就不走交互                                      |
 
 完整清单与说明见 `.env.example`。`ALLOWED_DEV_ORIGINS` 只在开发模式生效。
 
