@@ -17,6 +17,7 @@
     "db:seed": "tsx src/db/seed.ts",
     "admin:create": "tsx src/db/create-admin.ts",
     "brand:assets": "node scripts/brand/generate-assets.mjs",
+    "icons:prune": "node scripts/icons/prune-uploads.mjs",
     "e2e": "bash scripts/e2e/run.sh"
   },
   "dependencies": {

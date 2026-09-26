@@ -34,6 +34,9 @@
 | `data/favicon-cache/`、`icon-set-cache/`、`iconify-cache/` | 抓取缓存                               |
 | `backups/`                                                 | 数据库快照                             |
 
+换图标、删条目、换内容都会在 `uploads/` 里留下用不到的旧文件：`pnpm icons:prune` 列出它们（默认只打印，
+加 `--delete` 才真删；一小时以内写过的不动，认不出的文件名跳过）。
+
 ## 导出与快照
 
 - JSON 导出（`/api/backup/export`）包含分类、条目、标签、设置与图标集。编号不写入文件，条目通过
