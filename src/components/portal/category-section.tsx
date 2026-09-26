@@ -1,3 +1,4 @@
+import { Lock } from "lucide-react";
 import { ItemGrid } from "@/components/portal/item-grid";
 import { ItemView } from "@/components/portal/item-view";
 import type { PortalItem } from "@/lib/portal/types";
@@ -9,6 +10,8 @@ interface CategorySectionProps {
   description?: string | null;
   items: PortalItem[];
   layout: LayoutId;
+  /** 整类对匿名隐藏 */
+  hidden?: boolean;
   action?: React.ReactNode;
   /** 编辑模式传入已包好拖动能力的网格，此时不再自己渲染条目 */
   children?: React.ReactNode;
@@ -20,6 +23,7 @@ export function CategorySection({
   description,
   items,
   layout,
+  hidden,
   action,
   children,
 }: CategorySectionProps) {
@@ -31,6 +35,15 @@ export function CategorySection({
             {title}
           </h2>
           <span className="text-muted-foreground text-[12px] tabular-nums">{items.length} 个</span>
+          {hidden ? (
+            <span
+              title="整类隐藏：这个分类里的条目对匿名访客都不显示"
+              className="text-muted-foreground bg-secondary inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[11px] leading-none"
+            >
+              <Lock className="size-3" />
+              整类 Private
+            </span>
+          ) : null}
           {description ? (
             <span className="text-muted-foreground w-full truncate text-[12px] sm:w-auto sm:min-w-0 sm:flex-1">
               {description}

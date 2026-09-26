@@ -100,6 +100,13 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
     return counts;
   }, [portal.items]);
 
+  /** 已有标签，条目面板里输入标签时做匹配提示 */
+  const tagSuggestions = useMemo(() => {
+    const names = new Set<string>();
+    for (const item of portal.items) for (const tag of item.tags) names.add(tag);
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }, [portal.items]);
+
   const categoryNames = useMemo(
     () => new Map(portal.categories.map((category) => [category.id, category.name])),
     [portal.categories],
@@ -322,6 +329,7 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
                 description={section.description}
                 items={section.items}
                 layout={section.layout}
+                hidden={sectionCategory?.visibility === "private"}
                 action={
                   editing ? (
                     <div className="flex shrink-0 items-center gap-1">
@@ -464,6 +472,7 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
           defaultCategoryId={editor.categoryId}
           categories={portal.categories}
           defaultIconFit={portal.defaultIconFit}
+          tagSuggestions={tagSuggestions}
           onSaved={(next) => setPortal(next)}
         />
       ) : null}
