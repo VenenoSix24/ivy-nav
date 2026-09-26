@@ -4,7 +4,12 @@ import { categories, itemTags, items, tags } from "@/db/schema";
 import { getDefaultIconFit } from "@/lib/settings/icon-fit";
 import { toDomain } from "@/lib/utils/url";
 import { sortByOrder } from "@/lib/utils/sort";
-import { privateCategoryIds, visibleCategories, visibleItems } from "@/lib/utils/visibility";
+import {
+  isItemVisibleToGuest,
+  privateCategoryIds,
+  visibleCategories,
+  visibleItems,
+} from "@/lib/utils/visibility";
 import type { PortalCategory, PortalData, PortalItem } from "./types";
 
 /** The only way portal content reaches a page; filtering happens here, on the server. */
@@ -76,4 +81,29 @@ export function getPortalData(options: { includePrivate: boolean }): PortalData 
     }));
 
   return { categories: portalCategories, items: portalItems, defaultIconFit };
+}
+
+/** 有没有匿名看得见的条目在用这份图标文件 */
+export function hasGuestVisibleIcon(name: string): boolean {
+  const db = getDb();
+  const holders = db
+    .select({ categoryId: items.categoryId, visibility: items.visibility })
+    .from(items)
+    .where(eq(items.iconValue, name))
+    .all();
+  if (holders.length === 0) return false;
+
+  const byId = new Map(
+    db
+      .select()
+      .from(categories)
+      .all()
+      .map((row) => [row.id, row]),
+  );
+  return holders.some((holder) =>
+    isItemVisibleToGuest(
+      holder,
+      holder.categoryId === null ? null : (byId.get(holder.categoryId) ?? null),
+    ),
+  );
 }

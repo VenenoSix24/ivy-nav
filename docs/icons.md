@@ -30,13 +30,13 @@
 3. `/favicon.ico`
 4. favicon.im、icon.horse（第三方，卡片上会标出来，`FAVICON_FALLBACK_SOURCES=false` 可关）
 
-| 接口                                  | 用途                                        |
-| ------------------------------------- | ------------------------------------------- |
-| `GET /api/icons/favicon?item=<id>`    | 条目图标的代理地址，只接受条目编号          |
-| `GET /api/icons/candidates?url=`      | 列候选，逐个来源给状态                      |
-| `GET /api/icons/resolve?url=&source=` | 取某一来源的画面                            |
-| `POST /api/icons/upload`              | 上传（PNG / JPG / WEBP / SVG，512 KB 上限） |
-| `GET /api/icons/file/<name>`          | 读上传目录里的文件                          |
+| 接口                                  | 用途                                               |
+| ------------------------------------- | -------------------------------------------------- |
+| `GET /api/icons/favicon?item=<id>`    | 条目图标的代理地址，只接受条目编号                 |
+| `GET /api/icons/candidates?url=`      | 列候选，逐个来源给状态                             |
+| `GET /api/icons/resolve?url=&source=` | 取某一来源的画面                                   |
+| `POST /api/icons/upload`              | 上传（PNG / JPG / WEBP / SVG，512 KB 上限）        |
+| `GET /api/icons/file/<name>`          | 读上传目录里的文件；匿名只拿得到公开条目在用的那份 |
 
 候选状态分三种：`ok`、`placeholder`（服务活着，但只回它自己那张「查不到」占位图）、`miss`。
 占位图在服务端被认出来丢掉，不会冒充站点图标。取不到时回一张 1×1 的透明 PNG —— 不是 404，
