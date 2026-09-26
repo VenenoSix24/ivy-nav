@@ -137,7 +137,8 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
     for (const category of tabCategories) {
       if (active !== ALL_CATEGORIES && active !== category.id) continue;
       const items = matchedItems.filter((item) => item.categoryId === category.id);
-      if (items.length === 0) continue;
+      // 编辑模式下，没有条目的分类也占一格：它的「⋯」与「添加」要够得着
+      if (items.length === 0 && (!editing || searching)) continue;
       list.push({
         filter: category.id,
         title: category.name,
@@ -164,7 +165,7 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
     }
 
     return list;
-  }, [tabCategories, matchedItems, active, editing]);
+  }, [tabCategories, matchedItems, active, editing, searching]);
 
   function applyResult(result: PortalResult, successMessage?: string) {
     if (result.ok) {
@@ -184,9 +185,13 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
     applyResult(await portalRequest(path, body, method), successMessage);
   }
 
-  /** 首页上看得见的分区（不含 Inbox）的顺序 */
+  /** 首页上看得见的分区（不含空分区与 Inbox）的顺序 */
   const visibleOrder = useMemo(
-    () => sections.map((section) => section.categoryId).filter((id): id is number => id !== null),
+    () =>
+      sections
+        .filter((section) => section.items.length > 0)
+        .map((section) => section.categoryId)
+        .filter((id): id is number => id !== null),
     [sections],
   );
 
@@ -395,7 +400,11 @@ export function PortalShell({ data, initialEditMode = false }: PortalShellProps)
                   ) : null
                 }
               >
-                {editing ? (
+                {editing && section.items.length === 0 ? (
+                  <p className="border-hairline text-muted-foreground rounded-2xl border border-dashed px-4 py-8 text-center text-[13px]">
+                    这个分类还没有内容：点右上角「添加」放一个进来。
+                  </p>
+                ) : editing ? (
                   <EditableGrid
                     items={section.items}
                     layout={section.layout}
