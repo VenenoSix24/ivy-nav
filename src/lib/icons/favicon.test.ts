@@ -97,6 +97,8 @@ afterEach(async () => {
 
 describe("resolveFavicon", () => {
   it("returns null instead of throwing when a response body breaks off", async () => {
+    // 关掉第三方兜底：这条用例只验本地那个会断流的服务端
+    process.env.FAVICON_FALLBACK_SOURCES = "false";
     const { server, base } = await brokenBodyServer();
     running.push(server);
 
