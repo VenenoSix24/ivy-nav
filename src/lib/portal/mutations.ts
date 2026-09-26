@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, notInArray } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { categories, itemTags, items, tags } from "@/db/schema";
 import { nextSortOrder, toSortOrderPayload } from "@/lib/utils/sort";
@@ -14,10 +14,6 @@ export function findCategory(id: number) {
 
 export function findCategoryByName(name: string) {
   return getDb().select().from(categories).where(eq(categories.name, name)).get() ?? null;
-}
-
-export function listTags() {
-  return getDb().select().from(tags).all();
 }
 
 function currentItems(categoryId: number | null) {
@@ -175,18 +171,28 @@ function syncItemTags(itemId: number, tagNames: string[]) {
   db.delete(itemTags).where(eq(itemTags.itemId, itemId)).run();
 
   const names = normalizeTagNames(tagNames);
-  if (names.length === 0) return;
+  if (names.length > 0) {
+    db.insert(tags)
+      .values(names.map((name) => ({ name })))
+      .onConflictDoNothing()
+      .run();
 
-  db.insert(tags)
-    .values(names.map((name) => ({ name })))
-    .onConflictDoNothing()
-    .run();
+    const rows = db.select({ id: tags.id }).from(tags).where(inArray(tags.name, names)).all();
+    if (rows.length > 0) {
+      db.insert(itemTags)
+        .values(rows.map((row) => ({ itemId, tagId: row.id })))
+        .onConflictDoNothing()
+        .run();
+    }
+  }
 
-  const rows = db.select({ id: tags.id }).from(tags).where(inArray(tags.name, names)).all();
-  if (rows.length === 0) return;
+  pruneOrphanTags();
+}
 
-  db.insert(itemTags)
-    .values(rows.map((row) => ({ itemId, tagId: row.id })))
-    .onConflictDoNothing()
+/** 清掉已经没有任何条目引用的标签 */
+function pruneOrphanTags(): void {
+  const db = getDb();
+  db.delete(tags)
+    .where(notInArray(tags.id, db.select({ id: itemTags.tagId }).from(itemTags)))
     .run();
 }
