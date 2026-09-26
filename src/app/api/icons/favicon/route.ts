@@ -1,9 +1,10 @@
 import { binaryBody, jsonError } from "@/lib/api/http";
 import { getSession } from "@/lib/auth/session";
-import { findItem } from "@/lib/portal/mutations";
+import { findCategory, findItem } from "@/lib/portal/mutations";
 import { resolveFavicon } from "@/lib/icons/favicon";
 import { PLACEHOLDER_CACHE_SECONDS, TRANSPARENT_PNG } from "@/lib/icons/placeholder";
 import { parseHttpUrl } from "@/lib/utils/url";
+import { isItemVisibleToGuest } from "@/lib/utils/visibility";
 
 export const dynamic = "force-dynamic";
 
@@ -29,10 +30,13 @@ export async function GET(request: Request) {
   const item = findItem(id);
   if (!item) return jsonError("条目不存在：可能已被删除，请刷新页面。", 404);
 
-  // Private 条目也回 404，不用状态码暴露它存在
+  // 匿名对「看不到的条目」也回 404，否则编号能被枚举出图标
   const session = await getSession();
-  if (item.visibility === "private" && !session) {
-    return jsonError("条目不存在：可能已被删除，请刷新页面。", 404);
+  if (!session) {
+    const category = item.categoryId === null ? null : findCategory(item.categoryId);
+    if (!isItemVisibleToGuest(item, category)) {
+      return jsonError("条目不存在：可能已被删除，请刷新页面。", 404);
+    }
   }
 
   const target = parseHttpUrl(item.url);

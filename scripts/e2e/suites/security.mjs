@@ -184,6 +184,10 @@ assert(
   `分类 ${probeCategoryId}`,
 );
 
+const probeItemId = (probeItem.json?.portal?.items ?? []).find(
+  (item) => item.title === PROBE_ITEM,
+)?.id;
+
 const anonBefore = await fetch(`${BASE}/`).then((r) => r.text());
 assert(
   "隐藏之前匿名首页能看到这个分类与条目",
@@ -200,6 +204,13 @@ const anonHidden = await fetch(`${BASE}/`).then((r) => r.text());
 assert(
   "匿名首页连分类带条目都没有了",
   !anonHidden.includes(PROBE_CATEGORY) && !anonHidden.includes(PROBE_ITEM),
+);
+
+const hiddenIcon = await fetch(`${BASE}/api/icons/favicon?item=${probeItemId}`);
+assert(
+  "整类隐藏后匿名也取不到这个条目的图标",
+  hiddenIcon.status === 404,
+  `HTTP ${hiddenIcon.status}`,
 );
 
 const adminAfterHide = await call("/api/portal");
@@ -219,10 +230,6 @@ assert(
   anonRestored.includes(PROBE_CATEGORY) && anonRestored.includes(PROBE_ITEM),
 );
 
-const cleanupPortal = await call("/api/portal");
-const probeItemId = (cleanupPortal.json?.portal?.items ?? []).find(
-  (item) => item.title === PROBE_ITEM,
-)?.id;
 if (probeItemId) await call(`/api/items/${probeItemId}`, { method: "DELETE" });
 await call(`/api/categories/${probeCategoryId}`, { method: "DELETE" });
 

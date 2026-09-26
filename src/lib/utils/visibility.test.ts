@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { privateCategoryIds, visibleCategories, visibleItems } from "./visibility";
+import {
+  isItemVisibleToGuest,
+  privateCategoryIds,
+  visibleCategories,
+  visibleItems,
+} from "./visibility";
 
 const items = [
   { id: 1, categoryId: 10, visibility: "private" as const },
@@ -68,5 +73,32 @@ describe("visibleCategories", () => {
   it("ignores items that are not filed under any category", () => {
     const inboxOnly = [{ id: 9, categoryId: null }];
     expect(visibleCategories(categories, inboxOnly, false)).toEqual([]);
+  });
+});
+
+describe("isItemVisibleToGuest", () => {
+  const shown = { visibility: "public" as const, visibleOnHomepage: true };
+  const homepageOff = { visibility: "public" as const, visibleOnHomepage: false };
+  const wholeHidden = { visibility: "private" as const, visibleOnHomepage: true };
+
+  it("lets a public item in a public, homepage-visible category through", () => {
+    expect(isItemVisibleToGuest({ categoryId: 10, visibility: "public" }, shown)).toBe(true);
+  });
+
+  it("blocks a private item even when its category is public", () => {
+    expect(isItemVisibleToGuest({ categoryId: 10, visibility: "private" }, shown)).toBe(false);
+  });
+
+  it("blocks every item of a category that is hidden as a whole", () => {
+    expect(isItemVisibleToGuest({ categoryId: 30, visibility: "public" }, wholeHidden)).toBe(false);
+  });
+
+  it("blocks items of a category that is not on the homepage", () => {
+    expect(isItemVisibleToGuest({ categoryId: 40, visibility: "public" }, homepageOff)).toBe(false);
+  });
+
+  it("blocks the inbox and items whose category is gone", () => {
+    expect(isItemVisibleToGuest({ categoryId: null, visibility: "public" }, null)).toBe(false);
+    expect(isItemVisibleToGuest({ categoryId: 10, visibility: "public" }, null)).toBe(false);
   });
 });

@@ -38,6 +38,16 @@ export function visibleCategories<
   );
 }
 
+/** 匿名能否看到这一个条目：条目自身公开，且所在分类公开又在首页显示 */
+export function isItemVisibleToGuest<
+  I extends Pick<Item, "visibility" | "categoryId">,
+  C extends Pick<Category, "visibility" | "visibleOnHomepage">,
+>(item: I, category: C | null): boolean {
+  if (item.visibility !== "public") return false;
+  if (item.categoryId === null || category === null) return false;
+  return category.visibility !== "private" && category.visibleOnHomepage;
+}
+
 export function isPublic(visibility: Visibility): boolean {
   return visibility === "public";
 }
