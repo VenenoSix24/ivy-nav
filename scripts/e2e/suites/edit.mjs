@@ -1,6 +1,10 @@
+import Database from "better-sqlite3";
+import path from "node:path";
+
 const USER = process.env.E2E_USER ?? "ivy";
 const PASSWORD = process.env.E2E_PASSWORD ?? "test-password-123";
 const BASE = process.env.BASE ?? "http://127.0.0.1:3110";
+const DATA_DIR = process.env.DATA_DIR ?? "data";
 let cookie = "";
 
 function assert(label, condition, detail) {
@@ -239,6 +243,57 @@ assert(
   "分类设置已从设置页移走",
   !settingsHtml.text.includes("首页分类") && settingsHtml.text.includes("整理分类"),
 );
+assert("设置页有「标签」一节", settingsHtml.text.includes("改成一个已经存在的名字就是合并过去"));
+
+// 标签改名：改到已经存在的名字就是合并过去
+/** 标签没有列表接口，直接读库拿编号 */
+function tagId(name) {
+  const db = new Database(path.join(DATA_DIR, "portal.db"), { readonly: true });
+  const row = db.prepare("select id from tags where name = ?").get(name);
+  db.close();
+  return row?.id ?? null;
+}
+
+await call("/api/items", {
+  method: "POST",
+  body: { title: "标签改名甲", url: "https://tag-a.example/", tagNames: ["旧标签戊"] },
+});
+await call("/api/items", {
+  method: "POST",
+  body: { title: "标签改名乙", url: "https://tag-b.example/", tagNames: ["目标标签戊"] },
+});
+const sourceTagId = tagId("旧标签戊");
+assert("新建条目的标签落了库", typeof sourceTagId === "number", `tag=${sourceTagId}`);
+
+const tagRenamed = await call(`/api/tags/${sourceTagId}`, {
+  method: "PATCH",
+  body: { name: "目标标签戊" },
+});
+assert(
+  "改到已存在的名字会合并",
+  tagRenamed.status === 200 && tagRenamed.json?.merged === true,
+  `HTTP ${tagRenamed.status} merged=${tagRenamed.json?.merged}`,
+);
+assert(
+  "合并后同名标签只剩一个",
+  (tagRenamed.json?.tags ?? []).filter((tag) => tag.name === "目标标签戊").length === 1,
+);
+
+const afterRename = await call("/api/portal");
+const renamedItems = (afterRename.json?.portal?.items ?? []).filter((item) =>
+  item.title.startsWith("标签改名"),
+);
+assert(
+  "两个条目都挂到了合并后的标签上",
+  renamedItems.length === 2 && renamedItems.every((item) => item.tags.includes("目标标签戊")),
+  JSON.stringify(renamedItems.map((item) => item.tags)),
+);
+
+const blankName = await call(`/api/tags/${sourceTagId}`, {
+  method: "PATCH",
+  body: { name: "   " },
+});
+assert("空名字被拒", blankName.status === 400, `HTTP ${blankName.status}`);
 
 const loggedOut = await call("/api/auth/logout", { method: "POST" });
 assert("退出登录", loggedOut.status === 200);

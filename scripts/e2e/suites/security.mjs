@@ -308,6 +308,9 @@ assert(
 const candidatesAnon = await call("/api/icons/candidates?url=example.com", { auth: false });
 assert("匿名列图标候选被拒", candidatesAnon.status === 401, `HTTP ${candidatesAnon.status}`);
 
+const tagAnon = await call("/api/tags/1", { method: "PATCH", body: { name: "x" }, auth: false });
+assert("匿名改标签被拒", tagAnon.status === 401, `HTTP ${tagAnon.status}`);
+
 const candidatesEmpty = await call("/api/icons/candidates?url=");
 assert(
   "网址还没填时列空候选而不是报错",
