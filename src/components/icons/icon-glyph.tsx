@@ -103,7 +103,8 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
     if (!hasSource) return <LetterMark title={title} className={className} />;
 
     const darkMono = spec.mono === true && /\.svg(\?|$)/i.test(src);
-    const applied = trim && trim.src === src ? trim.transform : null;
+    // 只有「自动裁边」会套裁边换算出来的 transform
+    const applied = fit === "auto" && trim && trim.src === src ? trim.transform : null;
     const clipped = fit !== "contain";
     const transform = applied
       ? `scale(${applied.scale}) translate(${applied.x * 100}%, ${applied.y * 100}%)`
