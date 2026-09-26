@@ -238,6 +238,29 @@ assert(
   `${(editingHtml.match(/分类的操作/g) ?? []).length} 个`,
 );
 
+// 编辑模式下，没有条目的分类也占一格
+const emptyDraft = await call("/api/categories", {
+  method: "POST",
+  body: { name: "空分区探针", visibleOnHomepage: true },
+});
+const emptyCategoryId = emptyDraft.json?.portal?.categories?.find(
+  (category) => category.name === "空分区探针",
+)?.id;
+assert("建好一个没有条目的分类", typeof emptyCategoryId === "number", `分类 ${emptyCategoryId}`);
+
+const anonymousAfter = await fetch(`${BASE}/`).then((r) => r.text());
+assert("普通视图里空分类不占分区", !anonymousAfter.includes("这个分类还没有内容"));
+
+const editingAgain = await fetch(`${BASE}/`, {
+  headers: { Cookie: `${cookie}; ivy_edit=1` },
+}).then((r) => r.text());
+assert(
+  "编辑模式里空分类占一格",
+  editingAgain.includes("这个分类还没有内容") && editingAgain.includes("空分区探针"),
+);
+
+await call(`/api/categories/${emptyCategoryId}`, { method: "DELETE" });
+
 const settingsHtml = await call("/settings");
 assert(
   "分类设置已从设置页移走",
