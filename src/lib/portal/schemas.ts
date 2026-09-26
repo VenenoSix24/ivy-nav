@@ -64,6 +64,14 @@ export const reorderSchema = z.object({
   orderedIds: z.array(z.number().int().positive()).min(1, "缺少排序结果：请重试。"),
 });
 
+/** 改名去掉 # 前缀，名字本身与条目上的标签同一套规则 */
+export const tagRenameSchema = z.object({
+  name: z.preprocess(
+    (value) => (typeof value === "string" ? value.trim().replace(/^#+/, "").trim() : value),
+    z.string().min(1, "标签名不能为空：请填写后重试。").max(30, "标签过长：上限 30 个字符。"),
+  ),
+});
+
 export type CategoryInput = z.infer<typeof categoryInputSchema>;
 export type ItemInput = z.infer<typeof itemInputSchema>;
 

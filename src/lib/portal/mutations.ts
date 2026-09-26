@@ -1,4 +1,5 @@
 import { eq, inArray, notInArray } from "drizzle-orm";
+import type { Tag } from "@/db/schema";
 import { getDb } from "@/db/client";
 import { categories, itemTags, items, tags } from "@/db/schema";
 import { nextSortOrder, toSortOrderPayload } from "@/lib/utils/sort";
@@ -195,4 +196,37 @@ function pruneOrphanTags(): void {
   db.delete(tags)
     .where(notInArray(tags.id, db.select({ id: itemTags.tagId }).from(itemTags)))
     .run();
+}
+
+/** 标签改名；目标名字已经存在就并过去：链接先挪到目标上，再删掉旧行 */
+export function renameTag(id: number, name: string): { tag: Tag; merged: boolean } | null {
+  const db = getDb();
+  const existing = db.select().from(tags).where(eq(tags.id, id)).get();
+  if (!existing) return null;
+
+  const target = db
+    .select()
+    .from(tags)
+    .all()
+    .find((row) => row.id !== id && row.name.toLowerCase() === name.toLowerCase());
+
+  if (target) {
+    const links = db
+      .select({ itemId: itemTags.itemId })
+      .from(itemTags)
+      .where(eq(itemTags.tagId, id))
+      .all();
+    if (links.length > 0) {
+      db.insert(itemTags)
+        .values(links.map((row) => ({ itemId: row.itemId, tagId: target.id })))
+        .onConflictDoNothing()
+        .run();
+    }
+    db.delete(tags).where(eq(tags.id, id)).run();
+    pruneOrphanTags();
+    return { tag: target, merged: true };
+  }
+
+  db.update(tags).set({ name }).where(eq(tags.id, id)).run();
+  return { tag: { ...existing, name }, merged: false };
 }

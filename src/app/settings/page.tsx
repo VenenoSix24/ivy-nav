@@ -12,11 +12,13 @@ import { EditModeSettings } from "@/components/settings/edit-mode-settings";
 import { DataSettings } from "@/components/settings/data-settings";
 import { IconFitSettings } from "@/components/settings/icon-fit-settings";
 import { IconSetSettings } from "@/components/settings/icon-set-settings";
+import { TagSettings } from "@/components/settings/tag-settings";
 import { EDIT_MODE_COOKIE } from "@/lib/portal/edit-mode";
 import { listIconSets } from "@/lib/icons/library/sets";
 import { getPreferredPalette } from "@/lib/settings/appearance-server";
 import { getDefaultIconFit } from "@/lib/settings/icon-fit";
 import { getSession } from "@/lib/auth/session";
+import { listTagsWithCounts } from "@/lib/portal/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +51,7 @@ export default async function SettingsPage() {
 
         <h1 className="mt-12 text-[28px] font-semibold tracking-[-0.03em]">设置</h1>
         <p className="text-muted-foreground mt-2 text-[13px]">
-          外观、前台编辑、图标库、书签导入、数据、账号与会话。
+          外观、前台编辑、图标库、标签、书签导入、数据、账号与会话。
         </p>
 
         <p className="text-muted-foreground mt-8 text-[13px] leading-relaxed">
@@ -63,6 +65,7 @@ export default async function SettingsPage() {
           <IconSetSettings initialSets={listIconSets()} />
           <IconFitSettings initialFit={getDefaultIconFit()} />
           <BookmarkImport />
+          <TagSettings initialTags={listTagsWithCounts()} />
           <DataSettings />
           <AccountSettings
             username={session.username}
