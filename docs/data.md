@@ -15,6 +15,8 @@
 | `settings`          | 偏好：配色、图标摆法的默认值                                                     |
 | `backups`           | 数据库快照的记录                                                                 |
 
+不再被任何条目引用的标签会在保存条目时清掉，`tags` 里不留看不见的残留行。
+
 连接是懒加载的（`src/db/client.ts`），文件不存在就自动建表。路径取 `DATABASE_PATH`，
 默认 `./data/portal.db`。
 

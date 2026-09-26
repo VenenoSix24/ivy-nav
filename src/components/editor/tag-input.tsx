@@ -1,13 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { X } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Plus, X } from "lucide-react";
 import { cn } from "cn";
 import { normalizeTagNames } from "@/lib/portal/schemas";
 
 interface TagInputProps {
   value: string[];
   onChange: (tags: string[]) => void;
+  /** 已有标签，输入时按它做匹配提示 */
+  suggestions?: string[];
   placeholder?: string;
   maxTags?: number;
   id?: string;
@@ -17,12 +19,28 @@ interface TagInputProps {
 export function TagInput({
   value,
   onChange,
+  suggestions,
   placeholder = "输入后按回车",
   maxTags = 12,
   id,
 }: TagInputProps) {
   const [draft, setDraft] = useState("");
+  /** 键盘选中的那条提示；-1 表示没选过，回车就提交输入框里的字 */
+  const [active, setActive] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const matches = useMemo(() => {
+    const typed = draft.trim().toLowerCase();
+    if (!suggestions || typed.length === 0) return [];
+
+    const chosen = new Set(value.map((tag) => tag.toLowerCase()));
+    const pool = suggestions.filter((name) => !chosen.has(name.toLowerCase()));
+    const starts = pool.filter((name) => name.toLowerCase().startsWith(typed));
+    const rest = pool.filter(
+      (name) => !name.toLowerCase().startsWith(typed) && name.toLowerCase().includes(typed),
+    );
+    return [...starts, ...rest].slice(0, 6);
+  }, [draft, suggestions, value]);
 
   function commit(raw: string) {
     const added = normalizeTagNames(raw.split(/[,，]/));
@@ -37,6 +55,7 @@ export function TagInput({
 
     onChange(next);
     setDraft("");
+    setActive(-1);
   }
 
   function removeAt(index: number) {
@@ -76,13 +95,27 @@ export function TagInput({
         value={draft}
         onChange={(event) => {
           const next = event.target.value;
-          if (/[,，]$/.test(next)) commit(next);
-          else setDraft(next);
+          if (/[,，]$/.test(next)) {
+            commit(next);
+            return;
+          }
+          setDraft(next);
+          setActive(-1);
         }}
         onKeyDown={(event) => {
+          if (event.key === "ArrowDown" && matches.length > 0) {
+            event.preventDefault();
+            setActive((current) => (current + 1) % matches.length);
+            return;
+          }
+          if (event.key === "ArrowUp" && matches.length > 0) {
+            event.preventDefault();
+            setActive((current) => (current <= 0 ? matches.length - 1 : current - 1));
+            return;
+          }
           if (event.key === "Enter") {
             event.preventDefault();
-            commit(draft);
+            commit(active >= 0 ? (matches[active] ?? draft) : draft);
             return;
           }
           if (event.key === "Backspace" && draft === "" && value.length > 0) {
@@ -94,6 +127,30 @@ export function TagInput({
         autoComplete="off"
         className="placeholder:text-muted-foreground min-w-[8ch] flex-1 bg-transparent py-1 text-[16px] outline-none sm:text-[14px]"
       />
+
+      {matches.length > 0 ? (
+        <div className="flex w-full flex-wrap items-center gap-1 pt-0.5">
+          {matches.map((name, position) => (
+            <button
+              key={name}
+              type="button"
+              // 按下时不抢焦点，否则输入框先失焦、草稿先被当成新标签提交
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={(event) => {
+                event.stopPropagation();
+                commit(name);
+              }}
+              className={cn(
+                "text-muted-foreground hover:text-foreground hover:bg-secondary focus-visible:outline-ring inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] leading-none transition-colors focus-visible:outline-2",
+                position === active && "bg-secondary text-foreground",
+              )}
+            >
+              <Plus className="size-3" />
+              {name}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -44,6 +44,9 @@ interface ItemDialogProps {
   categories: PortalCategory[];
   /** 条目没自己设过「图标大小」时用的默认值 */
   defaultIconFit: IconFitId;
+
+  /** 已有标签，标签框里输入时做匹配提示 */
+  tagSuggestions?: string[];
   onSaved: (portal: PortalData) => void;
 }
 
@@ -54,6 +57,7 @@ export function ItemDialog({
   defaultCategoryId,
   categories,
   defaultIconFit,
+  tagSuggestions,
   onSaved,
 }: ItemDialogProps) {
   const [title, setTitle] = useState(item?.title ?? "");
@@ -266,7 +270,12 @@ export function ItemDialog({
 
             <div className="space-y-2">
               <Label htmlFor="item-tags">标签</Label>
-              <TagInput id="item-tags" value={tags} onChange={setTags} />
+              <TagInput
+                id="item-tags"
+                value={tags}
+                onChange={setTags}
+                suggestions={tagSuggestions}
+              />
             </div>
 
             <div className="flex items-center justify-between gap-4 pt-1">
