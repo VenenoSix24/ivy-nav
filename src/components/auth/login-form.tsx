@@ -9,12 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { site } from "@/lib/site";
 
-interface LoginFormProps {
-  /** 还没有管理员账号时给出建号指引 */
-  needsSetup: boolean;
-}
-
-export function LoginForm({ needsSetup }: LoginFormProps) {
+export function LoginForm() {
   const router = useRouter();
 
   const [username, setUsername] = useState("");
@@ -64,18 +59,6 @@ export function LoginForm({ needsSetup }: LoginFormProps) {
           登录后可以进入编辑模式。
         </p>
       </div>
-
-      {needsSetup ? (
-        <div className="border-border bg-secondary/60 mb-4 rounded-2xl border p-4 text-[13px] leading-relaxed">
-          <p className="font-medium">还没有管理员账号</p>
-          <p className="text-muted-foreground mt-1.5">
-            建号只在服务器上进行，不通过网页。请在项目目录执行：
-          </p>
-          <code className="bg-popover mt-2 block rounded-lg px-2.5 py-1.5 font-mono text-[12px]">
-            pnpm admin:create 你的用户名
-          </code>
-        </div>
-      ) : null}
 
       {/* method 必须显式写 post：脚本没跑起来时表单默认 GET，会把密码拼进 URL */}
       <form method="post" onSubmit={onSubmit} className="surface space-y-4 rounded-2xl p-6">
@@ -132,6 +115,10 @@ export function LoginForm({ needsSetup }: LoginFormProps) {
           {pending ? "处理中…" : "登录"}
         </Button>
       </form>
+
+      <p className="text-muted-foreground mt-4 text-center text-[12px] leading-relaxed">
+        账号在服务器上用 <code className="font-mono">pnpm admin:create</code> 创建。
+      </p>
 
       <p className="mt-6 text-center">
         <Link
