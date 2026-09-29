@@ -102,7 +102,7 @@ export function BookmarkImport() {
     <>
       <SettingsSection
         title="浏览器书签"
-        description="支持 Chrome、Edge、Firefox、Safari 导出的书签文件。一级目录作为分类，二级及更深的目录作为分类下的标签；可以自由选择导入的书签文件夹。"
+        description="一级目录作为分类，更深目录作为标签；可自选导入哪些文件夹。"
       >
         <input
           ref={fileInput}

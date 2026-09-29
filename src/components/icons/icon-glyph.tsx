@@ -31,7 +31,7 @@ export function usesPlate(spec: IconSpec): boolean {
 }
 
 /** 四种摆法对应的 object-fit */
-const FIT_CLASS: Record<IconFitId, string> = {
+export const FIT_CLASS: Record<IconFitId, string> = {
   contain: "object-contain",
   auto: "object-contain",
   cover: "object-cover",

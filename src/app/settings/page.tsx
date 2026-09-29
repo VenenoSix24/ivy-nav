@@ -51,15 +51,10 @@ export default async function SettingsPage() {
 
         <h1 className="mt-12 text-[28px] font-semibold tracking-[-0.03em]">设置</h1>
         <p className="text-muted-foreground mt-2 text-[13px]">
-          外观、前台编辑、图标库、标签、书签导入、数据、账号与会话。
+          外观、前台编辑、图标、标签、数据与账号。
         </p>
 
-        <p className="text-muted-foreground mt-8 text-[13px] leading-relaxed">
-          分类的名字、描述、布局与顺序都在首页的编辑模式里改：每个分区标题右边有「⋯」，
-          工具条上有「整理分类」。
-        </p>
-
-        <div className="mt-4 space-y-4">
+        <div className="mt-8 space-y-4">
           <AppearanceSettings initialPalette={getPreferredPalette()} />
           <EditModeSettings initialEnabled={editMode} />
           <IconSetSettings initialSets={listIconSets()} />

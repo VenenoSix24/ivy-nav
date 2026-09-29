@@ -29,8 +29,8 @@ export function CategorySection({
 }: CategorySectionProps) {
   return (
     <section aria-labelledby={id}>
-      <div className="mb-4 flex items-center justify-between gap-4 px-0.5">
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+      <div className="mb-4 flex items-center gap-3 px-0.5">
+        <div className="flex min-w-0 items-baseline gap-x-2.5">
           <h2 id={id} className="text-[15px] font-semibold tracking-[-0.015em]">
             {title}
           </h2>
@@ -44,12 +44,14 @@ export function CategorySection({
               整类 Private
             </span>
           ) : null}
-          {description ? (
-            <span className="text-muted-foreground w-full truncate text-[12px] sm:w-auto sm:min-w-0 sm:flex-1">
-              {description}
-            </span>
-          ) : null}
         </div>
+        {description ? (
+          <span className="text-muted-foreground min-w-0 flex-1 truncate text-right text-[12px]">
+            {description}
+          </span>
+        ) : (
+          <span className="flex-1" />
+        )}
         {action}
       </div>
 

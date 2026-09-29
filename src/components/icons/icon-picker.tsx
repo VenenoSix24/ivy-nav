@@ -6,8 +6,10 @@ import { useEffect, useRef, useState } from "react";
 import { Ban, ImageDown, Loader2, Plus, Search, Trash2, Upload } from "lucide-react";
 import { cn } from "cn";
 import { toast } from "sonner";
+import { IconFitPicker } from "@/components/icons/icon-fit-picker";
 import { IconGlyph, iconBox, usesPlate, type IconSpec } from "@/components/icons/icon-glyph";
 import { lucideNames, lucideRegistry } from "@/components/icons/lucide-registry";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { emojiCatalog, searchEmoji } from "@/lib/icons/emoji";
@@ -20,7 +22,7 @@ import {
   type IconSourceId,
 } from "@/lib/icons/sources";
 import { libraryIconSrc, previewFaviconSrc } from "@/lib/icons/urls";
-import { DEFAULT_ICON_FIT, ICON_FITS, type IconFitId } from "@/lib/icons/fit";
+import { DEFAULT_ICON_FIT } from "@/lib/icons/fit";
 import { parseHttpUrl } from "@/lib/utils/url";
 
 interface IconPickerProps {
@@ -212,7 +214,7 @@ export function IconPicker({
 
   const faviconHint =
     fetchState === "failed"
-      ? "这个网站没能取到图标：可以改用图标库、Emoji 或自己上传，也可以直接保存（会显示标题首字母）。"
+      ? "没取到图标：换图标库 / Emoji / 上传，或直接保存（显示首字母）。"
       : fetchState === "ok"
         ? "选择一张你喜欢的。"
         : fetchState === "loading"
@@ -396,7 +398,6 @@ export function IconPicker({
   const canMono = spec.type === "upload" && Boolean(spec.value?.endsWith(".svg"));
   const canFit = spec.type === "upload" || spec.type === "favicon";
   const fit = spec.fit ?? DEFAULT_ICON_FIT;
-  const fitHint = ICON_FITS.find((entry) => entry.id === fit)?.hint ?? "";
 
   const builtIns = libraries.filter((entry) => !entry.removable);
   const sets = libraries.filter((entry) => entry.removable);
@@ -457,62 +458,58 @@ export function IconPicker({
         ) : null}
       </div>
 
-      <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2">
-        {spec.type === "emoji" ? null : (
-          <label className="flex items-center gap-2 text-[12px]">
-            <Switch
-              size="sm"
-              checked={plate}
-              onCheckedChange={() => onChange({ ...spec, plate: !plate })}
-            />
-            图标遮罩
-          </label>
-        )}
-        {canMono ? (
-          <label className="flex items-center gap-2 text-[12px]">
-            <Switch
-              size="sm"
-              checked={mono}
-              onCheckedChange={() => onChange({ ...spec, mono: !mono })}
-            />
-            跟随主题
-          </label>
-        ) : null}
-        <span className="text-muted-foreground min-w-0 flex-1 truncate text-[11px]">
-          {spec.type === "emoji"
-            ? "Emoji 不显示背景遮罩"
-            : canMono
-              ? "跟随主题：浅色下为自选色，深色下转成前景色"
-              : "图标遮罩：应用类图标自带外形时可以取消"}
-        </span>
-      </div>
-
-      {canFit ? (
-        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <span className="text-muted-foreground text-[12px]">图标大小</span>
-          <div className="flex gap-1">
-            {ICON_FITS.map((entry) => (
-              <button
-                key={entry.id}
-                type="button"
-                aria-pressed={fit === entry.id}
-                onClick={() => onChange({ ...spec, fit: entry.id as IconFitId })}
-                className={cn(
-                  "focus-visible:outline-ring rounded-full px-2.5 py-1 text-[11px] transition-colors focus-visible:outline-2",
-                  fit === entry.id
-                    ? "bg-secondary text-foreground font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
-                )}
+      {spec.type === "emoji" ? null : (
+        <>
+          <div className="mb-3 space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <label
+                htmlFor="icon-plate"
+                title="应用类图标自带外形时，可以关掉这层背景"
+                className="text-[12px]"
               >
-                {entry.label}
-              </button>
-            ))}
+                图标遮罩
+              </label>
+              <Switch
+                id="icon-plate"
+                size="sm"
+                checked={plate}
+                onCheckedChange={() => onChange({ ...spec, plate: !plate })}
+              />
+            </div>
+
+            {canMono ? (
+              <div className="flex items-center justify-between gap-3">
+                <label
+                  htmlFor="icon-mono"
+                  title="深色下把这份 SVG 当蒙版，转成前景色"
+                  className="text-[12px]"
+                >
+                  跟随主题
+                </label>
+                <Switch
+                  id="icon-mono"
+                  size="sm"
+                  checked={mono}
+                  onCheckedChange={() => onChange({ ...spec, mono: !mono })}
+                />
+              </div>
+            ) : null}
+
+            {canFit ? (
+              <div className="space-y-2 pt-1">
+                <p className="text-[12px]">图标大小</p>
+                <IconFitPicker
+                  size="sm"
+                  value={fit}
+                  onChange={(next) => onChange({ ...spec, fit: next })}
+                />
+              </div>
+            ) : null}
           </div>
-          <span className="text-muted-foreground min-w-0 flex-1 truncate text-[11px]">
-            {fitHint}
-          </span>
-        </div>
-      ) : null}
+
+          <Separator className="mb-3" />
+        </>
+      )}
 
       <Tabs value={tab} onValueChange={(value) => setTab(value as TabId)}>
         <TabsList className="w-full">
@@ -843,7 +840,7 @@ export function IconPicker({
 
         <TabsContent value="upload" className="pt-3">
           <p className="text-muted-foreground mb-3 text-[12px] leading-relaxed">
-            支持 PNG、JPG、WEBP、SVG，单张不超过 512 KB。SVG 会被清洗后再保存， 并且只作为图片渲染。
+            PNG / JPG / WEBP / SVG，单张不超过 512 KB；SVG 会被清洗。
           </p>
           <input
             ref={fileInput}

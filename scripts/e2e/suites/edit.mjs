@@ -264,9 +264,9 @@ await call(`/api/categories/${emptyCategoryId}`, { method: "DELETE" });
 const settingsHtml = await call("/settings");
 assert(
   "分类设置已从设置页移走",
-  !settingsHtml.text.includes("首页分类") && settingsHtml.text.includes("整理分类"),
+  !settingsHtml.text.includes("首页分类") && settingsHtml.text.includes("前台编辑"),
 );
-assert("设置页有「标签」一节", settingsHtml.text.includes("改成一个已经存在的名字就是合并过去"));
+assert("设置页有「标签」一节", settingsHtml.text.includes("改成已有的名字即合并"));
 
 // 标签改名：改到已经存在的名字就是合并过去
 /** 标签没有列表接口，直接读库拿编号 */
