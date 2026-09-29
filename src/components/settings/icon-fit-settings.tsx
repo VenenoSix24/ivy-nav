@@ -34,10 +34,7 @@ export function IconFitSettings({ initialFit }: { initialFit: IconFitId }) {
   }
 
   return (
-    <SettingsSection
-      title="条目图标"
-      description="统一取回图标的裁切方式；单个条目可在图标里单独改。"
-    >
+    <SettingsSection title="条目图标" description="设置图标的默认裁切方式；单个条目可单独设置。">
       <IconFitPicker value={fit} onChange={(next) => void pick(next)} disabled={busy} />
     </SettingsSection>
   );

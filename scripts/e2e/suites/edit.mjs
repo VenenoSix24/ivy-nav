@@ -262,11 +262,12 @@ assert(
 await call(`/api/categories/${emptyCategoryId}`, { method: "DELETE" });
 
 const settingsHtml = await call("/settings");
+// 锚在分区标题的结构上，不绑文案：设置页的说明文字会随版本改
 assert(
   "分类设置已从设置页移走",
-  !settingsHtml.text.includes("首页分类") && settingsHtml.text.includes("前台编辑"),
+  !settingsHtml.text.includes("首页分类") && settingsHtml.text.includes(">前台编辑</h2>"),
 );
-assert("设置页有「标签」一节", settingsHtml.text.includes("改成已有的名字即合并"));
+assert("设置页有「标签」一节", settingsHtml.text.includes(">标签</h2>"));
 
 // 标签改名：改到已经存在的名字就是合并过去
 /** 标签没有列表接口，直接读库拿编号 */

@@ -214,7 +214,7 @@ export function IconPicker({
 
   const faviconHint =
     fetchState === "failed"
-      ? "没取到图标：换图标库 / Emoji / 上传，或直接保存（显示首字母）。"
+      ? "未取到图标：可改用图标库、Emoji 或上传；直接保存将显示首字母。"
       : fetchState === "ok"
         ? "选择一张你喜欢的。"
         : fetchState === "loading"
@@ -417,6 +417,11 @@ export function IconPicker({
   const canLoadMore = shownHits !== null && shownHits.length < shownTotal;
   const searchingThis = library !== LUCIDE;
 
+  const previewSrc =
+    fetchState === "ok" && url.trim()
+      ? previewFaviconSrc(url, spec.type === "favicon" ? normalizeFavicon(spec.value) : null)
+      : "";
+
   return (
     <div className="border-border rounded-xl border p-3">
       <div className="mb-3 flex items-center gap-3">
@@ -429,18 +434,7 @@ export function IconPicker({
             plate && fit === "contain" && "border-hairline border",
           )}
         >
-          <IconGlyph
-            spec={spec}
-            title={title || "?"}
-            faviconSrc={
-              fetchState === "ok" && url.trim()
-                ? previewFaviconSrc(
-                    url,
-                    spec.type === "favicon" ? normalizeFavicon(spec.value) : null,
-                  )
-                : ""
-            }
-          />
+          <IconGlyph spec={spec} title={title || "?"} faviconSrc={previewSrc} />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[13px] font-medium">图标</p>
@@ -460,52 +454,44 @@ export function IconPicker({
 
       {spec.type === "emoji" ? null : (
         <>
-          <div className="mb-3 space-y-2">
-            <div className="flex items-center justify-between gap-3">
-              <label
-                htmlFor="icon-plate"
-                title="应用类图标自带外形时，可以关掉这层背景"
-                className="text-[12px]"
-              >
-                图标遮罩
-              </label>
+          <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+            <label
+              className="flex items-center gap-2 text-[12px]"
+              title="应用类图标自带外形时可关闭"
+            >
               <Switch
-                id="icon-plate"
                 size="sm"
                 checked={plate}
                 onCheckedChange={() => onChange({ ...spec, plate: !plate })}
               />
-            </div>
+              图标遮罩
+            </label>
 
             {canMono ? (
-              <div className="flex items-center justify-between gap-3">
-                <label
-                  htmlFor="icon-mono"
-                  title="深色下把这份 SVG 当蒙版，转成前景色"
-                  className="text-[12px]"
-                >
-                  跟随主题
-                </label>
+              <label className="flex items-center gap-2 text-[12px]" title="深色模式下按前景色渲染">
                 <Switch
-                  id="icon-mono"
                   size="sm"
                   checked={mono}
                   onCheckedChange={() => onChange({ ...spec, mono: !mono })}
                 />
-              </div>
-            ) : null}
-
-            {canFit ? (
-              <div className="space-y-2 pt-1">
-                <p className="text-[12px]">图标大小</p>
-                <IconFitPicker
-                  size="sm"
-                  value={fit}
-                  onChange={(next) => onChange({ ...spec, fit: next })}
-                />
-              </div>
+                跟随主题
+              </label>
             ) : null}
           </div>
+
+          {canFit ? (
+            <div className="mb-3 space-y-2">
+              <p className="text-[12px]">图标大小</p>
+              <IconFitPicker
+                size="sm"
+                value={fit}
+                onChange={(next) => onChange({ ...spec, fit: next })}
+                spec={spec}
+                faviconSrc={previewSrc}
+                title={title || "?"}
+              />
+            </div>
+          ) : null}
 
           <Separator className="mb-3" />
         </>
@@ -734,7 +720,7 @@ export function IconPicker({
               </div>
               <p className="text-muted-foreground mt-2 text-[11px]">
                 {lucideResults.length === 0
-                  ? "没有匹配的图标：换个词试试。"
+                  ? "未找到匹配的图标，请更换关键词。"
                   : `显示 ${lucideResults.length} / ${lucideNames.length} 个（本地登记表，不用联网）。`}
               </p>
             </>
@@ -791,7 +777,7 @@ export function IconPicker({
                         : shownHits === null
                           ? "…"
                           : shownHits.length === 0
-                            ? "没有匹配的图标：换个词试试。"
+                            ? "未找到匹配的图标，请更换关键词。"
                             : `显示 ${shownHits.length} / ${shownTotal} 个`}
                 </span>
                 {canLoadMore ? (
@@ -834,13 +820,15 @@ export function IconPicker({
             ))}
           </div>
           {searchEmoji(emojiQuery).length === 0 ? (
-            <p className="text-muted-foreground mt-3 text-[12px]">没有匹配的 emoji：换个词试试。</p>
+            <p className="text-muted-foreground mt-3 text-[12px]">
+              未找到匹配的 emoji，请更换关键词。
+            </p>
           ) : null}
         </TabsContent>
 
         <TabsContent value="upload" className="pt-3">
           <p className="text-muted-foreground mb-3 text-[12px] leading-relaxed">
-            PNG / JPG / WEBP / SVG，单张不超过 512 KB；SVG 会被清洗。
+            支持 PNG、JPG、WEBP、SVG，单张不超过 512 KB；SVG 会先清洗。
           </p>
           <input
             ref={fileInput}
