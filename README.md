@@ -187,10 +187,40 @@ DATABASE_PATH=/srv/ivy-nav/data/portal.db PORT=3000 HOSTNAME=127.0.0.1 pnpm star
 
 ### 运行与反代
 
-- 数据库、上传的图标与备份都在应用目录下的 `data/`、`uploads/`、`backups/`，记得一并持久化并定期快照。
+常驻用 systemd（`/etc/systemd/system/ivy-nav.service`）：
+
+```ini
+[Unit]
+Description=Ivy · 一叶
+After=network.target
+
+[Service]
+Type=simple
+User=ivy
+WorkingDirectory=/srv/ivy-nav
+Environment=NODE_ENV=production
+Environment=DATABASE_PATH=/srv/ivy-nav/data/portal.db
+Environment=HOSTNAME=127.0.0.1
+Environment=NEXT_PUBLIC_SITE_URL=https://portal.example.com
+ExecStart=/usr/bin/pnpm start
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+反代用 Caddy 最省事，HTTPS 会自动签发：
+
+```
+portal.example.com {
+	reverse_proxy 127.0.0.1:3000
+}
+```
+
+- 要持久化、要备份的只有两个目录：`data/`（数据库、`uploads/`、各类缓存）与 `backups/`。
 - 用 HTTPS，`SESSION_COOKIE_SECURE` 保持默认的 `true`；只有反代可信时才设 `TRUST_PROXY_HEADERS=true`。
+- 在反代上给 `/api/auth/login` 再加一道按真实 IP 的限速 —— 应用里那两道是进程内计数，重建即清零。
 - 部署到公网时设 `NEXT_PUBLIC_SITE_URL`，分享卡片的链接才是对的。
-- 常驻可以使用 systemd：`ExecStart` 用 `pnpm start`，配上 `Restart=on-failure`。
 - 其余环境变量见 `.env.example`。
 
 ### Vercel 等托管平台
