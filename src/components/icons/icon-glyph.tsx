@@ -136,6 +136,8 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
             className={cn(
               "relative size-[var(--icon-glyph,1.25rem)]",
               FIT_CLASS[fit],
+              // 还没确认取到就不显示，免得与下面的首字母同时出现
+              phase !== "ready" && "opacity-0",
               darkMono && "dark:hidden",
             )}
             style={transform ? { transform } : undefined}
