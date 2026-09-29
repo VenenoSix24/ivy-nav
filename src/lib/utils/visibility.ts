@@ -19,10 +19,12 @@ export function visibleItems<T extends Pick<Item, "visibility" | "categoryId">>(
   hiddenCategories: Set<number> = new Set(),
 ): T[] {
   if (isAdmin) return items;
+  // 未归档（categoryId 为 null）对匿名不可见，与 isItemVisibleToGuest 保持一致
   return items.filter(
     (item) =>
       item.visibility === "public" &&
-      (item.categoryId === null || !hiddenCategories.has(item.categoryId)),
+      item.categoryId !== null &&
+      !hiddenCategories.has(item.categoryId),
   );
 }
 
