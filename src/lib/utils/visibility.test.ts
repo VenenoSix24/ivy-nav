@@ -42,7 +42,13 @@ describe("visibleItems", () => {
       { id: 8, categoryId: 10, visibility: "public" as const },
       { id: 9, categoryId: null, visibility: "public" as const },
     ];
-    expect(visibleItems(rows, false, hidden).map((item) => item.id)).toEqual([8, 9]);
+    expect(visibleItems(rows, false, hidden).map((item) => item.id)).toEqual([8]);
+  });
+
+  it("keeps the inbox away from guests, matching isItemVisibleToGuest", () => {
+    const inbox = { id: 9, categoryId: null, visibility: "public" as const };
+    expect(visibleItems([inbox], false)).toEqual([]);
+    expect(isItemVisibleToGuest(inbox, null)).toBe(false);
   });
 
   it("still gives the admin the items of a hidden category", () => {
