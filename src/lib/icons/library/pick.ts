@@ -43,7 +43,7 @@ export async function pickLibraryIcon(
 
   const contentType = sniffImageType(payload.body);
   if (!contentType || !STORABLE[contentType]) {
-    throw new PickError("这张图标的格式（不是 PNG / JPG / WEBP / SVG）存不下来：换一张试试。");
+    throw new PickError("该图标格式（非 PNG / JPG / WEBP / SVG）无法保存，请更换图标。");
   }
 
   // 文件名里的摘要取自图片内容，内容变了文件名就变

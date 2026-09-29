@@ -84,7 +84,7 @@ export function AppearanceSettings({ initialPalette }: AppearanceSettingsProps) 
         </div>
       </SettingsSection>
 
-      <SettingsSection title="配色" description="只改强调色与背景光晕，中性色与卡面不变。">
+      <SettingsSection title="配色" description="仅替换强调色与背景光晕，其余不变。">
         <div className="flex flex-wrap gap-2" role="group" aria-label="配色主题">
           {PALETTES.map((entry) => {
             const active = entry.id === palette;

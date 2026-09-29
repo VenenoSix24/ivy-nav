@@ -34,7 +34,7 @@ export function CategoryDialog({ category, onOpenChange, onSave }: CategoryDialo
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
           <DialogTitle>编辑分类</DialogTitle>
-          <DialogDescription>显示在首页分区标题的右侧。</DialogDescription>
+          <DialogDescription>显示于首页分区标题右侧。</DialogDescription>
         </DialogHeader>
 
         <form

@@ -110,7 +110,7 @@ export function DataSettings() {
 
   return (
     <>
-      <SettingsSection title="数据" description="导出/导入是内容 JSON；备份是整库快照。">
+      <SettingsSection title="数据" description="导出与导入为内容 JSON；备份为整库快照。">
         <div className="space-y-5">
           <div>
             <p className="mb-2 text-[13px] font-medium">导出与导入</p>

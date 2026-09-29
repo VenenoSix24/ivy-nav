@@ -102,7 +102,7 @@ export function BookmarkImport() {
     <>
       <SettingsSection
         title="浏览器书签"
-        description="一级目录作为分类，更深目录作为标签；可自选导入哪些文件夹。"
+        description="一级目录映射为分类，更深层级映射为标签；可选择导入的文件夹。"
       >
         <input
           ref={fileInput}
