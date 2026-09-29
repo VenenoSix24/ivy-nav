@@ -54,7 +54,8 @@ export function iconBox(plate: boolean, fit: IconFitId = DEFAULT_ICON_FIT): Reac
 
 /** 渲染一种图标 */
 export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps) {
-  const [phase, setPhase] = useState<"pending" | "ready" | "none">("pending");
+  /** 取回来的图不可用（占位图、破图）时才回退到首字母 */
+  const [broken, setBroken] = useState(false);
   /** 「自动裁边」量出来的缩放与平移，带来源 */
   const [trim, setTrim] = useState<{ src: string; transform: FitTransform | null } | null>(null);
 
@@ -63,9 +64,10 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
   /** 挂载时补看一次加载状态，并在这里量「自动裁边」 */
   const decide = useCallback((image: HTMLImageElement | null) => {
     if (!image || !image.complete) return;
-    const ready = image.naturalWidth > 1 && image.naturalHeight > 1;
-    setPhase((current) => (current === "pending" ? (ready ? "ready" : "none") : current));
-    if (!ready) return;
+    if (image.naturalWidth <= 1 || image.naturalHeight <= 1) {
+      setBroken(true);
+      return;
+    }
 
     const transform = trimTransform(
       measureAlphaBox(image),
@@ -121,13 +123,9 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
           className,
         )}
       >
-        {phase === "ready" ? null : (
-          <LetterMark
-            title={title}
-            className={cn("absolute inset-0 grid place-items-center", darkMono && "dark:hidden")}
-          />
-        )}
-        {phase === "none" ? null : (
+        {broken ? (
+          <LetterMark title={title} className={cn(darkMono && "dark:hidden")} />
+        ) : (
           <img
             src={src}
             alt=""
@@ -136,14 +134,12 @@ export function IconGlyph({ spec, title, faviconSrc, className }: IconGlyphProps
             className={cn(
               "relative size-[var(--icon-glyph,1.25rem)]",
               FIT_CLASS[fit],
-              // 还没确认取到就不显示，免得与下面的首字母同时出现
-              phase !== "ready" && "opacity-0",
               darkMono && "dark:hidden",
             )}
             style={transform ? { transform } : undefined}
             ref={decide}
             onLoad={(event) => decide(event.currentTarget)}
-            onError={() => setPhase("none")}
+            onError={() => setBroken(true)}
           />
         )}
         {darkMono ? (
