@@ -61,6 +61,25 @@ assert("拿到会话 Cookie", cookie.startsWith("ivy_session="));
 const listed = await call("/api/backup/list");
 assert("管理员可用", listed.status === 200, `HTTP ${listed.status}`);
 
+// 攻击者用不存在的用户名刷满全局桶，管理员仍要能用正确密码登录（否则可被无限锁在门外）
+for (let i = 0; i < 35; i += 1) {
+  await fetch(`${BASE}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-forwarded-for": `10.8.${i}.1` },
+    body: JSON.stringify({ username: `spray-${i}`, password: "x" }),
+  });
+}
+const stillIn = await fetch(`${BASE}/api/auth/login`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ username: USER, password: PASSWORD }),
+});
+assert(
+  "全局桶被打满后，管理员用自己的密码仍能登录",
+  stillIn.status === 200,
+  `HTTP ${stillIn.status}`,
+);
+
 const statuses = [];
 for (let i = 0; i < 14; i += 1) {
   const response = await fetch(`${BASE}/api/auth/login`, {

@@ -59,3 +59,18 @@ export const loginGlobalLimiter = new AttemptLimiter(
 );
 
 export const LOGIN_GLOBAL_KEY = "global";
+
+/** 登录闸门要看的三件事 */
+export interface LoginGate {
+  perUserAllowed: boolean;
+  globalAllowed: boolean;
+  userExists: boolean;
+}
+
+/**
+ * 这次登录该不该直接拒掉：按用户名的桶是真正那道闸，全局桶只拦「换用户名扫射」。
+ */
+export function shouldRejectLogin(gate: LoginGate): boolean {
+  if (!gate.perUserAllowed) return true;
+  return !gate.globalAllowed && !gate.userExists;
+}

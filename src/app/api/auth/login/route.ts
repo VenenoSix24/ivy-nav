@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { clientIp, firstIssueMessage, jsonError, jsonOk, readJson } from "@/lib/api/http";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
-import { LOGIN_GLOBAL_KEY, loginGlobalLimiter, loginLimiter } from "@/lib/auth/rate-limit";
+import {
+  LOGIN_GLOBAL_KEY,
+  loginGlobalLimiter,
+  loginLimiter,
+  shouldRejectLogin,
+} from "@/lib/auth/rate-limit";
 import { createSession, setSessionCookie } from "@/lib/auth/session";
 import { findUserByName } from "@/db/users";
 
@@ -26,12 +31,19 @@ export async function POST(request: Request) {
   const userKey = `user:${parsed.data.username.toLowerCase()}`;
   const perUser = loginLimiter.check(userKey);
   const global = loginGlobalLimiter.check(LOGIN_GLOBAL_KEY);
-  if (!perUser.allowed || !global.allowed) {
+  const user = findUserByName(parsed.data.username);
+
+  if (
+    shouldRejectLogin({
+      perUserAllowed: perUser.allowed,
+      globalAllowed: global.allowed,
+      userExists: user !== null,
+    })
+  ) {
     const wait = Math.max(perUser.retryAfterSeconds, global.retryAfterSeconds);
     return jsonError(`尝试次数过多：请等待 ${wait} 秒后再试。`, 429);
   }
 
-  const user = findUserByName(parsed.data.username);
   const storedHash = user?.passwordHash ?? (await timingDecoyHash());
   const passwordMatches = await verifyPassword(parsed.data.password, storedHash);
 
@@ -41,7 +53,9 @@ export async function POST(request: Request) {
     return jsonError("用户名或密码不正确：请检查后重试。", 401);
   }
 
+  // 登录成功：两个桶一起清，免得被别人刷满的全局桶继续挡着
   loginLimiter.reset(userKey);
+  loginGlobalLimiter.reset(LOGIN_GLOBAL_KEY);
 
   const { token, expiresAt } = createSession(user.id, {
     userAgent: request.headers.get("user-agent"),

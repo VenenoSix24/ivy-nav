@@ -13,7 +13,7 @@
 | `FAVICON_ALLOW_PRIVATE_HOSTS` | `false`                 | 允许抓内网地址的站点图标                                                         |
 | `FAVICON_FALLBACK_SOURCES`    | 开                      | 是否走 favicon.im / icon.horse                                                   |
 | `LOGIN_ATTEMPT_LIMIT`         | `10`                    | 单个用户名在统计窗口内的失败上限                                                 |
-| `LOGIN_GLOBAL_ATTEMPT_LIMIT`  | `30`                    | 全局失败上限                                                                     |
+| `LOGIN_GLOBAL_ATTEMPT_LIMIT`  | `30`                    | 全局失败上限；只挡换用户名的扫射，已存在的账号由上一行兜着                       |
 | `LOGIN_ATTEMPT_WINDOW_MS`     | `900000`                | 统计窗口                                                                         |
 | `ADMIN_PASSWORD`              | —                       | 只给 `pnpm admin:create` 用，给了就不走交互                                      |
 
@@ -34,6 +34,8 @@
 - 用 HTTPS，`SESSION_COOKIE_SECURE` 保持默认的 `true`。
 - 只有反代可信时才设 `TRUST_PROXY_HEADERS=true`（否则请求头里的 `X-Forwarded-For` 由客户端自己写，
   按它限流等于不限）。
+- 在反代上给 `/api/auth/login` 再加一道按真实 IP 的限速：应用里那两道是进程内计数，重建即清零，
+  反代那道才是独立的第二层。
 - Serverless 平台不能把 SQLite 放在本地临时文件里做长期存储 —— 需要换 SQLite 兼容的托管服务，
   或者保持自有服务器部署。
 
