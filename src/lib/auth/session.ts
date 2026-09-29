@@ -2,7 +2,6 @@ import { cookies } from "next/headers";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { sessions, users } from "@/db/schema";
-import { needsSetup } from "@/db/users";
 import {
   SESSION_COOKIE_NAME,
   SESSION_RENEW_AFTER_MS,
@@ -123,6 +122,3 @@ export async function destroyOtherSessions(userId: number, keepSessionId: string
 export async function readSessionToken(): Promise<string | null> {
   return (await cookies()).get(SESSION_COOKIE_NAME)?.value ?? null;
 }
-
-// 重新导出：用户查询本身在 db/users.ts
-export { needsSetup };

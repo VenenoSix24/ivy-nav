@@ -6,15 +6,6 @@ export function listAdminUsers() {
   return getDb().select().from(users).all();
 }
 
-export function countAdminUsers(): number {
-  return listAdminUsers().length;
-}
-
-/** 是否还没有管理员（建号只在服务器上做）。 */
-export function needsSetup(): boolean {
-  return countAdminUsers() === 0;
-}
-
 export function findUserByName(username: string) {
   return getDb().select().from(users).where(eq(users.username, username)).get() ?? null;
 }
