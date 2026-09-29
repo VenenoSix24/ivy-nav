@@ -8,13 +8,11 @@ import { isItemVisibleToGuest } from "@/lib/utils/visibility";
 
 export const dynamic = "force-dynamic";
 
-function placeholderResponse(isAdmin: boolean) {
+function placeholderResponse() {
   return new Response(binaryBody(TRANSPARENT_PNG), {
     headers: {
       "content-type": "image/png",
-      "cache-control": isAdmin
-        ? `private, max-age=${PLACEHOLDER_CACHE_SECONDS}`
-        : `public, max-age=${PLACEHOLDER_CACHE_SECONDS}`,
+      "cache-control": `private, max-age=${PLACEHOLDER_CACHE_SECONDS}`,
       "x-content-type-options": "nosniff",
     },
   });
@@ -45,12 +43,13 @@ export async function GET(request: Request) {
   // iconValue 记着在选择器里挑中的那个方案（为空即按顺序自己挑）
   const payload = await resolveFavicon(target, item.iconValue);
   // 取不到不是错误：回一张透明占位图
-  if (!payload) return placeholderResponse(session !== null);
+  if (!payload) return placeholderResponse();
 
+  // 匿名那份的可见性会变：只进访客自己的浏览器，任何共享缓存都不得留存
   return new Response(binaryBody(payload.body), {
     headers: {
       "content-type": payload.contentType,
-      "cache-control": session ? "private, max-age=604800" : "public, max-age=604800",
+      "cache-control": "private, max-age=604800",
       "x-content-type-options": "nosniff",
     },
   });

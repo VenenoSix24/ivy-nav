@@ -152,8 +152,8 @@ assert(
 );
 
 assert(
-  "匿名那份只缓存 7 天（可见性会变）",
-  anonUploadShared.headers.get("cache-control") === "public, max-age=604800",
+  "匿名那份只进浏览器缓存（可见性会变，共享缓存不得留存）",
+  anonUploadShared.headers.get("cache-control") === "private, max-age=604800",
   anonUploadShared.headers.get("cache-control") ?? "无",
 );
 

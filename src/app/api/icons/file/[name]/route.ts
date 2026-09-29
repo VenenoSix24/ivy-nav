@@ -19,8 +19,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ nam
 
   const contentType = uploadContentType(name);
 
-  // 匿名那份的可见性会变，只缓存 7 天；管理员那份只进他自己的浏览器
-  const cacheControl = session ? "private, max-age=31536000, immutable" : "public, max-age=604800";
+  // 匿名那份的可见性会变：只进访客自己的浏览器，任何共享缓存都不得留存
+  const cacheControl = session ? "private, max-age=31536000, immutable" : "private, max-age=604800";
 
   return new Response(binaryBody(body), {
     headers: {
