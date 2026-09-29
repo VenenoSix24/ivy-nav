@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "cn";
+import { IconFitPicker } from "@/components/icons/icon-fit-picker";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { ICON_FITS, type IconFitId } from "@/lib/icons/fit";
 
@@ -37,32 +36,9 @@ export function IconFitSettings({ initialFit }: { initialFit: IconFitId }) {
   return (
     <SettingsSection
       title="条目图标"
-      description="取回来的图标大小不一：有的把画布填满，有的四周留一大圈透明边，同一个图标遮罩下就显得一大一小。这里设置默认裁切样式，单个条目可以在图标选择器里改。"
+      description="统一取回图标的裁切方式；单个条目可在图标里单独改。"
     >
-      <ul className="space-y-1.5">
-        {ICON_FITS.map((entry) => (
-          <li key={entry.id}>
-            <button
-              type="button"
-              aria-pressed={fit === entry.id}
-              disabled={busy}
-              onClick={() => void pick(entry.id)}
-              className={cn(
-                "focus-visible:outline-ring flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline-2",
-                fit === entry.id ? "bg-accent" : "hover:bg-secondary",
-              )}
-            >
-              <span className="min-w-0 flex-1">
-                <span className="block text-[13px] font-medium">{entry.label}</span>
-                <span className="text-muted-foreground mt-0.5 block text-[12px] leading-relaxed">
-                  {entry.hint}
-                </span>
-              </span>
-              {fit === entry.id ? <Check className="text-primary mt-0.5 size-4 shrink-0" /> : null}
-            </button>
-          </li>
-        ))}
-      </ul>
+      <IconFitPicker value={fit} onChange={(next) => void pick(next)} disabled={busy} />
     </SettingsSection>
   );
 }

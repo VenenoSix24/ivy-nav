@@ -94,10 +94,7 @@ export function IconSetSettings({ initialSets }: IconSetSettingsProps) {
   }
 
   return (
-    <SettingsSection
-      title="图标库"
-      description="这里可以添加自建的 JSON 图标集。只存清单，并不会全量下载。"
-    >
+    <SettingsSection title="图标库" description="添加自建的 JSON 图标集；只存清单，不下载图片。">
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <input

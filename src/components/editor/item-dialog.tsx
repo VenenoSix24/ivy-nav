@@ -170,9 +170,7 @@ export function ItemDialog({
       <DialogContent className="flex max-h-[min(88dvh,46rem)] flex-col sm:max-w-[520px]">
         <DialogHeader className="shrink-0">
           <DialogTitle>{item ? "编辑项目" : "新建项目"}</DialogTitle>
-          <DialogDescription>
-            网址只支持 http 与 https；Private 的条目只有登录后可见。
-          </DialogDescription>
+          <DialogDescription>只支持 http 与 https。</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col gap-4">
@@ -217,7 +215,7 @@ export function ItemDialog({
               <Textarea
                 id="item-description"
                 value={description}
-                placeholder="这里填写描述哦～"
+                placeholder="选填：一句话说明它是什么"
                 onChange={(event) => setDescription(event.target.value)}
                 maxLength={300}
                 rows={2}
