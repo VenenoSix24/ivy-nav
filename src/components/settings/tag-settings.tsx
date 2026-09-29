@@ -63,7 +63,7 @@ export function TagSettings({ initialTags }: TagSettingsProps) {
   return (
     <SettingsSection
       title="标签"
-      description="点标签名改名，改成已有的名字即合并。数字是使用它的条目数；没人用的会自动清掉。"
+      description="点名称可改名，改为已有名称则合并。右侧数字为引用条目数；无引用的标签自动清理。"
     >
       {tags.length === 0 ? (
         <p className="text-muted-foreground text-[13px]">
